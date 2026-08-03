@@ -231,6 +231,7 @@
     <a href="#kalshi">Kalshi</a>
     <a href="#leaders">Leaderboard</a>
     <a href="#watchlist">Watchlist</a>
+    <a href="#conviction">Conviction board</a>
     <a href="#crypto">Crypto tape</a>
     <a href="#hyper">Hyperliquid whales</a>
     <a href="#form4">Form 4 filings</a>
@@ -418,7 +419,7 @@
       </div>
       <div class="tscroll">
         <table id="watchTable">
-          <thead><tr><th>Trader</th><th>Wallet</th><th class="num">Times flagged</th><th class="num">Max score</th><th>Last seen</th><th></th></tr></thead>
+          <thead><tr><th>Trader</th><th>Wallet</th><th class="num">Times flagged</th><th class="num">Record</th><th class="num">Max score</th><th>Last seen</th><th></th></tr></thead>
           <tbody><tr><td colspan="6" class="empty">Nothing starred yet — hit ☆ next to any trader in the radar or leaderboard.</td></tr></tbody>
         </table>
       </div>
@@ -432,6 +433,24 @@
         </table>
       </div>
     </div>
+  </section>
+
+  <!-- ======================= CONVICTION BOARD ======================= -->
+  <section class="block" id="conviction">
+    <div class="block-head">
+      <h2>🧭 Conviction board — what your smart money is holding</h2>
+      <span class="feedstate" id="cvState">connecting…</span>
+      <span class="desc">Every unresolved position held by wallets you follow or that have proven win records. Their open bets are, in effect, their forecasts.</span>
+    </div>
+    <div class="card">
+      <div class="tscroll">
+        <table id="cvTable">
+          <thead><tr><th>Wallet</th><th>Betting that…</th><th>Position</th><th class="num">At stake now</th><th class="num">Entry → now</th><th>Signal</th></tr></thead>
+          <tbody><tr><td colspan="6" class="empty">Loading conviction board…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <p class="note">Fed by your starred wallets and any wallet that earns a "proven" record (3+ graded wins on flagged bets). Entry → now shows whether the market has moved toward their bet since they placed it — green means the money is so far being proven right.</p>
   </section>
 
   <!-- ======================= CRYPTO TAPE ======================= -->
@@ -530,6 +549,8 @@
         <span class="note" style="display:inline">disclosures lag trades by up to 45 days by law</span>
         <input class="addr" id="fmpInput" placeholder="optional: free FMP API key" spellcheck="false" style="min-width:180px">
         <button class="ctrl" id="fmpSave">Save key</button>
+        <input class="addr" id="polInput" placeholder="watch politicians, e.g. Pelosi, Fields, Mullin" spellcheck="false" style="min-width:220px">
+        <button class="ctrl" id="polSave">Watch</button>
       </div>
       <div class="tscroll">
         <table id="ctTable">
@@ -743,7 +764,7 @@ state.count = 60;
 function saveSettings() {
   store.settings = { minSize: state.minSize, radarFilter: state.radarFilter, lbWindow: state.lbWindow,
     pair: state.pair, cbThresh: state.cbThresh, kThresh: state.kThresh, kHideTicks: state.kHideTicks,
-    mHideSports: state.mHideSports, radarSpeed: state.radarSpeed, ntfyTopic: state.ntfyTopic || '', fmpKey: state.fmpKey || '', sound: state.sound, notify: state.notify };
+    mHideSports: state.mHideSports, radarSpeed: state.radarSpeed, ntfyTopic: state.ntfyTopic || '', fmpKey: state.fmpKey || '', polWatch: state.polWatch || '', sound: state.sound, notify: state.notify };
   persist();
 }
 
@@ -777,6 +798,7 @@ function applyContext(t) {
   if (t._cluster) { s.score += 12; s.reasons.push(`part of ${t._cluster}-wallet same-side cluster on this market`); }
   const ws = store.walletStats[t.proxyWallet];
   if (ws && ws.hits >= 3) { s.score += 10; s.reasons.push(`repeat pattern — flagged ${ws.hits}× before`); }
+  if (ws && (ws.wins || 0) >= 3 && (ws.wins || 0) > 3 * (ws.losses || 0)) { s.score += 15; s.reasons.push(`PROVEN WINNER — ${ws.wins}W/${ws.losses||0}L on previously flagged bets`); }
   const d = dossierCache.get(t.proxyWallet);
   if (d && d.data) {
     if (d.data.firstTrade) { s.score += 15; s.reasons.push('this wallet\'s FIRST-ever trade'); }
@@ -976,7 +998,8 @@ function recordFlagged(trades) {
     if (!known.has(key)) {
       store.flagged.unshift({ key, ts: t.timestamp, market: t.title, outcome: t.outcome, side: t.side,
         price: t.price, usd: Math.round(t._s.usd), wallet: t.proxyWallet, name: nm,
-        score: t._s.score, reasons: t._s.reasons.join(' | ') });
+        score: t._s.score, reasons: t._s.reasons.join(' | '),
+        conditionId: t.conditionId || '', outcomeIndex: t.outcomeIndex ?? null, slug: t.slug || '' });
       known.add(key);
       const ws = store.walletStats[t.proxyWallet] || { hits: 0, maxScore: 0, lastSeen: 0, name: nm };
       ws.hits++; ws.maxScore = Math.max(ws.maxScore, t._s.score); ws.lastSeen = t.timestamp; ws.name = nm;
@@ -1394,10 +1417,35 @@ async function loadCT() {
       });
       if (!rows.length) throw new Error('empty/invalid key');
       rows.sort((a,b) => String(b.disclosureDate || b.dateRecieved || '').localeCompare(String(a.disclosureDate || a.dateRecieved || '')));
+      // politician watch: alert on new disclosures by watched names
+      const watched = (state.polWatch || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+      store.polSeen = store.polSeen || {};
+      const firstPolRun = !store.polSeenInit;
+      for (const t of rows) {
+        const nm = [t.firstName, t.lastName].filter(Boolean).join(' ') || t.representative || t.senator || '';
+        const hit = watched.some(wn => nm.toLowerCase().includes(wn));
+        t._watched = hit;
+        if (hit) {
+          const k = (nm + '|' + (t.symbol||'') + '|' + (t.transactionDate||'') + '|' + (t.type||'')).toLowerCase();
+          if (!store.polSeen[k]) {
+            store.polSeen[k] = 1;
+            if (!firstPolRun) {
+              pushNtfy('Politician trade: ' + nm, `${String(t.type||'').toUpperCase()} ${t.symbol||''} ${t.amount||''} — traded ${t.transactionDate||'?'}, disclosed ${t.disclosureDate||'?'}`);
+            }
+          }
+        }
+      }
+      store.polSeenInit = true;
+      if (Object.keys(store.polSeen).length > 400) {
+        const ks = Object.keys(store.polSeen); ks.slice(0, ks.length - 400).forEach(k => delete store.polSeen[k]);
+      }
+      persist();
+      rows.sort((a,b) => (b._watched?1:0) - (a._watched?1:0) || String(b.disclosureDate||'').localeCompare(String(a.disclosureDate||'')));
       tbody.innerHTML = rows.slice(0, 15).map(t => {
         const nm = [t.firstName, t.lastName].filter(Boolean).join(' ') || t.representative || t.senator || t.office || '—';
         const type = String(t.type || t.transactionType || '—').toUpperCase();
-        return ctRow(t._chamber + ' ' + nm, '', t.symbol || t.ticker || '—', type, String(t.amount || '—'), String(t.transactionDate || '—'), String(t.disclosureDate || '—'));
+        const row = ctRow((t._watched ? '⭐ ' : '') + t._chamber + ' ' + nm, '', t.symbol || t.ticker || '—', type, String(t.amount || '—'), String(t.transactionDate || '—'), String(t.disclosureDate || '—'));
+        return t._watched ? row.replace('<tr>', '<tr class="watched">') : row;
       }).join('');
       setFeed('#ctState', true);
       $('#ctFallback').hidden = true;
@@ -1425,6 +1473,133 @@ function ctRow(name, party, tick, type, val, traded, disclosed) {
   </tr>`;
 }
 
+/* ============================== OUTCOME TRACKING ============================== */
+// Did flagged bets actually win? Resolved markets grade every flagged trade; wallets build W/L records.
+async function checkOutcomes() {
+  const pend = store.flagged.filter(f => !f.result && f.conditionId && (Date.now()/1000 - f.ts) > 3600).slice(0, 10);
+  if (!pend.length) return;
+  const ids = [...new Set(pend.map(f => f.conditionId))];
+  let byCid = new Map();
+  try {
+    const url = 'https://gamma-api.polymarket.com/markets?' + ids.map(i => 'condition_ids=' + encodeURIComponent(i)).join('&');
+    const ms = await fetchJSON(url);
+    if (Array.isArray(ms)) byCid = new Map(ms.map(m => [m.conditionId, m]));
+  } catch(e){}
+  // fallback: look up a few by slug if condition_ids returned nothing
+  if (!byCid.size) {
+    for (const f of pend.slice(0, 5)) {
+      if (!f.slug) continue;
+      try {
+        const a = await fetchJSON('https://gamma-api.polymarket.com/markets?slug=' + encodeURIComponent(f.slug));
+        if (a && a[0]) byCid.set(f.conditionId, a[0]);
+      } catch(e){}
+    }
+  }
+  let changed = false;
+  for (const f of pend) {
+    const m = byCid.get(f.conditionId);
+    if (!m || !m.closed) continue;
+    let prices = [];
+    try { prices = typeof m.outcomePrices === 'string' ? JSON.parse(m.outcomePrices) : (m.outcomePrices || []); } catch(e){}
+    const p = parseFloat(prices[f.outcomeIndex ?? 0]);
+    if (isNaN(p)) continue;
+    const won = f.side === 'BUY' ? p > 0.5 : p < 0.5;
+    f.result = won ? 'WIN' : 'LOSS';
+    const ws = store.walletStats[f.wallet];
+    if (ws) { ws.wins = (ws.wins || 0) + (won ? 1 : 0); ws.losses = (ws.losses || 0) + (won ? 0 : 1); }
+    if (won && f.score >= 80) pushNtfy('Flagged bet RESOLVED WIN', `${f.name} won the ${fmtUSD(f.usd)} bet on "${(f.market||'').slice(0,80)}" — flagged at score ${f.score} before resolution`);
+    changed = true;
+  }
+  if (changed) { persist(); renderWatch(); }
+}
+
+/* ============================== FOLLOW ALERTS (starred wallets) ============================== */
+async function checkStarred() {
+  const wallets = Object.keys(store.stars).slice(0, 10);
+  let changed = false;
+  for (const w of wallets) {
+    try {
+      const trs = await (await fetch(`https://data-api.polymarket.com/trades?user=${w}&limit=3`)).json();
+      const s = store.stars[w];
+      const newest = trs && trs[0];
+      if (!newest) continue;
+      const key = newest.transactionHash || String(newest.timestamp);
+      if (s.lastTx && s.lastTx !== key) {
+        const usd = newest.size * newest.price;
+        if (usd >= 500) {
+          const nm = s.name || w.slice(0, 10) + '…';
+          const body = `${newest.side} ${fmtUSD(usd)} @ ${(newest.price*100).toFixed(0)}¢ — ${newest.title}`;
+          pushNtfy('Followed wallet: ' + nm, body);
+          try {
+            if (state.notify && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+              new Notification('⭐ ' + nm + ' just traded', { body });
+            }
+          } catch(e){}
+        }
+      }
+      if (s.lastTx !== key) { s.lastTx = key; changed = true; }
+    } catch(e){}
+  }
+  if (changed) persist();
+}
+
+/* ============================== CONVICTION BOARD ============================== */
+async function loadConviction() {
+  const tbody = $('#cvTable tbody');
+  const proven = Object.entries(store.walletStats)
+    .filter(([w, s]) => (s.wins || 0) >= 3 && s.wins > 3 * (s.losses || 0)).map(([w]) => w);
+  const wallets = [...new Set([...Object.keys(store.stars), ...proven])].slice(0, 8);
+  if (!wallets.length) {
+    setFeed('#cvState', 'link');
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">Empty for now — this board fills with the open positions of wallets you ⭐ star and wallets that earn a proven win record. Star a suspicious whale in the radar and its bets appear here.</td></tr>';
+    return;
+  }
+  const all = [];
+  let anyOk = false;
+  await Promise.allSettled(wallets.map(async w => {
+    const res = await fetch(`https://data-api.polymarket.com/positions?user=${w}&limit=100`);
+    if (!res.ok) return;
+    const pos = await res.json();
+    anyOk = true;
+    const st = store.walletStats[w] || {};
+    const nm = (store.stars[w] && store.stars[w].name) || st.name || w.slice(0, 10) + '…';
+    const isProven = (st.wins || 0) >= 3 && st.wins > 3 * (st.losses || 0);
+    for (const p of (pos || [])) {
+      if (p.redeemable) continue;
+      const cur = +p.curPrice;
+      if (!(cur > 0.01 && cur < 0.99)) continue;
+      const val = +p.currentValue || 0;
+      if (val < 1000) continue;
+      all.push({ w, nm, isProven, title: p.title || '—', outcome: p.outcome || '', val,
+        avg: +p.avgPrice || 0, cur, slug: p.eventSlug || p.slug || '',
+        newsy: NEWSY.test(p.title || '') && !SPORTSY.test(p.title || '') });
+    }
+  }));
+  if (!anyOk) {
+    setFeed('#cvState', false);
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">Positions API unreachable right now.</td></tr>';
+    return;
+  }
+  setFeed('#cvState', true);
+  if (!all.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">Your followed wallets hold no open positions over $1k right now — they\'re flat or fully resolved.</td></tr>';
+    return;
+  }
+  all.sort((a, b) => (b.newsy - a.newsy) || (b.val - a.val));
+  tbody.innerHTML = all.slice(0, 20).map(p => {
+    const edge = p.avg > 0 ? (p.cur - p.avg) / p.avg * 100 : 0;
+    const right = p.cur >= p.avg;
+    return `<tr class="${store.stars[p.w] ? 'watched' : ''}">
+      <td><a class="walletlink" data-dossier="${esc(p.w)}" data-label="${esc(p.nm)}">${esc(p.nm)}</a>${p.isProven ? ' <span class="chip critical">▲ proven</span>' : ''}</td>
+      <td><a href="https://polymarket.com/event/${esc(p.slug)}" target="_blank" rel="noopener">${esc(p.title)}</a></td>
+      <td><span class="chip muted">${esc(p.outcome)}</span></td>
+      <td class="num"><strong>${fmtUSD(p.val)}</strong></td>
+      <td class="num" style="color:${right ? 'var(--status-good)' : 'var(--status-critical)'}">${(p.avg * 100).toFixed(0)}¢ → ${(p.cur * 100).toFixed(0)}¢ (${edge >= 0 ? '+' : ''}${edge.toFixed(0)}%)</td>
+      <td>${p.newsy ? '<span class="chip serious">◆ news-sensitive</span>' : '<span style="color:var(--ink-3)">—</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
 /* ============================== WATCHLIST & EXPORTS ============================== */
 function toggleStar(wallet, name) {
   if (store.stars[wallet]) delete store.stars[wallet];
@@ -1446,14 +1621,18 @@ function renderWatch() {
   const wallets = Object.keys(store.stars);
   $('#memStats').textContent = `${wallets.length} starred · ${store.flagged.length} flagged trades remembered · storage: ${DB.persistent ? 'persistent in this browser' : 'in-memory only (browser blocked storage — export to keep)'}`;
   if (!wallets.length) {
-    wt.innerHTML = '<tr><td colspan="6" class="empty">Nothing starred yet — hit ☆ next to any trader in the radar or leaderboard.</td></tr>';
+    wt.innerHTML = '<tr><td colspan="7" class="empty">Nothing starred yet — hit ☆ next to any trader in the radar or leaderboard. Starred wallets push to your phone whenever they make a new trade.</td></tr>';
   } else {
     wt.innerHTML = wallets.map(w => {
       const s = store.stars[w], st = store.walletStats[w] || {};
+      const wins = st.wins || 0, losses = st.losses || 0;
+      const proven = wins >= 3 && wins > 3 * losses;
+      const rec = (wins + losses) ? `${wins}W–${losses}L${proven ? ' <span class="chip critical">▲ proven</span>' : ''}` : '—';
       return `<tr class="watched">
         <td><a class="walletlink" data-dossier="${esc(w)}" data-label="${esc(s.name)}"><strong>${esc(s.name)}</strong></a></td>
         <td><a href="https://polymarket.com/profile/${esc(w)}" target="_blank" rel="noopener" style="font-size:12px">${esc(w.slice(0,12))}… ↗</a></td>
         <td class="num">${st.hits || 0}</td>
+        <td class="num">${rec}</td>
         <td class="num">${st.maxScore ? scoreChip(st.maxScore) : '—'}</td>
         <td style="color:var(--ink-2)">${st.lastSeen ? ago(st.lastSeen) : '—'}</td>
         <td><button class="ctrl" data-dossier="${esc(w)}" data-label="${esc(s.name)}">dossier</button> <button class="ctrl" data-unstar="${esc(w)}">✕</button></td>
@@ -1470,7 +1649,7 @@ function renderWatch() {
       <td><strong>${esc(f.side)}</strong> @ ${(f.price * 100).toFixed(0)}¢</td>
       <td class="num">${fmtUSD(f.usd)}</td>
       <td><a class="walletlink" data-dossier="${esc(f.wallet)}" data-label="${esc(f.name)}">${esc(f.name)}</a></td>
-      <td class="num">${scoreChip(f.score)}</td>
+      <td class="num">${scoreChip(f.score)}${f.result === 'WIN' ? ' <span class="chip critical">✓ WON</span>' : f.result === 'LOSS' ? ' <span class="chip muted">✗ lost</span>' : ''}</td>
     </tr>`).join('');
   }
 }
@@ -1757,6 +1936,12 @@ $('#fmpSave').addEventListener('click', () => {
   saveSettings();
   loadCT();
 });
+$('#polInput').value = state.polWatch || '';
+$('#polSave').addEventListener('click', () => {
+  state.polWatch = $('#polInput').value.trim();
+  saveSettings();
+  loadCT();
+});
 $('#ntfyInput').value = state.ntfyTopic || '';
 $('#ntfySave').addEventListener('click', () => {
   state.ntfyTopic = $('#ntfyInput').value.trim();
@@ -1819,6 +2004,7 @@ $('#refreshBtn').addEventListener('click', () => refreshAll());
 async function refreshAll() {
   state.count = 60;
   await Promise.allSettled([loadRadar(), loadMovers(), loadKalshi(), loadLeaderboard(), loadCrypto(), loadHyper(), loadSEC(), loadCT()]);
+  Promise.allSettled([checkStarred(), checkOutcomes(), loadConviction()]);
   $('#lastUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString();
 }
 // restore toggles from saved settings
