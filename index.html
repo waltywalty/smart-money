@@ -214,7 +214,7 @@
 
 <header class="top">
   <div class="top-inner">
-    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector</div>
+    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v4.2</span></div>
     <div class="top-meta">
       <span id="lastUpdated">loading…</span>
       <span id="countdown" title="Auto-refresh countdown"></span>
@@ -263,10 +263,11 @@
       <button class="ctrl" id="ntfySave">Save</button>
       <button class="ctrl" id="ntfyTest">Send test push</button>
       <button class="ctrl" id="syncLink">🔗 Copy setup link</button>
+      <button class="ctrl" id="syncImport">📥 Paste setup link</button>
       <span id="ntfyStatus" style="font-size:12px;color:var(--ink-3)"></span>
     </div>
     <div class="fallback" style="border-top:1px solid var(--grid)">
-      <strong>Using more than one device?</strong> Settings live per-device. Set things up once here, tap <strong>🔗 Copy setup link</strong>, and open that link on your other device — it imports your topic, API key, thresholds, and starred wallets automatically.<br><br>
+      <strong>Using more than one device?</strong> Settings live per-device. Set things up once here, tap <strong>🔗 Copy setup link</strong>, and open that link on your other device — it imports your topic, API key, thresholds, and starred wallets automatically. <strong>Important for the home-screen app:</strong> on iPhone/iPad the installed app has its own separate storage from Safari — opening the link in Safari won't reach it. Inside the app, tap <strong>📥 Paste setup link</strong> and paste the link there instead.<br><br>
       One-time setup: install the free <strong>ntfy</strong> app (<a href="https://apps.apple.com/us/app/ntfy/id1625396347" target="_blank" rel="noopener">iPhone</a> · <a href="https://play.google.com/store/apps/details?id=io.heckel.ntfy" target="_blank" rel="noopener">Android</a>), tap + and subscribe to your topic, then enter the same topic here and Save. From then on, any insider-pattern trade (score 80+) or news-sensitive wallet cluster this page detects pushes straight to your phone — and the hourly cloud monitor pushes to the same topic even when this page is closed. Keep the topic secret; it's the only password.
     </div>
   </div>
@@ -447,6 +448,15 @@
         <table id="cvTable">
           <thead><tr><th>Wallet</th><th>Betting that…</th><th>Position</th><th class="num">At stake now</th><th class="num">Entry → now</th><th>Signal</th></tr></thead>
           <tbody><tr><td colspan="6" class="empty">Loading conviction board…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-pad" style="border-bottom:1px solid var(--grid)"><strong>Wallet scorecards — backtest of every already-resolved bet</strong> <span class="note" style="display:inline">their full history graded, not just what happens from now on</span></div>
+      <div class="tscroll">
+        <table id="cvScoreTable">
+          <thead><tr><th>Wallet</th><th class="num">Resolved bets</th><th class="num">Record</th><th class="num">Win rate</th><th class="num">Resolved P&L</th><th class="num">Longshot record (≤25¢)</th><th class="num">News-market record</th><th class="num">Biggest win</th></tr></thead>
+          <tbody><tr><td colspan="8" class="empty">Loads with the board above.</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -841,6 +851,7 @@ async function fetchDossier(wallet) {
       longshotPct: buys.length ? Math.round(longshots.length / buys.length * 100) : 0,
       buys: buys.length, pnl: realized + openPnl + redeemPnl, posCount: positions.length,
       recent: trs.slice(0, 8),
+      sc: computeScorecard(positions),
     };
     dossierCache.set(wallet, { ts: Date.now(), data });
     return data;
@@ -881,11 +892,21 @@ async function openDossier(wallet, label) {
       <div class="dstat"><div class="v">${d.longshotPct}%</div><div class="l">of buys at ≤20¢ odds</div></div>
       <div class="dstat"><div class="v">${d.markets}</div><div class="l">distinct markets</div></div>
       <div class="dstat"><div class="v" style="color:${d.pnl >= 0 ? 'var(--status-good)' : 'var(--status-critical)'}">${fmtUSD(d.pnl)}</div><div class="l">est. P&L (open + realized)</div></div>
+      <div class="dstat"><div class="v">${d.sc && d.sc.n ? `${d.sc.wins}W–${d.sc.losses}L (${d.sc.winRate}%)` : '—'}</div><div class="l">backtest: all resolved bets</div></div>
+      <div class="dstat"><div class="v">${d.sc && (d.sc.lsW + d.sc.lsL) ? `${d.sc.lsW}W–${d.sc.lsL}L` : '—'}</div><div class="l">longshot record (entries ≤25¢)</div></div>
     </div>
-    <div style="display:flex; gap:8px; flex-wrap:wrap; margin:6px 0 12px">
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin:6px 0 4px">
       <button class="ctrl" id="dStar">${starred ? '★ Unstar' : '☆ Star to watchlist'}</button>
       <a class="ctrl" style="display:inline-block; text-decoration:none" href="https://polymarket.com/profile/${esc(wallet)}" target="_blank" rel="noopener">Polymarket profile ↗</a>
     </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:0 0 12px">
+      <span style="font-size:12px; color:var(--ink-3)">Trace funding:</span>
+      <a class="ctrl" style="display:inline-block; text-decoration:none" href="https://intel.arkm.com/explorer/address/${esc(wallet)}" target="_blank" rel="noopener">Arkham ↗</a>
+      <a class="ctrl" style="display:inline-block; text-decoration:none" href="https://polygonscan.com/address/${esc(wallet)}" target="_blank" rel="noopener">Polygonscan ↗</a>
+      <a class="ctrl" style="display:inline-block; text-decoration:none" href="https://debank.com/profile/${esc(wallet)}" target="_blank" rel="noopener">DeBank ↗</a>
+      <button class="ctrl" id="dCopyAddr">Copy address</button>
+    </div>
+    <p class="note" style="margin:0 0 10px">How to trace like Bubblemaps: on Polygonscan, sort this wallet's USDC transfers oldest-first — the address that sent its <em>first</em> deposit is the funder. Paste that funder into Arkham; every other wallet it funded is the cluster. Two "different" whales sharing a funder = one person.</p>
     <div style="font-size:12px; color:var(--ink-3); margin-bottom:5px">Most recent trades</div>
     <table><tbody>
       ${d.recent.map(t => `<tr>
@@ -897,6 +918,10 @@ async function openDossier(wallet, label) {
     </tbody></table>
     <p class="note">P&L is approximate (sum of realized + current position P&L from the public positions API). Wallet age is exact only when full history fits in 500 trades.</p>`;
   $('#dStar').addEventListener('click', () => { toggleStar(wallet, d.name); openDossier(wallet, label); });
+  $('#dCopyAddr').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(wallet); $('#dCopyAddr').textContent = '✓ Copied'; }
+    catch (e) { prompt('Wallet address:', wallet); }
+  });
 }
 function closeDossier() { $('#modalBack').classList.remove('open'); $('#dossierModal').classList.remove('open'); }
 
@@ -1543,6 +1568,27 @@ async function checkStarred() {
   if (changed) persist();
 }
 
+/* ============================== BACKTEST SCORECARD ============================== */
+// Grade a wallet's entire RESOLVED position history — win rate, P&L, longshot and news-market records.
+function computeScorecard(pos) {
+  const sc = { n: 0, wins: 0, losses: 0, pnl: 0, lsW: 0, lsL: 0, nwW: 0, nwL: 0, biggestWin: 0 };
+  for (const p of (pos || [])) {
+    const cur = +p.curPrice;
+    const resolved = p.redeemable || cur >= 0.99 || cur <= 0.01;
+    if (!resolved) continue;
+    const won = cur > 0.5;
+    const pnl = (+p.cashPnl || 0) + (+p.realizedPnl || 0);
+    sc.n++; sc.pnl += pnl;
+    won ? sc.wins++ : sc.losses++;
+    if (won && pnl > sc.biggestWin) sc.biggestWin = pnl;
+    if ((+p.avgPrice || 0) > 0 && (+p.avgPrice) <= 0.25) { won ? sc.lsW++ : sc.lsL++; }
+    const t = p.title || '';
+    if (NEWSY.test(t) && !SPORTSY.test(t)) { won ? sc.nwW++ : sc.nwL++; }
+  }
+  sc.winRate = sc.n ? Math.round(sc.wins / sc.n * 100) : 0;
+  return sc;
+}
+
 /* ============================== CONVICTION BOARD ============================== */
 async function loadConviction() {
   const tbody = $('#cvTable tbody');
@@ -1555,15 +1601,17 @@ async function loadConviction() {
     return;
   }
   const all = [];
+  const scorecards = [];
   let anyOk = false;
   await Promise.allSettled(wallets.map(async w => {
-    const res = await fetch(`https://data-api.polymarket.com/positions?user=${w}&limit=100`);
+    const res = await fetch(`https://data-api.polymarket.com/positions?user=${w}&limit=300`);
     if (!res.ok) return;
     const pos = await res.json();
     anyOk = true;
     const st = store.walletStats[w] || {};
     const nm = (store.stars[w] && store.stars[w].name) || st.name || w.slice(0, 10) + '…';
     const isProven = (st.wins || 0) >= 3 && st.wins > 3 * (st.losses || 0);
+    scorecards.push({ w, nm, isProven, sc: computeScorecard(pos) });
     for (const p of (pos || [])) {
       if (p.redeemable) continue;
       const cur = +p.curPrice;
@@ -1581,6 +1629,26 @@ async function loadConviction() {
     return;
   }
   setFeed('#cvState', true);
+  // scorecards table (backtest of resolved history)
+  const sct = $('#cvScoreTable tbody');
+  const withHistory = scorecards.filter(s => s.sc.n > 0).sort((a,b) => b.sc.pnl - a.sc.pnl);
+  if (!withHistory.length) {
+    sct.innerHTML = '<tr><td colspan="8" class="empty">No resolved history yet for these wallets.</td></tr>';
+  } else {
+    sct.innerHTML = withHistory.map(({w, nm, isProven, sc}) => {
+      const strong = sc.n >= 10 && sc.winRate >= 60;
+      return `<tr class="${store.stars[w] ? 'watched' : ''}">
+        <td><a class="walletlink" data-dossier="${esc(w)}" data-label="${esc(nm)}">${esc(nm)}</a>${isProven ? ' <span class="chip critical">▲ proven</span>' : strong ? ' <span class="chip serious">◆ strong history</span>' : ''}</td>
+        <td class="num">${sc.n}</td>
+        <td class="num">${sc.wins}W–${sc.losses}L</td>
+        <td class="num"><strong>${sc.winRate}%</strong></td>
+        <td class="num" style="color:${sc.pnl >= 0 ? 'var(--status-good)' : 'var(--status-critical)'}">${fmtUSD(sc.pnl)}</td>
+        <td class="num">${(sc.lsW + sc.lsL) ? sc.lsW + 'W–' + sc.lsL + 'L' : '—'}</td>
+        <td class="num">${(sc.nwW + sc.nwL) ? sc.nwW + 'W–' + sc.nwL + 'L' : '—'}</td>
+        <td class="num">${sc.biggestWin ? fmtUSD(sc.biggestWin) : '—'}</td>
+      </tr>`;
+    }).join('');
+  }
   if (!all.length) {
     tbody.innerHTML = '<tr><td colspan="6" class="empty">Your followed wallets hold no open positions over $1k right now — they\'re flat or fully resolved.</td></tr>';
     return;
@@ -1903,26 +1971,41 @@ $('#clearMem').addEventListener('click', () => {
 /* ============================== CROSS-DEVICE SETUP LINK ============================== */
 function b64uEncode(s) { return btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
 function b64uDecode(s) { return decodeURIComponent(escape(atob(s.replace(/-/g,'+').replace(/_/g,'/')))); }
+function applySetupPayload(payload) {
+  if (!payload || payload.v !== 1) return false;
+  store.settings = Object.assign({}, store.settings, payload.settings || {});
+  store.stars = Object.assign({}, store.stars, payload.stars || {});
+  store.hlAddrs = [...new Set([...(store.hlAddrs || []), ...(payload.hlAddrs || [])])];
+  persist();
+  return true;
+}
 $('#syncLink').addEventListener('click', async () => {
   saveSettings();
   const payload = { v: 1, settings: store.settings, stars: store.stars, hlAddrs: store.hlAddrs || [] };
   const link = location.origin + location.pathname + '#setup=' + b64uEncode(JSON.stringify(payload));
   try {
     await navigator.clipboard.writeText(link);
-    $('#ntfyStatus').textContent = 'Setup link copied — open it on your other device';
+    $('#ntfyStatus').textContent = 'Setup link copied — open it on your other device (in the app: use 📥 Paste setup link)';
   } catch (e) {
     prompt('Copy this link and open it on your other device:', link);
   }
 });
+$('#syncImport').addEventListener('click', () => {
+  const v = prompt('Paste the setup link here (the whole link is fine):');
+  if (!v) return;
+  const m = v.trim().match(/#setup=([A-Za-z0-9_\-]+)/);
+  const raw = m ? m[1] : v.trim();
+  try {
+    if (applySetupPayload(JSON.parse(b64uDecode(raw)))) {
+      alert('✓ Setup imported — topic, keys, thresholds and watchlist are now on this device.');
+      location.reload();
+    } else { alert('That link doesn\'t contain valid setup data.'); }
+  } catch (e) { alert('Could not read that link — make sure you pasted the full setup link.'); }
+});
 (function importSetup() {
   if (!location.hash.startsWith('#setup=')) return;
   try {
-    const payload = JSON.parse(b64uDecode(location.hash.slice(7)));
-    if (payload && payload.v === 1) {
-      store.settings = Object.assign({}, store.settings, payload.settings || {});
-      store.stars = Object.assign({}, store.stars, payload.stars || {});
-      store.hlAddrs = [...new Set([...(store.hlAddrs || []), ...(payload.hlAddrs || [])])];
-      persist();
+    if (applySetupPayload(JSON.parse(b64uDecode(location.hash.slice(7))))) {
       history.replaceState(null, '', location.pathname + location.search);
       alert('✓ Setup imported — topic, keys, thresholds and watchlist are now on this device.');
       location.reload();
