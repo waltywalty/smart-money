@@ -261,9 +261,11 @@
       <input class="addr" id="ntfyInput" placeholder="your secret ntfy topic" spellcheck="false" style="min-width:220px">
       <button class="ctrl" id="ntfySave">Save</button>
       <button class="ctrl" id="ntfyTest">Send test push</button>
+      <button class="ctrl" id="syncLink">🔗 Copy setup link</button>
       <span id="ntfyStatus" style="font-size:12px;color:var(--ink-3)"></span>
     </div>
     <div class="fallback" style="border-top:1px solid var(--grid)">
+      <strong>Using more than one device?</strong> Settings live per-device. Set things up once here, tap <strong>🔗 Copy setup link</strong>, and open that link on your other device — it imports your topic, API key, thresholds, and starred wallets automatically.<br><br>
       One-time setup: install the free <strong>ntfy</strong> app (<a href="https://apps.apple.com/us/app/ntfy/id1625396347" target="_blank" rel="noopener">iPhone</a> · <a href="https://play.google.com/store/apps/details?id=io.heckel.ntfy" target="_blank" rel="noopener">Android</a>), tap + and subscribe to your topic, then enter the same topic here and Save. From then on, any insider-pattern trade (score 80+) or news-sensitive wallet cluster this page detects pushes straight to your phone — and the hourly cloud monitor pushes to the same topic even when this page is closed. Keep the topic secret; it's the only password.
     </div>
   </div>
@@ -525,7 +527,9 @@
       <div class="card-pad" style="border-bottom:1px solid var(--grid); display:flex; align-items:center; gap:10px; flex-wrap:wrap">
         <strong>Latest disclosed congressional trades</strong>
         <span class="feedstate" id="ctState">connecting…</span>
-        <span class="note" style="display:inline">experimental live feed via Capitol Trades — disclosures lag trades by up to 45 days by law</span>
+        <span class="note" style="display:inline">disclosures lag trades by up to 45 days by law</span>
+        <input class="addr" id="fmpInput" placeholder="optional: free FMP API key" spellcheck="false" style="min-width:180px">
+        <button class="ctrl" id="fmpSave">Save key</button>
       </div>
       <div class="tscroll">
         <table id="ctTable">
@@ -534,7 +538,8 @@
         </table>
       </div>
       <div class="fallback" id="ctFallback" hidden>
-        This feed doesn't allow browser access — browse it directly instead: <a href="https://www.capitoltrades.com/trades" target="_blank" rel="noopener">Capitol Trades</a> · <a href="https://www.quiverquant.com/congresstrading/" target="_blank" rel="noopener">Quiver live feed</a> · <a href="https://unusualwhales.com/politics" target="_blank" rel="noopener">Unusual Whales</a>
+        Browse live disclosures directly: <a href="https://www.capitoltrades.com/trades" target="_blank" rel="noopener">Capitol Trades</a> · <a href="https://www.quiverquant.com/congresstrading/" target="_blank" rel="noopener">Quiver live feed</a> · <a href="https://unusualwhales.com/politics" target="_blank" rel="noopener">Unusual Whales</a><br>
+        <span style="color:var(--ink-3)">Or make this table live: grab a free API key at <a href="https://site.financialmodelingprep.com" target="_blank" rel="noopener">financialmodelingprep.com</a> (free tier is plenty), paste it above, Save. The key stays in your browser only.</span>
       </div>
     </div>
 
@@ -738,12 +743,13 @@ state.count = 60;
 function saveSettings() {
   store.settings = { minSize: state.minSize, radarFilter: state.radarFilter, lbWindow: state.lbWindow,
     pair: state.pair, cbThresh: state.cbThresh, kThresh: state.kThresh, kHideTicks: state.kHideTicks,
-    mHideSports: state.mHideSports, radarSpeed: state.radarSpeed, ntfyTopic: state.ntfyTopic || '', sound: state.sound, notify: state.notify };
+    mHideSports: state.mHideSports, radarSpeed: state.radarSpeed, ntfyTopic: state.ntfyTopic || '', fmpKey: state.fmpKey || '', sound: state.sound, notify: state.notify };
   persist();
 }
 
 function setFeed(id, ok) {
   const el = $(id);
+  if (ok === 'link') { el.textContent = 'LINK-OUT MODE'; el.className = 'feedstate'; return; }
   el.textContent = ok ? 'LIVE' : 'FEED ERROR';
   el.className = 'feedstate ' + (ok ? 'live' : 'err');
 }
@@ -1349,9 +1355,11 @@ async function loadHyper() {
   }).join('');
 }
 
-/* ============================== CAPITOL TRADES (experimental) ============================== */
+/* ============================== CONGRESSIONAL TRADES FEED ============================== */
+// Route 1: Capitol Trades unofficial API (usually gated). Route 2: FMP with user's free key. Else: link-out mode.
 async function loadCT() {
   const tbody = $('#ctTable tbody');
+  // Route 1 — Capitol Trades
   try {
     const j = await fetchJSON('https://bff.capitoltrades.com/trades?per_page=15&page=1');
     const rows = j.data || j.trades || (Array.isArray(j) ? j : []);
@@ -1364,22 +1372,57 @@ async function loadCT() {
       const tick = (t.asset && (t.asset.assetTicker || t.asset.ticker)) || t.ticker || '—';
       const type = (t.txType || t.type || '—').toUpperCase();
       const val = t.value != null ? fmtUSD(+t.value) : (t.size || '—');
-      return `<tr>
-        <td><strong>${esc(chamber)} ${esc(nm)}</strong>${party ? ` <span style="color:var(--ink-3);font-size:11.5px">(${esc(party)})</span>` : ''}</td>
-        <td>${esc(String(tick).replace(':US',''))}</td>
-        <td><span class="chip ${type.includes('SELL') ? 'critical' : type.includes('BUY') ? 'good' : 'muted'}">${esc(type)}</span></td>
-        <td class="num">${esc(String(val))}</td>
-        <td style="color:var(--ink-2)">${esc(t.txDate || t.traded || '—')}</td>
-        <td style="color:var(--ink-2)">${esc(String(t.pubDate || t.filingDate || '—').slice(0,10))}</td>
-      </tr>`;
+      return ctRow(chamber + ' ' + nm, party, tick, type, String(val), t.txDate || t.traded || '—', String(t.pubDate || t.filingDate || '—').slice(0,10));
     }).join('');
     setFeed('#ctState', true);
     $('#ctFallback').hidden = true;
-  } catch (e) {
-    setFeed('#ctState', false);
-    $('#ctFallback').hidden = false;
-    tbody.innerHTML = '<tr><td colspan="6" class="empty">Feed blocked browser access (expected — it\'s unofficial). Use the links below.</td></tr>';
+    return;
+  } catch (e) {}
+  // Route 2 — FMP (free key)
+  if ((state.fmpKey || '').trim()) {
+    try {
+      const key = encodeURIComponent(state.fmpKey.trim());
+      const results = await Promise.allSettled([
+        fetchJSON(`https://financialmodelingprep.com/stable/senate-latest?page=0&limit=12&apikey=${key}`),
+        fetchJSON(`https://financialmodelingprep.com/stable/house-latest?page=0&limit=12&apikey=${key}`),
+      ]);
+      let rows = [];
+      results.forEach((r, i) => {
+        if (r.status === 'fulfilled' && Array.isArray(r.value)) {
+          r.value.forEach(t => rows.push({ ...t, _chamber: i === 0 ? 'Sen.' : 'Rep.' }));
+        }
+      });
+      if (!rows.length) throw new Error('empty/invalid key');
+      rows.sort((a,b) => String(b.disclosureDate || b.dateRecieved || '').localeCompare(String(a.disclosureDate || a.dateRecieved || '')));
+      tbody.innerHTML = rows.slice(0, 15).map(t => {
+        const nm = [t.firstName, t.lastName].filter(Boolean).join(' ') || t.representative || t.senator || t.office || '—';
+        const type = String(t.type || t.transactionType || '—').toUpperCase();
+        return ctRow(t._chamber + ' ' + nm, '', t.symbol || t.ticker || '—', type, String(t.amount || '—'), String(t.transactionDate || '—'), String(t.disclosureDate || '—'));
+      }).join('');
+      setFeed('#ctState', true);
+      $('#ctFallback').hidden = true;
+      return;
+    } catch (e) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">FMP key rejected or rate-limited — double-check the key.</td></tr>';
+      setFeed('#ctState', false);
+      $('#ctFallback').hidden = false;
+      return;
+    }
   }
+  // Route 3 — link-out mode (calm, not an error)
+  setFeed('#ctState', 'link');
+  $('#ctFallback').hidden = false;
+  tbody.innerHTML = '<tr><td colspan="6" class="empty">No free live source is currently open to browsers — use the links below, or add a free FMP key to make this table live.</td></tr>';
+}
+function ctRow(name, party, tick, type, val, traded, disclosed) {
+  return `<tr>
+    <td><strong>${esc(name)}</strong>${party ? ` <span style="color:var(--ink-3);font-size:11.5px">(${esc(party)})</span>` : ''}</td>
+    <td>${esc(String(tick).replace(':US',''))}</td>
+    <td><span class="chip ${type.includes('SELL') || type.includes('SALE') ? 'critical' : type.includes('BUY') || type.includes('PURCHASE') ? 'good' : 'muted'}">${esc(type)}</span></td>
+    <td class="num">${esc(val)}</td>
+    <td style="color:var(--ink-2)">${esc(traded)}</td>
+    <td style="color:var(--ink-2)">${esc(disclosed)}</td>
+  </tr>`;
 }
 
 /* ============================== WATCHLIST & EXPORTS ============================== */
@@ -1678,6 +1721,42 @@ $('#clearMem').addEventListener('click', () => {
   persist(); renderWatch();
 });
 
+/* ============================== CROSS-DEVICE SETUP LINK ============================== */
+function b64uEncode(s) { return btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+function b64uDecode(s) { return decodeURIComponent(escape(atob(s.replace(/-/g,'+').replace(/_/g,'/')))); }
+$('#syncLink').addEventListener('click', async () => {
+  saveSettings();
+  const payload = { v: 1, settings: store.settings, stars: store.stars, hlAddrs: store.hlAddrs || [] };
+  const link = location.origin + location.pathname + '#setup=' + b64uEncode(JSON.stringify(payload));
+  try {
+    await navigator.clipboard.writeText(link);
+    $('#ntfyStatus').textContent = 'Setup link copied — open it on your other device';
+  } catch (e) {
+    prompt('Copy this link and open it on your other device:', link);
+  }
+});
+(function importSetup() {
+  if (!location.hash.startsWith('#setup=')) return;
+  try {
+    const payload = JSON.parse(b64uDecode(location.hash.slice(7)));
+    if (payload && payload.v === 1) {
+      store.settings = Object.assign({}, store.settings, payload.settings || {});
+      store.stars = Object.assign({}, store.stars, payload.stars || {});
+      store.hlAddrs = [...new Set([...(store.hlAddrs || []), ...(payload.hlAddrs || [])])];
+      persist();
+      history.replaceState(null, '', location.pathname + location.search);
+      alert('✓ Setup imported — topic, keys, thresholds and watchlist are now on this device.');
+      location.reload();
+    }
+  } catch (e) {}
+})();
+
+$('#fmpInput').value = state.fmpKey || '';
+$('#fmpSave').addEventListener('click', () => {
+  state.fmpKey = $('#fmpInput').value.trim();
+  saveSettings();
+  loadCT();
+});
 $('#ntfyInput').value = state.ntfyTopic || '';
 $('#ntfySave').addEventListener('click', () => {
   state.ntfyTopic = $('#ntfyInput').value.trim();
