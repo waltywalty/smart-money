@@ -214,7 +214,7 @@
 
 <header class="top">
   <div class="top-inner">
-    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v4.2</span></div>
+    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v4.5</span></div>
     <div class="top-meta">
       <span id="lastUpdated">loading…</span>
       <span id="countdown" title="Auto-refresh countdown"></span>
@@ -393,13 +393,16 @@
       <div class="tscroll">
         <table id="lbTable">
           <thead><tr>
-            <th>#</th><th>Trader</th><th class="num">Profit</th><th></th><th class="num">Volume</th><th>Flags</th>
+            <th>#</th><th>Trader</th><th class="num">Reported P&L</th><th></th><th class="num">Volume</th><th>Flags</th>
           </tr></thead>
           <tbody><tr><td colspan="6" class="empty">Loading leaderboard…</td></tr></tbody>
         </table>
       </div>
       <div class="fallback" id="lbFallback" hidden>
         Leaderboard feed unavailable. See <a href="https://polymarket.com/leaderboard" target="_blank" rel="noopener">polymarket.com/leaderboard</a>.
+      </div>
+      <div class="fallback" style="border-top:1px solid var(--grid); color:var(--ink-3)">
+        Reported P&L comes from Polymarket's own leaderboard and is <em>not</em> independently verified — it credits sold longshot shares at full $1 notional, so some entries overstate profit by orders of magnitude. Anything flagged as an API artifact failed a profit-vs-volume sanity check. For a real record, open a trader's dossier: those figures are rebuilt from actual trade fills.
       </div>
     </div>
   </section>
@@ -452,10 +455,10 @@
       </div>
     </div>
     <div class="card">
-      <div class="card-pad" style="border-bottom:1px solid var(--grid)"><strong>Wallet scorecards — backtest of every already-resolved bet</strong> <span class="note" style="display:inline">their full history graded, not just what happens from now on</span></div>
+      <div class="card-pad" style="border-bottom:1px solid var(--grid)"><strong>Wallet scorecards — backtest of already-settled bets</strong> <span class="note" style="display:inline">built by replaying actual trade fills and grading each against the market's real resolution (not the positions book, which hides redeemed winners)</span></div>
       <div class="tscroll">
         <table id="cvScoreTable">
-          <thead><tr><th>Wallet</th><th class="num">Resolved bets</th><th class="num">Record</th><th class="num">Win rate</th><th class="num">Resolved P&L</th><th class="num">Longshot record (≤25¢)</th><th class="num">News-market record</th><th class="num">Biggest win</th></tr></thead>
+          <thead><tr><th>Wallet</th><th class="num">Graded (sample)</th><th class="num">Record</th><th class="num">Win rate</th><th class="num">P&L on graded</th><th class="num">Longshot record (≤25¢)</th><th class="num">News-market record</th><th class="num">Biggest win</th></tr></thead>
           <tbody><tr><td colspan="8" class="empty">Loads with the board above.</td></tr></tbody>
         </table>
       </div>
@@ -654,14 +657,19 @@
 /* ============================== UTILITIES ============================== */
 const $ = (s, el=document) => el.querySelector(s);
 const $$ = (s, el=document) => [...el.querySelectorAll(s)];
-const fmtUSD = n => n >= 1e6 ? '$' + (n/1e6).toFixed(2) + 'M' : n >= 1e3 ? '$' + (n/1e3).toFixed(1) + 'k' : '$' + n.toFixed(0);
-const fmtNum = n => n.toLocaleString('en-US', {maximumFractionDigits: 2});
+const fmtUSD = n => {
+  if (!Number.isFinite(+n)) return '—';
+  const neg = +n < 0, a = Math.abs(+n);
+  return (neg ? '−' : '') + (a >= 1e6 ? '$' + (a/1e6).toFixed(2) + 'M' : a >= 1e3 ? '$' + (a/1e3).toFixed(1) + 'k' : '$' + a.toFixed(0));
+};
+const fmtNum = n => (n == null || n === '' || !Number.isFinite(+n)) ? '—' : (+n).toLocaleString('en-US', {maximumFractionDigits: 2});
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 // Resilient JSON fetch: direct first, then CORS relays (for APIs that block cross-origin browser calls)
 async function fetchJSON(url) {
   const attempts = [
     u => u,
     u => 'https://corsproxy.io/?url=' + encodeURIComponent(u),
+    u => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u),
     u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u),
   ];
   let lastErr;
@@ -686,8 +694,18 @@ const ago = ts => {
 };
 
 /* ============================== SCORING ============================== */
-const NEWSY = /(iran|israel|venezuela|maduro|strike|war|invade|attack|military|nuclear|missile|ceasefire|pardon|nominee|nomination|cabinet|secretary|resign|fired|impeach|indict|arrest|charge|tariff|sanction|fed |rate cut|rate hike|powell|supreme court|scotus|ruling|verdict|merger|acquisi|acquire|deal |announce|launch|listing|airdrop|etf |sec |cftc|doj |fbi |nobel|conclave|pope|tiktok|ban |election|primary|senate|congress|governor|president|prime minister|coup|hostage|treaty|summit|emergency|outbreak|pandemic|recall|bankrupt|default|shutdown)/i;
-const SPORTSY = /( vs\.? |nba|nfl|mlb|nhl|ncaa|premier league|la liga|serie a|bundesliga|champions league|ucl|europa|world cup|game \d|map \d|league of legends|cs2|counter-strike|dota|valorant|esports|tennis|ufc|mma|boxing|f1 |grand prix|golf|pga|atp|wta|olympic|super bowl|playoff|finals|match|derby)/i;
+// Word-bounded: unanchored tokens caused real misclassification (e.g. "ucl" matched "nUCLear",
+// sending every nuclear market to the sports bucket — the exact opposite of this tool's purpose).
+const NEWSY = /(iran|israel|venezuela|maduro|ukraine|russia|putin|zelensky|kremlin|taiwan|china|north korea|kim jong|\bstrike|\bwar\b|warfare|invade|invasion|attack|military|nuclear|missile|icbm|ceasefire|pardon|nominee|nomination|cabinet|secretary|resign|fired|impeach|indict|arrest|\bcharge[sd]?\b|assassinat|tariff|sanction|\bfed\b|rate cut|rate hike|powell|supreme court|scotus|ruling|verdict|merger|acquisi|acquire|\bdeal\b|announce|launch|listing|airdrop|\betf\b|\bsec\b|cftc|\bdoj\b|\bfbi\b|nobel|conclave|pope|tiktok|\bban\b|election|primary|senate|congress|governor|president|prime minister|\bcoup\b|hostage|treaty|summit|emergency|outbreak|pandemic|recall|bankrupt|default|shutdown|inflation|\bcpi\b|recession|layoff|\bipo\b|opec|downgrade|veto|executive order|hurricane|earthquake)/i;
+// Strong = unambiguous sports markers. " vs " alone is NOT enough — litigation and political
+// match-ups ("SEC vs Ripple", "Trump vs Newsom") use the same caption format.
+const SPORTS_STRONG = /(\bnba\b|\bnfl\b|\bmlb\b|\bnhl\b|\bncaa\b|premier league|la liga|serie a|bundesliga|champions league|\bucl\b|europa league|world cup|game \d|map \d|league of legends|\bcs2\b|counter-strike|dota|valorant|esports|tennis|\bufc\b|\bmma\b|boxing|\bf1\b|grand prix|golf|\bpga\b|\batp\b|\bwta\b|olympic|super bowl|playoff|finals|derby|\bo\/u\b|moneyline)/i;
+function isSportsTitle(title) {
+  const t = title || '';
+  if (SPORTS_STRONG.test(t)) return true;
+  return / vs\.? /i.test(t) && !NEWSY.test(t);   // bare "X vs Y" only counts as sport if nothing newsy
+}
+const SPORTSY = { test: t => isSportsTitle(t) };   // back-compat shim for existing call sites
 const AUTOPSEUDO = /^[A-Z][a-z]+-[A-Z][a-z]+$/;
 const WALLETNAME = /^0x[0-9a-fA-F]{6,}/;
 
@@ -742,8 +760,13 @@ const DB = (() => {
     if (ok) { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch(e) { return {}; } }
     return mem;
   };
-  const save = d => { if (ok) { try { localStorage.setItem(KEY, JSON.stringify(d)); } catch(e){} } else mem = d; };
-  return { load, save, persistent: ok };
+  const api = { load, persistent: ok, saveFailed: false };
+  api.save = d => {
+    if (!ok) { mem = d; return true; }
+    try { localStorage.setItem(KEY, JSON.stringify(d)); api.saveFailed = false; return true; }
+    catch (e) { api.saveFailed = true; return false; }   // quota exceeded — surfaced in the UI
+  };
+  return api;
 })();
 
 const store = Object.assign({
@@ -753,7 +776,17 @@ const store = Object.assign({
   hlAddrs: [],        // extra hyperliquid addresses
   settings: {},
 }, DB.load());
-function persist() { DB.save(store); }
+function persist() {
+  // Cap walletStats or the blob eventually exceeds the storage quota and every save
+  // silently becomes a no-op (settings appear to save, then vanish on reload).
+  const ws = store.walletStats || {};
+  const keys = Object.keys(ws);
+  if (keys.length > 500) {
+    keys.sort((a, b) => (ws[a].lastSeen || 0) - (ws[b].lastSeen || 0));
+    for (const k of keys.slice(0, keys.length - 500)) if (!store.stars[k]) delete ws[k];
+  }
+  DB.save(store);
+}
 
 /* ============================== STATE ============================== */
 const state = Object.assign({
@@ -789,11 +822,13 @@ function setFeed(id, ok) {
 const gammaCache = new Map();  // slug -> {vol24}
 async function enrichLiquidity(trades) {
   const need = [...new Set(trades.map(t => t.slug).filter(s => s && !gammaCache.has(s)))].slice(0, 12);
+  // Negative-cache misses too: without this, a slug that returns [] is re-requested every
+  // scan forever, burning the 12-call budget and silently starving real lookups.
   await Promise.allSettled(need.map(async slug => {
     try {
-      const r = await fetch('https://gamma-api.polymarket.com/markets?slug=' + encodeURIComponent(slug));
-      if (r.ok) { const a = await r.json(); if (a && a[0]) gammaCache.set(slug, { vol24: +a[0].volume24hr || 0, chg: +a[0].oneDayPriceChange || 0 }); }
-    } catch(e){}
+      const a = await fetchJSON('https://gamma-api.polymarket.com/markets?slug=' + encodeURIComponent(slug));
+      gammaCache.set(slug, (a && a[0]) ? { vol24: +a[0].volume24hr || 0, chg: +a[0].oneDayPriceChange || 0 } : null);
+    } catch(e) { gammaCache.set(slug, null); }
   }));
 }
 function applyContext(t) {
@@ -807,7 +842,9 @@ function applyContext(t) {
   if (g && Math.abs(g.chg || 0) >= 0.15 && t.side === 'BUY') { s.score += 8; s.reasons.push('market repricing fast (moved ≥15pts in 24h)'); }
   if (t._cluster) { s.score += 12; s.reasons.push(`part of ${t._cluster}-wallet same-side cluster on this market`); }
   const ws = store.walletStats[t.proxyWallet];
-  if (ws && ws.hits >= 3) { s.score += 10; s.reasons.push(`repeat pattern — flagged ${ws.hits}× before`); }
+  // "before" must mean before this batch — otherwise a wallet's own three fills in one window
+  // bootstrap their own repeat-offender bonus.
+  if (ws && ws.hits >= 3 && (ws.lastSeen || 0) < (t.timestamp - 60)) { s.score += 10; s.reasons.push(`repeat pattern — flagged ${ws.hits}× before`); }
   if (ws && (ws.wins || 0) >= 3 && (ws.wins || 0) > 3 * (ws.losses || 0)) { s.score += 15; s.reasons.push(`PROVEN WINNER — ${ws.wins}W/${ws.losses||0}L on previously flagged bets`); }
   const d = dossierCache.get(t.proxyWallet);
   if (d && d.data) {
@@ -830,8 +867,10 @@ async function fetchDossier(wallet) {
     ]);
     if (!trRes.ok) throw 0;
     const trs = await trRes.json();
-    let positions = [];
-    if (posRes && posRes.ok) { try { positions = await posRes.json(); } catch(e){} }
+    // An empty array is indistinguishable from a failed lookup — never treat it as "brand-new wallet".
+    if (!Array.isArray(trs) || !trs.length) { dossierCache.set(wallet, { ts: Date.now(), data: null }); return null; }
+    let positions = [], posOk = false;
+    if (posRes && posRes.ok) { try { positions = await posRes.json(); posOk = Array.isArray(positions); } catch(e){} }
     const n = trs.length;
     const complete = n < 500;
     const oldest = n ? Math.min(...trs.map(t => t.timestamp)) : null;
@@ -841,18 +880,16 @@ async function fetchDossier(wallet) {
     const vol = trs.reduce((a,t) => a + t.size * t.price, 0);
     const markets = new Set(trs.map(t => t.conditionId || t.slug)).size;
     const biggest = trs.reduce((m,t) => Math.max(m, t.size * t.price), 0);
-    const realized = positions.reduce((a,p) => a + (+p.realizedPnl || 0), 0);
-    const openPnl = positions.filter(p => !p.redeemable).reduce((a,p) => a + (+p.cashPnl || 0), 0);
-    const redeemPnl = positions.filter(p => p.redeemable).reduce((a,p) => a + (+p.cashPnl || 0), 0);
+    const openPnl = posOk ? positions.filter(p => !p.redeemable).reduce((a,p) => a + (+p.cashPnl || 0), 0) : null;
     const name = (trs[0] && (trs[0].name || trs[0].pseudonym)) || wallet.slice(0,10) + '…';
     const data = {
-      wallet, name, n, complete, freshDays, firstTrade: n <= 1,
+      wallet, name, n, complete, freshDays, firstTrade: n === 1,
       vol, markets, biggest,
       longshotPct: buys.length ? Math.round(longshots.length / buys.length * 100) : 0,
-      buys: buys.length, pnl: realized + openPnl + redeemPnl, posCount: positions.length,
+      buys: buys.length, openPnl, posCount: positions.length,
       recent: trs.slice(0, 8),
-      sc: computeScorecard(positions),
     };
+    data.sc = await buildScorecard(wallet);
     dossierCache.set(wallet, { ts: Date.now(), data });
     return data;
   } catch (e) {
@@ -867,7 +904,9 @@ function dossierFlagChips(d) {
   else if (d.freshDays != null && d.freshDays <= 30) f.push(`<span class="chip serious">◆ young wallet — ${d.freshDays}d</span>`);
   if (d.buys >= 5 && d.longshotPct >= 50) f.push(`<span class="chip serious">◆ longshot specialist (${d.longshotPct}% of buys ≤20¢)</span>`);
   if (d.vol >= 1e6) f.push('<span class="chip warn">● high roller ($1M+ traded)</span>');
-  if (d.pnl > 250000) f.push(`<span class="chip serious">◆ big winner (${fmtUSD(d.pnl)} P&L)</span>`);
+  if (d.sc && d.sc.n >= 8 && d.sc.winRate >= 65) f.push(`<span class="chip critical">▲ strong record (${d.sc.winRate}% of ${d.sc.n} graded)</span>`);
+  if (d.sc && (d.sc.lsW + d.sc.lsL) >= 5 && d.sc.lsW > d.sc.lsL) f.push(`<span class="chip critical">▲ wins longshots (${d.sc.lsW}W–${d.sc.lsL}L at ≤25¢)</span>`);
+  if (d.sc && d.sc.pnl > 250000) f.push(`<span class="chip serious">◆ big winner (${fmtUSD(d.sc.pnl)} on graded bets)</span>`);
   if (!f.length) f.push('<span class="chip muted">no structural red flags</span>');
   return f.join(' ');
 }
@@ -887,13 +926,15 @@ async function openDossier(wallet, label) {
     <div class="dstats">
       <div class="dstat"><div class="v">${d.complete ? (d.freshDays != null ? d.freshDays + 'd' : '—') : '500+'}</div><div class="l">${d.complete ? 'wallet age (first trade)' : 'trades — too active to date fully'}</div></div>
       <div class="dstat"><div class="v">${d.n}${d.complete ? '' : '+'}</div><div class="l">trades (last 500 max)</div></div>
-      <div class="dstat"><div class="v">${fmtUSD(d.vol)}</div><div class="l">volume traded</div></div>
+      <div class="dstat"><div class="v">${fmtUSD(d.vol)}</div><div class="l">volume traded${d.complete ? "" : " (last 500 fills)"}</div></div>
       <div class="dstat"><div class="v">${fmtUSD(d.biggest)}</div><div class="l">biggest single trade</div></div>
       <div class="dstat"><div class="v">${d.longshotPct}%</div><div class="l">of buys at ≤20¢ odds</div></div>
-      <div class="dstat"><div class="v">${d.markets}</div><div class="l">distinct markets</div></div>
-      <div class="dstat"><div class="v" style="color:${d.pnl >= 0 ? 'var(--status-good)' : 'var(--status-critical)'}">${fmtUSD(d.pnl)}</div><div class="l">est. P&L (open + realized)</div></div>
-      <div class="dstat"><div class="v">${d.sc && d.sc.n ? `${d.sc.wins}W–${d.sc.losses}L (${d.sc.winRate}%)` : '—'}</div><div class="l">backtest: all resolved bets</div></div>
+      <div class="dstat"><div class="v">${d.markets}</div><div class="l">distinct markets${d.complete ? "" : " (sampled)"}</div></div>
+      <div class="dstat"><div class="v">${d.sc && d.sc.n ? `${d.sc.wins}W–${d.sc.losses}L (${d.sc.winRate}%)` : '—'}</div><div class="l">graded record — last ${d.sc ? d.sc.sampled : 0} markets</div></div>
+      <div class="dstat"><div class="v" style="color:${d.sc && d.sc.pnl >= 0 ? 'var(--status-good)' : 'var(--status-critical)'}">${d.sc && d.sc.n ? fmtUSD(d.sc.pnl) : '—'}</div><div class="l">P&L on graded bets</div></div>
       <div class="dstat"><div class="v">${d.sc && (d.sc.lsW + d.sc.lsL) ? `${d.sc.lsW}W–${d.sc.lsL}L` : '—'}</div><div class="l">longshot record (entries ≤25¢)</div></div>
+      <div class="dstat"><div class="v">${d.sc && (d.sc.nwW + d.sc.nwL) ? `${d.sc.nwW}W–${d.sc.nwL}L` : '—'}</div><div class="l">news-market record</div></div>
+      <div class="dstat"><div class="v" style="color:${d.openPnl == null ? 'var(--ink-3)' : d.openPnl >= 0 ? 'var(--status-good)' : 'var(--status-critical)'}">${d.openPnl == null ? '—' : fmtUSD(d.openPnl)}</div><div class="l">open positions P&L (unrealized)</div></div>
     </div>
     <div style="display:flex; gap:8px; flex-wrap:wrap; margin:6px 0 4px">
       <button class="ctrl" id="dStar">${starred ? '★ Unstar' : '☆ Star to watchlist'}</button>
@@ -916,7 +957,7 @@ async function openDossier(wallet, label) {
         <td class="num">${fmtUSD(t.size * t.price)}</td>
       </tr>`).join('')}
     </tbody></table>
-    <p class="note">P&L is approximate (sum of realized + current position P&L from the public positions API). Wallet age is exact only when full history fits in 500 trades.</p>`;
+    <p class="note">Record and P&L are computed by replaying this wallet's actual trade fills and grading each reconstructed position against the market's real resolution${d.sc && d.sc.truncated ? ' (history capped at the last 500 taker fills)' : ''}. This deliberately does <em>not</em> use Polymarket's positions endpoint for grading: that endpoint drops winning positions once they're redeemed and keeps losers forever, which makes even famously profitable wallets look like they never won. Open-position P&L above is unrealized and still comes from the positions book. Taker fills only — maker-heavy wallets under-count.</p>`;
   $('#dStar').addEventListener('click', () => { toggleStar(wallet, d.name); openDossier(wallet, label); });
   $('#dCopyAddr').addEventListener('click', async () => {
     try { await navigator.clipboard.writeText(wallet); $('#dCopyAddr').textContent = '✓ Copied'; }
@@ -945,6 +986,7 @@ async function _loadRadar() {
     const clusters = detectClusters(trades);
     trades.forEach(applyContext);
     renderClusters(clusters);
+    clustersSeeded = true;   // armed only after a completed batch, whatever it contained
     if (state.radarFilter === 'newsy') trades = trades.filter(t => t._s.isNewsy);
     if (state.radarFilter === 'hot') trades = trades.filter(t => t._s.score >= 60);
     trades.sort((a,b) => b.timestamp - a.timestamp);
@@ -1057,14 +1099,15 @@ function notifyHot(t) {
 }
 async function pushNtfy(title, body) {
   const topic = (state.ntfyTopic || '').trim();
-  if (!topic) return;
+  if (!topic) return false;
   try {
-    await fetch('https://ntfy.sh/' + encodeURIComponent(topic), {
+    const r = await fetch('https://ntfy.sh/' + encodeURIComponent(topic), {
       method: 'POST',
       headers: { 'Title': title.replace(/[^\x20-\x7E]/g, ''), 'Priority': 'high', 'Tags': 'whale' },
       body,
     });
-  } catch(e){}
+    return r.ok;
+  } catch(e) { return false; }
 }
 
 /* ============================== LEADERBOARD ============================== */
@@ -1081,7 +1124,11 @@ async function loadLeaderboard() {
       const anon = WALLETNAME.test(nm) || /-\d{10,}$/.test(nm);
       const flags = [];
       if (anon) flags.push('<span class="chip serious">◆ anonymous wallet</span>');
-      if ((r.pnl||0) > 0 && (r.vol||0) > 0 && r.pnl / r.vol > 0.5) flags.push('<span class="chip warn">● extreme hit-rate</span>');
+      // Polymarket's leaderboard books sold longshot shares at full $1 notional, so reported
+      // profit can exceed total volume by orders of magnitude. Flag it rather than trusting it.
+      const implausible = (r.pnl || 0) > (r.vol || 0) * 3;
+      if (implausible) flags.push('<span class="chip serious">◆ P&L not reconcilable with volume — likely API artifact</span>');
+      else if ((r.pnl||0) > 0 && (r.vol||0) > 0) flags.push(`<span class="chip warn">● ${Math.round(r.pnl / r.vol * 100)}% return on volume</span>`);
       if (r.verifiedBadge) flags.push('<span class="chip muted">verified</span>');
       const w = Math.round(Math.abs(r.pnl||0)/maxPnl*100);
       const starred = !!store.stars[r.proxyWallet];
@@ -1126,7 +1173,9 @@ async function loadCrypto() {
       const aggressor = tr.side === 'buy' ? 'SELL' : 'BUY';
       const ts = new Date(tr.time).getTime();
       const usd = parseFloat(tr.price) * parseFloat(tr.size);
-      if (cur && cur.aggressor === aggressor && (cur.ts - ts) <= 2000) {
+      // Bound the whole burst, not just the gap — otherwise any steady one-sided tape
+      // chains into a single fake "whale print" spanning many minutes.
+      if (cur && cur.aggressor === aggressor && (cur.ts - ts) <= 2000 && (cur.t0 - ts) <= 10000) {
         cur.usd += usd; cur.qty += parseFloat(tr.size); cur.pxSum += parseFloat(tr.price) * parseFloat(tr.size); cur.n++;
         cur.ts = ts;
       } else {
@@ -1169,8 +1218,12 @@ async function loadCrypto() {
 async function loadSEC() {
   const tbody = $('#secTable tbody');
   try {
-    const data = await fetchJSON('https://efts.sec.gov/LATEST/search-index?q=%22Form+4%22&forms=4');
-    const hits = (data.hits && data.hits.hits) || [];
+    // Without a date window this endpoint is relevance-ranked over the entire corpus and
+    // returns filings from 2003-2014 under a "live" heading. Window it, then sort by date.
+    const _d = n => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+    const data = await fetchJSON(`https://efts.sec.gov/LATEST/search-index?q=%22Form+4%22&forms=4&dateRange=custom&startdt=${_d(7)}&enddt=${_d(0)}`);
+    const hits = (((data.hits && data.hits.hits) || [])).slice()
+      .sort((a, b) => String((b._source||{}).file_date || '').localeCompare(String((a._source||{}).file_date || '')));
     if (!hits.length) throw new Error('no hits');
     tbody.innerHTML = hits.slice(0, 12).map(h => {
       const s = h._source || {};
@@ -1222,7 +1275,7 @@ function detectClusters(trades) {
 }
 function renderClusters(clusters) {
   const el = $('#clusterAlerts');
-  if (!clusters.length) { el.innerHTML = ''; clustersSeeded = true; return; }
+  if (!clusters.length) { el.innerHTML = ''; return; }   // seeding happens after every batch, not just empty ones
   el.innerHTML = clusters.slice(0, 4).map(c => `
     <div class="cluster ${c.newsy ? '' : 'calm'}">
       <span class="big">${c.newsy ? '🚨' : '👀'} ${c.wallets} wallets ${c.side === 'BUY' ? 'buying' : 'selling'} the same side</span>
@@ -1315,19 +1368,22 @@ async function loadKalshi() {
         (mj.markets || []).forEach(m => kTitleCache.set(m.ticker, m.title || m.ticker));
       } catch(e){}
     }
+    const titlesMissing = trs.filter(t => !kTitleCache.has(t.ticker)).length;
     if (!trs.length) {
       tbody.innerHTML = '<tr><td colspan="6" class="empty">No trades over ' + fmtUSD(state.kThresh) + ' in the last 6h window — lower the threshold or include tick markets.</td></tr>';
     } else {
       tbody.innerHTML = trs.map(t => {
+        const known = kTitleCache.has(t.ticker);
         const title = kTitleCache.get(t.ticker) || t.ticker;
         let pts = Math.max(0, Math.min(40, Math.log10(Math.max(t.notional,1)/500) * 18));
         const reasons = [];
         if (t.px <= 0.05) { pts += 28; reasons.push('extreme longshot (≤5¢)'); }
         else if (t.px <= 0.12) { pts += 22; reasons.push('longshot (≤12¢)'); }
         else if (t.px <= 0.20) { pts += 14; reasons.push('longshot (≤20¢)'); }
-        const newsy = NEWSY.test(title) && !SPORTSY.test(title);
+        // Never classify on a raw ticker string — without the real question, topic scoring is noise.
+        const newsy = known && NEWSY.test(title) && !SPORTSY.test(title);
         if (newsy) { pts += 15; reasons.push('news-sensitive market'); }
-        else if (SPORTSY.test(title)) pts -= 12;
+        else if (known && SPORTSY.test(title)) pts -= 12;
         const score = Math.round(Math.max(0, Math.min(100, pts)));
         return `<tr title="${esc(reasons.join(' · ') || 'no flags')}">
           <td style="white-space:nowrap;color:var(--ink-3)">${ago(Math.floor(t.ts/1000))}</td>
@@ -1340,6 +1396,10 @@ async function loadKalshi() {
       }).join('');
     }
     setFeed('#kalshiState', true);
+    if (titlesMissing && trs.length) {
+      $('#kalshiState').textContent = 'LIVE — titles unavailable';
+      $('#kalshiState').className = 'feedstate';
+    }
     $('#kalshiFallback').hidden = true;
   } catch (e) {
     setFeed('#kalshiState', false);
@@ -1451,13 +1511,19 @@ async function loadCT() {
         const hit = watched.some(wn => nm.toLowerCase().includes(wn));
         t._watched = hit;
         if (hit) {
+          // Baseline PER NAME, not globally — otherwise adding a new name to the watch list
+          // instantly pushes every already-disclosed trade of theirs.
+          store.polSeenNames = store.polSeenNames || {};
+          const nameKey = nm.toLowerCase();
+          const nameSeen = !!store.polSeenNames[nameKey];
           const k = (nm + '|' + (t.symbol||'') + '|' + (t.transactionDate||'') + '|' + (t.type||'')).toLowerCase();
           if (!store.polSeen[k]) {
             store.polSeen[k] = 1;
-            if (!firstPolRun) {
+            if (!firstPolRun && nameSeen) {
               pushNtfy('Politician trade: ' + nm, `${String(t.type||'').toUpperCase()} ${t.symbol||''} ${t.amount||''} — traded ${t.transactionDate||'?'}, disclosed ${t.disclosureDate||'?'}`);
             }
           }
+          store.polSeenNames[nameKey] = 1;
         }
       }
       store.polSeenInit = true;
@@ -1500,35 +1566,30 @@ function ctRow(name, party, tick, type, val, traded, disclosed) {
 
 /* ============================== OUTCOME TRACKING ============================== */
 // Did flagged bets actually win? Resolved markets grade every flagged trade; wallets build W/L records.
+let outcomesBusy = false;
 async function checkOutcomes() {
-  const pend = store.flagged.filter(f => !f.result && f.conditionId && (Date.now()/1000 - f.ts) > 3600).slice(0, 10);
+  if (outcomesBusy) return;          // re-entrancy would double-count wins into walletStats
+  outcomesBusy = true;
+  try { await _checkOutcomes(); } finally { outcomesBusy = false; }
+}
+async function _checkOutcomes() {
+  // Oldest-first: newest flags are almost never settled yet, and grading them first
+  // permanently starved the queue — older, actually-resolved flags were never reached.
+  const pend = store.flagged
+    .filter(f => !f.result && f.conditionId && (Date.now()/1000 - f.ts) > 3600)
+    .sort((a, b) => a.ts - b.ts)
+    .slice(0, 10);
   if (!pend.length) return;
   const ids = [...new Set(pend.map(f => f.conditionId))];
-  let byCid = new Map();
-  try {
-    const url = 'https://gamma-api.polymarket.com/markets?' + ids.map(i => 'condition_ids=' + encodeURIComponent(i)).join('&');
-    const ms = await fetchJSON(url);
-    if (Array.isArray(ms)) byCid = new Map(ms.map(m => [m.conditionId, m]));
-  } catch(e){}
-  // fallback: look up a few by slug if condition_ids returned nothing
-  if (!byCid.size) {
-    for (const f of pend.slice(0, 5)) {
-      if (!f.slug) continue;
-      try {
-        const a = await fetchJSON('https://gamma-api.polymarket.com/markets?slug=' + encodeURIComponent(f.slug));
-        if (a && a[0]) byCid.set(f.conditionId, a[0]);
-      } catch(e){}
-    }
-  }
+  const resList = await Promise.all(ids.map(id => getMarketResolution(id).catch(() => null)));
+  const byCid = new Map(ids.map((id, i) => [id, resList[i]]));
   let changed = false;
   for (const f of pend) {
-    const m = byCid.get(f.conditionId);
-    if (!m || !m.closed) continue;
-    let prices = [];
-    try { prices = typeof m.outcomePrices === 'string' ? JSON.parse(m.outcomePrices) : (m.outcomePrices || []); } catch(e){}
-    const p = parseFloat(prices[f.outcomeIndex ?? 0]);
-    if (isNaN(p)) continue;
-    const won = f.side === 'BUY' ? p > 0.5 : p < 0.5;
+    if (f.result) continue;          // re-check after the await — snapshot may be stale
+    const r = byCid.get(f.conditionId);
+    if (!r || !r.closed || r.winnerIndex == null) continue;
+    const outcomeWon = r.winnerIndex === (f.outcomeIndex ?? 0);
+    const won = f.side === 'BUY' ? outcomeWon : !outcomeWon;
     f.result = won ? 'WIN' : 'LOSS';
     const ws = store.walletStats[f.wallet];
     if (ws) { ws.wins = (ws.wins || 0) + (won ? 1 : 0); ws.losses = (ws.losses || 0) + (won ? 0 : 1); }
@@ -1569,23 +1630,96 @@ async function checkStarred() {
 }
 
 /* ============================== BACKTEST SCORECARD ============================== */
-// Grade a wallet's entire RESOLVED position history — win rate, P&L, longshot and news-market records.
-function computeScorecard(pos) {
-  const sc = { n: 0, wins: 0, losses: 0, pnl: 0, lsW: 0, lsL: 0, nwW: 0, nwL: 0, biggestWin: 0 };
-  for (const p of (pos || [])) {
-    const cur = +p.curPrice;
-    const resolved = p.redeemable || cur >= 0.99 || cur <= 0.01;
-    if (!resolved) continue;
-    const won = cur > 0.5;
-    const pnl = (+p.cashPnl || 0) + (+p.realizedPnl || 0);
-    sc.n++; sc.pnl += pnl;
-    won ? sc.wins++ : sc.losses++;
-    if (won && pnl > sc.biggestWin) sc.biggestWin = pnl;
-    if ((+p.avgPrice || 0) > 0 && (+p.avgPrice) <= 0.25) { won ? sc.lsW++ : sc.lsL++; }
-    const t = p.title || '';
-    if (NEWSY.test(t) && !SPORTSY.test(t)) { won ? sc.nwW++ : sc.nwL++; }
+/* IMPORTANT — why this is built on TRADES, not positions:
+   Polymarket's positions endpoint only keeps UNREDEEMED positions. Winners get redeemed
+   and vanish from the book; losers sit there at $0 forever. So any win-rate or P&L computed
+   from positions alone is catastrophically loss-biased (it showed the famous Iran-strike
+   winner as 0 wins / 7 losses). Trades are immutable history, so we reconstruct each
+   position from trade fills and grade it against the market's actual resolution. */
+
+const marketRes = new Map(Object.entries((store.marketRes) || {}));  // conditionId -> {closed, winnerIndex}
+async function getMarketResolution(conditionId) {
+  if (!conditionId) return null;
+  if (marketRes.has(conditionId)) return marketRes.get(conditionId);
+  let res = null;
+  try {
+    const m = await fetchJSON('https://clob.polymarket.com/markets/' + conditionId);
+    if (m && Array.isArray(m.tokens)) {
+      const wi = m.tokens.findIndex(t => t.winner === true);
+      if (wi >= 0) res = { closed: true, winnerIndex: wi };
+      else if (m.closed) {
+        // No winner flag yet (e.g. closed but pending UMA resolution). A price-based guess is
+        // provisional — use it for display but never persist it, or a disputed market that
+        // later flips would permanently mint a fake "proven winner".
+        const pi = m.tokens.findIndex(t => +t.price >= 0.99);
+        res = { closed: true, winnerIndex: pi >= 0 ? pi : null, provisional: pi >= 0 };
+      } else res = { closed: false, winnerIndex: null };
+    }
+  } catch (e) { res = null; }
+  if (res && res.closed && !res.provisional) {   // only cache confirmed settlements
+    marketRes.set(conditionId, res);
+    store.marketRes = store.marketRes || {};
+    store.marketRes[conditionId] = res;
+    if (Object.keys(store.marketRes).length > 600) {
+      const ks = Object.keys(store.marketRes); ks.slice(0, ks.length - 600).forEach(k => delete store.marketRes[k]);
+    }
+    persist();
   }
-  sc.winRate = sc.n ? Math.round(sc.wins / sc.n * 100) : 0;
+  return res;
+}
+
+// Reconstruct positions from trade fills, then grade each against actual resolution.
+function foldTradesToPositions(trs) {
+  const pos = new Map();
+  for (const t of (trs || [])) {
+    if (!t.conditionId) continue;
+    const k = t.conditionId + '|' + (t.outcomeIndex ?? 0);
+    if (!pos.has(k)) pos.set(k, { conditionId: t.conditionId, outcomeIndex: t.outcomeIndex ?? 0,
+      title: t.title || '', outcome: t.outcome || '', shares: 0, cost: 0, buyShares: 0, buyCost: 0, last: 0 });
+    const p = pos.get(k);
+    const v = t.size * t.price;
+    if (t.side === 'BUY') { p.shares += t.size; p.cost += v; p.buyShares += t.size; p.buyCost += v; }
+    else { p.shares -= t.size; p.cost -= v; }
+    if (t.timestamp > p.last) p.last = t.timestamp;
+  }
+  return [...pos.values()];
+}
+
+const scorecardCache = new Map();  // wallet|maxMarkets -> {ts, sc}
+async function buildScorecard(wallet, maxMarkets = 30) {
+  const ck = wallet + '|' + maxMarkets;
+  const hit = scorecardCache.get(ck);
+  if (hit && Date.now() - hit.ts < 20 * 60 * 1000) return hit.sc;
+  const sc = { n: 0, wins: 0, losses: 0, pnl: 0, lsW: 0, lsL: 0, nwW: 0, nwL: 0, biggestWin: 0, sampled: 0, skipped: 0, truncated: false, winRate: 0 };
+  try {
+    const trs = await fetchJSON(`https://data-api.polymarket.com/trades?user=${wallet}&limit=500`);
+    if (!Array.isArray(trs) || !trs.length) { scorecardCache.set(ck, {ts: Date.now(), sc}); return sc; }
+    sc.truncated = trs.length >= 500;
+    const list = foldTradesToPositions(trs).sort((a, b) => b.last - a.last).slice(0, maxMarkets);
+    sc.sampled = list.length;
+    const resolutions = await Promise.all(list.map(p => getMarketResolution(p.conditionId).catch(() => null)));
+    list.forEach((p, i) => {
+      const r = resolutions[i];
+      if (!r || !r.closed || r.winnerIndex == null) return;
+      // Skip ungradeable reconstructions: no buys seen, or a negative share balance, which means
+      // the opening buys fell outside the 500-fill window. Grading those would mint phantom profit.
+      if (p.buyShares <= 0 || p.shares < -1e-6) { sc.skipped++; return; }
+      const outcomeWon = r.winnerIndex === p.outcomeIndex;
+      const payout = outcomeWon ? p.shares : 0;
+      const pnl = payout - p.cost;
+      // Grade the WALLET (did it make money?), not the market. A scalper who bought at 30¢ and
+      // sold at 70¢ profited even if the outcome later resolved NO.
+      const won = pnl > 0;
+      sc.n++; sc.pnl += pnl;
+      won ? sc.wins++ : sc.losses++;
+      if (won && pnl > sc.biggestWin) sc.biggestWin = pnl;
+      const entry = p.buyShares > 0 ? p.buyCost / p.buyShares : 0;
+      if (entry > 0 && entry <= 0.25) { won ? sc.lsW++ : sc.lsL++; }
+      if (NEWSY.test(p.title) && !SPORTSY.test(p.title)) { won ? sc.nwW++ : sc.nwL++; }
+    });
+    sc.winRate = sc.n ? Math.round(sc.wins / sc.n * 100) : 0;
+  } catch (e) {}
+  scorecardCache.set(ck, { ts: Date.now(), sc });
   return sc;
 }
 
@@ -1611,7 +1745,7 @@ async function loadConviction() {
     const st = store.walletStats[w] || {};
     const nm = (store.stars[w] && store.stars[w].name) || st.name || w.slice(0, 10) + '…';
     const isProven = (st.wins || 0) >= 3 && st.wins > 3 * (st.losses || 0);
-    scorecards.push({ w, nm, isProven, sc: computeScorecard(pos) });
+    scorecards.push({ w, nm, isProven });
     for (const p of (pos || [])) {
       if (p.redeemable) continue;
       const cur = +p.curPrice;
@@ -1629,17 +1763,18 @@ async function loadConviction() {
     return;
   }
   setFeed('#cvState', true);
-  // scorecards table (backtest of resolved history)
+  // scorecards table — trade-replay grading (see buildScorecard for why not positions)
   const sct = $('#cvScoreTable tbody');
-  const withHistory = scorecards.filter(s => s.sc.n > 0).sort((a,b) => b.sc.pnl - a.sc.pnl);
+  const graded = await Promise.all(scorecards.slice(0, 5).map(async s => ({ ...s, sc: await buildScorecard(s.w, 20) })));
+  const withHistory = graded.filter(s => s.sc && s.sc.n > 0).sort((a,b) => b.sc.pnl - a.sc.pnl);
   if (!withHistory.length) {
-    sct.innerHTML = '<tr><td colspan="8" class="empty">No resolved history yet for these wallets.</td></tr>';
+    sct.innerHTML = '<tr><td colspan="8" class="empty">No settled markets found in these wallets\' recent trade history yet.</td></tr>';
   } else {
     sct.innerHTML = withHistory.map(({w, nm, isProven, sc}) => {
-      const strong = sc.n >= 10 && sc.winRate >= 60;
+      const strong = sc.n >= 8 && sc.winRate >= 60;
       return `<tr class="${store.stars[w] ? 'watched' : ''}">
         <td><a class="walletlink" data-dossier="${esc(w)}" data-label="${esc(nm)}">${esc(nm)}</a>${isProven ? ' <span class="chip critical">▲ proven</span>' : strong ? ' <span class="chip serious">◆ strong history</span>' : ''}</td>
-        <td class="num">${sc.n}</td>
+        <td class="num">${sc.n}<span style="color:var(--ink-3)"> / ${sc.sampled}${sc.truncated ? '+' : ''}</span></td>
         <td class="num">${sc.wins}W–${sc.losses}L</td>
         <td class="num"><strong>${sc.winRate}%</strong></td>
         <td class="num" style="color:${sc.pnl >= 0 ? 'var(--status-good)' : 'var(--status-critical)'}">${fmtUSD(sc.pnl)}</td>
@@ -1687,7 +1822,7 @@ function toggleStar(wallet, name) {
 function renderWatch() {
   const wt = $('#watchTable tbody');
   const wallets = Object.keys(store.stars);
-  $('#memStats').textContent = `${wallets.length} starred · ${store.flagged.length} flagged trades remembered · storage: ${DB.persistent ? 'persistent in this browser' : 'in-memory only (browser blocked storage — export to keep)'}`;
+  $('#memStats').textContent = `${wallets.length} starred · ${store.flagged.length} flagged trades remembered · storage: ${DB.saveFailed ? '⚠ FULL — changes are NOT being saved, export now' : DB.persistent ? 'persistent in this browser' : 'in-memory only (browser blocked storage — export to keep)'}`;
   if (!wallets.length) {
     wt.innerHTML = '<tr><td colspan="7" class="empty">Nothing starred yet — hit ☆ next to any trader in the radar or leaderboard. Starred wallets push to your phone whenever they make a new trade.</td></tr>';
   } else {
@@ -2036,8 +2171,10 @@ $('#ntfyTest').addEventListener('click', async () => {
   saveSettings();
   if (!state.ntfyTopic) { $('#ntfyStatus').textContent = 'Enter a topic first'; return; }
   $('#ntfyStatus').textContent = 'Sending…';
-  await pushNtfy('Smart Money Detector test', 'Phone pushes are working. Whale radar is armed.');
-  $('#ntfyStatus').textContent = 'Test sent — check your phone (ntfy app must be subscribed to the same topic)';
+  const ok = await pushNtfy('Smart Money Detector test', 'Phone pushes are working. Whale radar is armed.');
+  $('#ntfyStatus').textContent = ok
+    ? 'Test accepted by ntfy — check your phone (the app must be subscribed to the same topic)'
+    : '✗ Push failed — ntfy.sh unreachable or rejected from this network';
 });
 $('#notifBtn').addEventListener('click', async () => {
   if (!state.notify) {
