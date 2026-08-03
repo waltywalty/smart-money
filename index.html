@@ -621,6 +621,26 @@ const $$ = (s, el=document) => [...el.querySelectorAll(s)];
 const fmtUSD = n => n >= 1e6 ? '$' + (n/1e6).toFixed(2) + 'M' : n >= 1e3 ? '$' + (n/1e3).toFixed(1) + 'k' : '$' + n.toFixed(0);
 const fmtNum = n => n.toLocaleString('en-US', {maximumFractionDigits: 2});
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// Resilient JSON fetch: direct first, then CORS relays (for APIs that block cross-origin browser calls)
+async function fetchJSON(url) {
+  const attempts = [
+    u => u,
+    u => 'https://corsproxy.io/?url=' + encodeURIComponent(u),
+    u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u),
+  ];
+  let lastErr;
+  for (const wrap of attempts) {
+    try {
+      const ctrl = new AbortController();
+      const to = setTimeout(() => ctrl.abort(), 7000);
+      const r = await fetch(wrap(url), { signal: ctrl.signal });
+      clearTimeout(to);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return await r.json();
+    } catch (e) { lastErr = e; }
+  }
+  throw lastErr;
+}
 const ago = ts => {
   const s = Math.max(1, Math.floor(Date.now()/1000 - ts));
   if (s < 60) return s + 's ago';
@@ -1095,9 +1115,7 @@ async function loadCrypto() {
 async function loadSEC() {
   const tbody = $('#secTable tbody');
   try {
-    const res = await fetch('https://efts.sec.gov/LATEST/search-index?q=%22Form+4%22&forms=4', {headers: {}});
-    if (!res.ok) throw new Error(res.status);
-    const data = await res.json();
+    const data = await fetchJSON('https://efts.sec.gov/LATEST/search-index?q=%22Form+4%22&forms=4');
     const hits = (data.hits && data.hits.hits) || [];
     if (!hits.length) throw new Error('no hits');
     tbody.innerHTML = hits.slice(0, 12).map(h => {
@@ -1228,9 +1246,7 @@ async function loadKalshi() {
   const tbody = $('#kalshiTable tbody');
   try {
     const minTs = Math.floor(Date.now()/1000) - 6 * 3600;
-    const r = await fetch(`https://api.elections.kalshi.com/trade-api/v2/markets/trades?limit=1000&min_ts=${minTs}`);
-    if (!r.ok) throw new Error(r.status);
-    const j = await r.json();
+    const j = await fetchJSON(`https://api.elections.kalshi.com/trade-api/v2/markets/trades?limit=1000&min_ts=${minTs}`);
     let trs = (j.trades || []).map(t => {
       const px = t.taker_side === 'yes' ? +t.yes_price_dollars : +t.no_price_dollars;
       const count = +(t.count_fp ?? t.count ?? 0);
@@ -1241,8 +1257,8 @@ async function loadKalshi() {
     const need = [...new Set(trs.map(t => t.ticker))].filter(tk => tk && !kTitleCache.has(tk)).slice(0, 40);
     if (need.length) {
       try {
-        const mr = await fetch('https://api.elections.kalshi.com/trade-api/v2/markets?tickers=' + encodeURIComponent(need.join(',')));
-        if (mr.ok) { const mj = await mr.json(); (mj.markets || []).forEach(m => kTitleCache.set(m.ticker, m.title || m.ticker)); }
+        const mj = await fetchJSON('https://api.elections.kalshi.com/trade-api/v2/markets?tickers=' + encodeURIComponent(need.join(',')));
+        (mj.markets || []).forEach(m => kTitleCache.set(m.ticker, m.title || m.ticker));
       } catch(e){}
     }
     if (!trs.length) {
@@ -1337,9 +1353,7 @@ async function loadHyper() {
 async function loadCT() {
   const tbody = $('#ctTable tbody');
   try {
-    const r = await fetch('https://bff.capitoltrades.com/trades?per_page=15&page=1');
-    if (!r.ok) throw new Error(r.status);
-    const j = await r.json();
+    const j = await fetchJSON('https://bff.capitoltrades.com/trades?per_page=15&page=1');
     const rows = j.data || j.trades || (Array.isArray(j) ? j : []);
     if (!rows.length) throw new Error('empty');
     tbody.innerHTML = rows.slice(0, 15).map(t => {
