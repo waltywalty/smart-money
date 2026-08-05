@@ -214,7 +214,7 @@
 
 <header class="top">
   <div class="top-inner">
-    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v7.1</span></div>
+    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v7.2</span></div>
     <div class="top-meta">
       <span id="lastUpdated">loading…</span>
       <span id="countdown" title="Auto-refresh countdown"></span>
@@ -708,6 +708,7 @@
         <strong>Latest disclosed congressional trades</strong>
         <span class="feedstate" id="ctState">connecting…</span>
         <span class="note" style="display:inline">disclosures lag trades by up to 45 days by law</span>
+        <span id="fmpBudget" style="font-size:11.5px;color:var(--ink-3)"></span>
         <input class="addr" id="fmpInput" placeholder="optional: free FMP API key" spellcheck="false" style="min-width:180px">
         <button class="ctrl" id="fmpSave">Save key</button>
         <input class="addr" id="polInput" placeholder="watch politicians, e.g. Pelosi, Fields, Mullin" spellcheck="false" style="min-width:220px">
@@ -1495,8 +1496,15 @@ async function loadSEC() {
   // EDGAR full-text only yields filer names, so it is the fallback.
   if ((state.fmpKey || '').trim()) {
     try {
-      const rows = await fetchJSON(`https://financialmodelingprep.com/stable/insider-trading/latest?page=0&apikey=${encodeURIComponent(state.fmpKey.trim())}`);
-      if (!Array.isArray(rows) || !rows.length) throw new Error('empty');
+      let rows = [];
+      if (fmpDue('insider') || !(store.secCache || []).length) {
+        try {
+          const got = await fmpFetch('insider', `https://financialmodelingprep.com/stable/insider-trading/latest?page=0&apikey=${encodeURIComponent(state.fmpKey.trim())}`);
+          if (Array.isArray(got) && got.length) { rows = got; store.secCache = got.slice(0, 60); store.secAt = Date.now(); persist(); }
+        } catch (e) {}
+      }
+      if (!rows.length) rows = (store.secCache || []).slice();
+      if (!rows.length) throw new Error('no cached filings yet');
       const real = rows.filter(r => r.symbol && +r.securitiesTransacted > 0);
       const isBuy = r => /^P/i.test(r.transactionType || '') || /^A$/i.test(r.acquisitionOrDisposition || '');
       // cluster buys: 2+ distinct insiders buying the same ticker in this window
@@ -1705,14 +1713,25 @@ const LEADLAG_MAP = {
   election: { label: 'political outcome', tickers: [['SPY', 1], ['XLE', 1]] },
   fiscal:   { label: 'fiscal stress', tickers: [['TLT', -1], ['GLD', 1]] },
 };
-async function quoteOf(sym) {
+const quoteCache = new Map();
+async function quoteOf(sym, fresh) {
   const key = (state.fmpKey || '').trim();
   if (!key) return null;
+  const hit = quoteCache.get(sym);
+  if (!fresh && hit && Date.now() - hit.ts < FMP_MIN_INTERVAL.quote) return hit.px;
+  if (fmpBlocked()) return hit ? hit.px : null;
+  const b = fmpBudget();
   try {
+    b.calls++;
     const q = await fetchJSON(`https://financialmodelingprep.com/stable/quote?symbol=${sym}&apikey=${encodeURIComponent(key)}`);
     const r = Array.isArray(q) ? q[0] : q;
-    return r && Number.isFinite(+r.price) ? +r.price : null;
-  } catch (e) { return null; }
+    const px = r && Number.isFinite(+r.price) ? +r.price : null;
+    if (px != null) quoteCache.set(sym, { ts: Date.now(), px });
+    return px;
+  } catch (e) {
+    if (/429/.test(e.message || '')) { b.limited = Date.now(); persist(); }
+    return hit ? hit.px : null;
+  }
 }
 async function recordSignal(kind, title, dir, detail) {
   const bucket = confirmBucket(title);
@@ -1837,6 +1856,30 @@ function walkAsks(book, wantShares) {
     cost += take * +lvl.price; got += take; need -= take;
   }
   return got > 0 ? { shares: got, vwap: cost / got, filled: need <= 1e-9 } : null;
+}
+/* FMP free tier is roughly 250 calls/day. Refreshing congress + insider filings every 60s
+   burned that in about two hours and every downstream panel then showed FEED ERROR (429).
+   Disclosures update daily, so per-minute polling was pure waste. All FMP traffic now goes
+   through this budget: a minimum interval per endpoint class, cached results in between, and
+   an hour-long backoff the moment a 429 is seen. */
+const FMP_MIN_INTERVAL = { congress: 45 * 60e3, insider: 45 * 60e3, quote: 20 * 60e3 };
+function fmpBudget() {
+  const today = new Date().toISOString().slice(0, 10);
+  store.fmp = store.fmp || { day: today, calls: 0, last: {}, limited: 0 };
+  if (store.fmp.day !== today) store.fmp = { day: today, calls: 0, last: {}, limited: 0 };
+  return store.fmp;
+}
+function fmpBlocked() { const b = fmpBudget(); return b.limited && Date.now() - b.limited < 60 * 60e3; }
+function fmpDue(kind) {
+  if (fmpBlocked()) return false;
+  const b = fmpBudget();
+  return Date.now() - (b.last[kind] || 0) >= (FMP_MIN_INTERVAL[kind] || 20 * 60e3);
+}
+async function fmpFetch(kind, url) {
+  const b = fmpBudget();
+  b.last[kind] = Date.now(); b.calls++; persist();
+  try { return await fetchJSON(url); }
+  catch (e) { if (/429/.test(e.message || '')) { b.limited = Date.now(); persist(); } throw e; }
 }
 const bookCache = new Map();
 async function getBook(tokenId) {
@@ -2203,19 +2246,30 @@ function confirmBucket(title) {
   if (/(shutdown|debt ceiling|\bdefault\b|downgrade)/i.test(t)) return 'fiscal';
   return null;
 }
+const confirmCache = new Map();
 async function fetchConfirm(title) {
   const key = (state.fmpKey || '').trim();
   const bucket = confirmBucket(title);
   if (!key || !bucket || !CONFIRM_TICKERS[bucket] || !CONFIRM_TICKERS[bucket].length) return null;
+  const hit = confirmCache.get(bucket);
+  if (hit && Date.now() - hit.ts < FMP_MIN_INTERVAL.quote) return hit.data;
+  if (fmpBlocked()) return hit ? hit.data : null;
+  const b = fmpBudget();
   try {
     const out = [];
     for (const sym of CONFIRM_TICKERS[bucket]) {
+      b.calls++;
       const q = await fetchJSON(`https://financialmodelingprep.com/stable/quote?symbol=${sym}&apikey=${encodeURIComponent(key)}`);
       const r = Array.isArray(q) ? q[0] : q;
       if (r && Number.isFinite(+r.changePercentage)) out.push({ sym, chg: +r.changePercentage, price: +r.price });
     }
-    return out.length ? out : null;
-  } catch (e) { return null; }
+    const data = out.length ? out : null;
+    if (data) confirmCache.set(bucket, { ts: Date.now(), data });
+    return data;
+  } catch (e) {
+    if (/429/.test(e.message || '')) { b.limited = Date.now(); persist(); }
+    return hit ? hit.data : null;
+  }
 }
 
 function renderBriefing() {
@@ -2607,9 +2661,12 @@ async function loadKalshi() {
     $('#kalshiFallback').hidden = true;
   } catch (e) {
     if (!seqCurrent('kalshi', my)) return;
-    setFeed('#kalshiState', false);
+    // Kalshi blocks direct browser calls and the free CORS relays are intermittent by nature,
+    // so a failure here is expected rather than broken. Degrade calmly, don't shout FEED ERROR.
+    setFeed('#kalshiState', 'link');
+    $('#kalshiState').textContent = 'relay unavailable';
     $('#kalshiFallback').hidden = false;
-    tbody.innerHTML = '<tr><td colspan="6" class="empty">Kalshi API unreachable from this browser.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">Kalshi does not allow direct browser access, and the free relays that work around it are intermittent. The API itself is healthy — use the links below; this reconnects on its own when a relay recovers.</td></tr>';
   }
 }
 
@@ -2702,17 +2759,21 @@ async function loadCT() {
   if ((state.fmpKey || '').trim()) {
     try {
       const key = encodeURIComponent(state.fmpKey.trim());
-      const results = await Promise.allSettled([
-        fetchJSON(`https://financialmodelingprep.com/stable/senate-latest?page=0&limit=12&apikey=${key}`),
-        fetchJSON(`https://financialmodelingprep.com/stable/house-latest?page=0&limit=12&apikey=${key}`),
-      ]);
       let rows = [];
-      results.forEach((r, i) => {
-        if (r.status === 'fulfilled' && Array.isArray(r.value)) {
-          r.value.forEach(t => rows.push({ ...t, _chamber: i === 0 ? 'Sen.' : 'Rep.' }));
-        }
-      });
-      if (!rows.length) throw new Error('empty/invalid key');
+      if (fmpDue('congress') || !(store.ctCache || []).length) {
+        const results = await Promise.allSettled([
+          fmpFetch('congress', `https://financialmodelingprep.com/stable/senate-latest?page=0&apikey=${key}`),
+          fmpFetch('congress', `https://financialmodelingprep.com/stable/house-latest?page=0&apikey=${key}`),
+        ]);
+        results.forEach((r, i) => {
+          if (r.status === 'fulfilled' && Array.isArray(r.value)) {
+            r.value.slice(0, 20).forEach(t => rows.push({ ...t, _chamber: i === 0 ? 'Sen.' : 'Rep.' }));
+          }
+        });
+        if (rows.length) { store.ctCache = rows; store.ctAt = Date.now(); persist(); }
+      }
+      if (!rows.length) rows = (store.ctCache || []).slice();
+      if (!rows.length) throw new Error(fmpBlocked() ? 'free-tier rate limit hit — retrying within the hour' : 'no data returned');
       rows.sort((a,b) => String(b.disclosureDate || b.dateRecieved || '').localeCompare(String(a.disclosureDate || a.dateRecieved || '')));
       // politician watch: alert on new disclosures by watched names
       const watched = (state.polWatch || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
@@ -2748,6 +2809,8 @@ async function loadCT() {
       persist();
       rows.forEach(r => { r._nm = [r.firstName, r.lastName].filter(Boolean).join(' ') || r.representative || r.senator || ''; });
       lastCongressRows = rows;
+      const _b = fmpBudget();
+      $('#fmpBudget').textContent = `${_b.calls} FMP calls today${store.ctAt ? ' · data from ' + new Date(store.ctAt).toLocaleTimeString() : ''}${fmpBlocked() ? ' · rate-limited, backing off' : ''}`;
       rows.sort((a,b) => (b._watched?1:0) - (a._watched?1:0) || String(b.disclosureDate||'').localeCompare(String(a.disclosureDate||'')));
       tbody.innerHTML = rows.slice(0, 15).map(t => {
         const nm = [t.firstName, t.lastName].filter(Boolean).join(' ') || t.representative || t.senator || t.office || '—';
