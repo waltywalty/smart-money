@@ -214,7 +214,7 @@
 
 <header class="top">
   <div class="top-inner">
-    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v6.0</span></div>
+    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v7.1</span></div>
     <div class="top-meta">
       <span id="lastUpdated">loading…</span>
       <span id="countdown" title="Auto-refresh countdown"></span>
@@ -226,18 +226,23 @@
     </div>
   </div>
   <nav class="sections">
+    <a href="#briefing">Today's briefing</a>
     <a href="#radar">Live whale radar</a>
     <a href="#movers">Odds swings</a>
     <a href="#kalshi">Kalshi</a>
     <a href="#leaders">Leaderboard</a>
     <a href="#watchlist">Watchlist</a>
     <a href="#conviction">Conviction board</a>
+    <a href="#backtest">Score validation</a>
+    <a href="#leadlag">Lead/lag study</a>
+    <a href="#bot">Paper bot</a>
     <a href="#crypto">Crypto tape</a>
     <a href="#hyper">Hyperliquid whales</a>
     <a href="#form4">Form 4 filings</a>
     <a href="#congress">Congress watchlist</a>
     <a href="#pm-cases">Prediction-market cases</a>
     <a href="#crypto-cases">Crypto whale cases</a>
+    <a href="#lines">Line movement</a>
     <a href="#sports-cases">Sports cases</a>
     <a href="#arsenal">Tracker arsenal</a>
   </nav>
@@ -254,6 +259,17 @@
     <div class="tile"><div class="v">70</div><div class="l">Suspicious sports-betting alerts in Q1 2026 (+11% YoY)</div><div class="s">IBIA quarterly integrity report</div></div>
     <div class="tile"><div class="v">232–198</div><div class="l">House passed stock-trading restrictions (H.R. 7008), Jul 22 2026</div><div class="s">Senate outcome still uncertain</div></div>
   </div>
+
+  <!-- ======================= BRIEFING ======================= -->
+  <section class="block" id="briefing" style="margin-top:22px">
+    <div class="block-head">
+      <h2>📋 Today's briefing</h2>
+      <span class="feedstate" id="brState">assembling…</span>
+      <span class="desc">The whole dashboard compressed into what actually matters right now — updated on every refresh.</span>
+    </div>
+    <div id="brBody"></div>
+    <p class="note">Context notes describe how a market's subject <em>typically</em> transmits to other instruments — they are background for your own reading, not trade recommendations, and I'm not a financial adviser. Prediction-market moves are frequently wrong and can reverse with no news at all.</p>
+  </section>
 
   <!-- ======================= PHONE ALERTS ======================= -->
   <div class="card" id="phoneAlerts" style="margin-top:14px">
@@ -453,6 +469,15 @@
       <span class="desc">Every unresolved position held by wallets you follow or that have proven win records. Their open bets are, in effect, their forecasts.</span>
     </div>
     <div class="card">
+      <div class="controls">
+        <span>Track:</span>
+        <div class="seg" id="cvSrcSeg">
+          <button data-v="starred">Starred only</button>
+          <button data-v="proven" aria-pressed="true">Starred + proven</button>
+          <button data-v="top">+ today's top traders</button>
+        </div>
+        <span style="color:var(--ink-3)">every position marked live against the best bid</span>
+      </div>
       <div class="tscroll">
         <table id="cvTable">
           <thead><tr><th>Wallet</th><th>Betting that…</th><th>Position</th><th class="num">At stake now</th><th class="num">Unrealised P&L</th><th class="num">Entry → now</th><th>Signal</th></tr></thead>
@@ -470,6 +495,120 @@
       </div>
     </div>
     <p class="note">Click any politician for their recent filings and a deep link to their full portfolio. Fed by your starred wallets and any wallet that earns a "proven" record (3+ graded wins on flagged bets). Entry → now shows whether the market has moved toward their bet since they placed it — green means the money is so far being proven right.</p>
+  </section>
+
+  <!-- ======================= BACKTEST ======================= -->
+  <section class="block" id="backtest">
+    <div class="block-head">
+      <h2>🔬 Does the score actually work?</h2>
+      <span class="feedstate" id="btState">not run yet</span>
+      <span class="desc">The honest test. Sample markets that have already resolved, score every trade with this dashboard's own algorithm, and check whether high-scoring bets won more often than the odds they paid implied.</span>
+    </div>
+    <div class="card">
+      <div class="controls">
+        <span>Sample size:</span>
+        <div class="seg" id="btSizeSeg">
+          <button data-v="15" aria-pressed="true">15 markets</button>
+          <button data-v="40">40 markets</button>
+          <button data-v="80">80 markets</button>
+        </div>
+        <label class="ck"><input type="checkbox" id="btNewsOnly"> news-sensitive markets only</label>
+        <button class="ctrl" id="btRun">▶ Run backtest</button>
+        <span id="btProgress" style="color:var(--ink-3)"></span>
+      </div>
+      <div id="btVerdict"></div>
+      <div class="tscroll">
+        <table id="btTable">
+          <thead><tr>
+            <th>Score band</th><th class="num">Bets</th><th class="num">Actually won</th>
+            <th class="num">Odds implied</th><th class="num">Edge</th><th></th><th>Read</th>
+          </tr></thead>
+          <tbody><tr><td colspan="7" class="empty">Hit <strong>Run backtest</strong>. It samples resolved markets, replays their trades through the scoring algorithm, and grades every bet against what actually happened.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-pad" style="border-bottom:1px solid var(--grid)"><strong>Which individual signals earn their weight?</strong> <span class="note" style="display:inline">edge contributed by each scoring component, measured the same way</span></div>
+      <div class="tscroll">
+        <table id="btSigTable">
+          <thead><tr><th>Signal</th><th class="num">Bets with it</th><th class="num">Edge with</th><th class="num">Edge without</th><th>Verdict</th></tr></thead>
+          <tbody><tr><td colspan="5" class="empty">Runs with the backtest above.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <p class="note"><strong>How to read "edge":</strong> a bet placed at 20¢ should win about 20% of the time if the market is efficient. Edge is how much more (or less) often those bets actually won. Positive edge on high-score bands means the detector is finding genuine information; an edge near zero means the score is decoration. Caveats: this tests trade-shape signals only (size, entry odds, market type, anonymity) — the live wallet-age, cluster and liquidity bonuses can't be reconstructed historically. Sampling is weighted toward higher-volume resolved markets. Small samples are noisy; treat anything under ~30 bets in a band as indicative only.</p>
+  </section>
+
+  <!-- ======================= LEAD/LAG ======================= -->
+  <section class="block" id="leadlag">
+    <div class="block-head">
+      <h2>🎯 Signal → market lead/lag study</h2>
+      <span class="feedstate" id="llState">collecting</span>
+      <span class="desc">The strategic bet: prediction markets are hard to trade but may be <em>early</em>. Every qualifying signal is timestamped with a snapshot of the instruments it should move, then re-checked at +4h, +24h and +72h. Over time this measures whether the detector actually leads real markets — the thing that would make all this information worth money.</span>
+    </div>
+    <div id="llSummary"></div>
+    <div class="card">
+      <div class="tscroll">
+        <table id="llTable">
+          <thead><tr><th>Recorded</th><th>Signal</th><th>Implies</th><th class="num">+4h</th><th class="num">+24h</th><th class="num">+72h</th><th>Result</th></tr></thead>
+          <tbody><tr><td colspan="7" class="empty">No signals recorded yet. One is logged automatically whenever a news-sensitive market moves 15+ points or a wallet cluster forms — provided the FMP key is set, since that supplies the instrument prices.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <p class="note">Direction is derived mechanically: rising odds on a rate cut implies bonds and small caps up; rising odds on a military strike implies crude and gold up with equities down; rising tariff odds implies importers and semis down. A "hit" means the instrument moved at least 0.3% in the implied direction. This is an observational study, not a strategy — and it needs dozens of signals before the hit rate means anything. If prediction markets turn out to <em>lag</em> instruments, that is equally valuable to know, and it would kill the thesis honestly.</p>
+  </section>
+
+  <!-- ======================= PAPER BOT ======================= -->
+  <section class="block" id="bot">
+    <div class="block-head">
+      <h2>🤖 Copy-trade paper bot</h2>
+      <span class="feedstate" id="botState">off</span>
+      <span class="desc">Simulates copying flagged whales with <em>real</em> execution mechanics — actual order-book depth, Polymarket's real fee formula, maker vs taker, and exit-when-they-exit. No money moves. This is the forward test.</span>
+    </div>
+
+    <div class="card">
+      <div class="controls">
+        <button class="ctrl" id="botToggle">▶ Start paper trading</button>
+        <span>Bankroll</span><input class="addr" id="botBank" value="1000" style="min-width:90px">
+        <span>Copy at score</span>
+        <div class="seg" id="botScoreSeg">
+          <button data-v="60">60+</button>
+          <button data-v="70" aria-pressed="true">70+</button>
+          <button data-v="80">80+</button>
+        </div>
+        <span>Execution</span>
+        <div class="seg" id="botModeSeg">
+          <button data-v="maker" aria-pressed="true">Maker (patient)</button>
+          <button data-v="taker">Taker (chase)</button>
+        </div>
+        <button class="ctrl" id="botReset">Reset</button>
+      </div>
+      <div class="controls" style="border-top:1px solid var(--grid)">
+        <span>Risk per trade</span>
+        <div class="seg" id="botRiskSeg">
+          <button data-v="0.01">1%</button>
+          <button data-v="0.02" aria-pressed="true">2%</button>
+          <button data-v="0.05">5%</button>
+        </div>
+        <label class="ck"><input type="checkbox" id="botNewsOnly" checked> news-sensitive markets only</label>
+        <label class="ck"><input type="checkbox" id="botExitCopy" checked> exit when the whale exits</label>
+        <span id="botLiveNote" style="color:var(--ink-3);font-size:12px;margin-left:auto">simulation only — no wallet connected, no orders sent</span>
+      </div>
+    </div>
+
+    <div class="tiles" id="botStats"></div>
+    <div class="card"><div class="card-pad" style="border-bottom:1px solid var(--grid)"><strong>Equity curve</strong></div><div id="botCurve" style="padding:14px 16px"></div></div>
+
+    <div class="card">
+      <div class="card-pad" style="border-bottom:1px solid var(--grid)"><strong>Positions</strong> <span class="note" style="display:inline">marked live against the current best bid — what you could actually exit at, not a fantasy mid-price</span></div>
+      <div class="tscroll">
+        <table id="botPosTable">
+          <thead><tr><th>Status</th><th>Market</th><th>Position</th><th class="num">Entry</th><th class="num">Now</th><th class="num">Stake</th><th class="num">Fee</th><th class="num">P&L</th><th>Copied from</th></tr></thead>
+          <tbody><tr><td colspan="9" class="empty">Start the bot and it will copy qualifying flagged trades as they appear on the radar.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <p class="note" id="botFeeNote"></p>
   </section>
 
   <!-- ======================= CRYPTO TAPE ======================= -->
@@ -540,20 +679,21 @@
     <div class="block-head">
       <h2>🏛️ Latest corporate insider filings (SEC Form 4)</h2>
       <span class="feedstate" id="secState">connecting…</span>
-      <span class="desc">Fresh Form 4 insider-transaction filings hitting EDGAR, live. Legal insider trades — but the timing patterns are where stories start.</span>
+      <span class="desc">Fresh Form 4 filings, live. These are legal trades — the signal is in the pattern, especially <strong>cluster buys</strong>: several executives at one company buying in the same week is the strongest publicly-available smart-money indicator in equities.</span>
     </div>
     <div class="card">
       <div class="tscroll">
         <table id="secTable">
-          <thead><tr><th>Filed</th><th>Insider / Company</th><th>Filing</th></tr></thead>
-          <tbody><tr><td colspan="3" class="empty">Loading EDGAR…</td></tr></tbody>
+          <thead><tr><th>Filed</th><th>Ticker</th><th>Insider</th><th>Action</th><th class="num">Shares</th><th class="num">Price</th><th></th></tr></thead>
+          <tbody><tr><td colspan="7" class="empty">Loading insider filings…</td></tr></tbody>
         </table>
       </div>
       <div class="fallback" id="secFallback" hidden>
         EDGAR feed unavailable. Use <a href="http://openinsider.com" target="_blank" rel="noopener">OpenInsider</a> or <a href="https://efts.sec.gov/LATEST/search-index?q=%22insider%22&forms=4" target="_blank" rel="noopener">EDGAR full-text search</a>.
       </div>
     </div>
-    <p class="note">Screen for the classics on <a href="http://openinsider.com/latest-cluster-buys" target="_blank" rel="noopener">OpenInsider cluster buys</a>: multiple executives buying the same stock in the same week is one of the strongest legal "smart money" signals known.</p>
+    <div id="clusterBuys"></div>
+    <p class="note">Open-market purchases (P) carry signal; sales (S) and gifts (G) mostly do not — executives sell for tax and diversification reasons constantly, but they buy for one reason. Cross-check anything interesting on <a href="http://openinsider.com/latest-cluster-buys" target="_blank" rel="noopener">OpenInsider</a>.</p>
   </section>
 
   <!-- ======================= CONGRESS ======================= -->
@@ -617,12 +757,44 @@
     <div class="cases" id="cryptoCases"></div>
   </section>
 
+  <!-- ======================= LINE MOVEMENT ======================= -->
+  <section class="block" id="lines">
+    <div class="block-head">
+      <h2>📉 Sports line movement — steam detector</h2>
+      <span class="feedstate" id="lnState">needs a key</span>
+      <span class="desc">The one signal that actually catches fixing: a line moving hard with no news, especially when every book moves together. This builds its own history by snapshotting odds over time — so the longer it runs, the more it sees.</span>
+    </div>
+    <div class="card">
+      <div class="controls">
+        <input class="addr" id="oddsKey" placeholder="free The Odds API key" spellcheck="false" style="min-width:200px">
+        <button class="ctrl" id="oddsSave">Save key</button>
+        <span>Sport:</span>
+        <div class="seg" id="sportSeg">
+          <button data-v="basketball_nba" aria-pressed="true">NBA</button>
+          <button data-v="americanfootball_nfl">NFL</button>
+          <button data-v="baseball_mlb">MLB</button>
+          <button data-v="icehockey_nhl">NHL</button>
+          <button data-v="soccer_epl">EPL</button>
+        </div>
+        <button class="ctrl" id="oddsCheck">📸 Take snapshot now</button>
+        <span id="oddsQuota" style="font-size:12px;color:var(--ink-3)"></span>
+      </div>
+      <div class="tscroll">
+        <table id="lnTable">
+          <thead><tr><th>Game</th><th>Market</th><th>Opened → now</th><th class="num">Move</th><th class="num">Books agreeing</th><th>Read</th></tr></thead>
+          <tbody><tr><td colspan="6" class="empty">Add a free key from <a href="https://the-odds-api.com" target="_blank" rel="noopener">the-odds-api.com</a> (500 requests/month, no card). Each snapshot costs one request; the tracker takes at most one every 30 minutes and only while this page is open.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <p class="note">Movement alone is not proof — lines move for injuries, weather, lineup news and ordinary sharp money. What investigators look for is a <strong>steam move</strong>: a large, fast, one-directional shift that most books make together, with no public explanation. This tracker can only see games it has snapshotted before, so a freshly-added sport shows nothing until the second snapshot.</p>
+  </section>
+
   <!-- ======================= SPORTS CASES ======================= -->
   <section class="block" id="sports-cases">
     <div class="block-head">
       <h2>🏀 Sports betting insider cases</h2>
       <span class="chip muted">curated · researched Aug 2, 2026</span>
-      <span class="desc">No public real-time feed exists for suspicious bets (integrity-firm data is confidential) — these are the active prosecutions and bans.</span>
+      <span class="desc">Deliberately case-based, not live. Betting-integrity data (IBIA, IC360, Sportradar) is contractually confidential to member books and regulators, and no free public API exposes odds-movement history — the one signal that would actually detect fixing. Line moves without news are how the cases below were caught; if you ever want that, a free odds-API key would let me build snapshot-based movement tracking. Until then this section tracks the prosecutions.</span>
     </div>
     <div class="cases" id="sportsCases"></div>
   </section>
@@ -839,6 +1011,9 @@ const state = Object.assign({
   kThresh: 10000,
   radarSpeed: 15,
   alertThresh: 70,
+  btSize: 15,
+  cvSrc: 'proven',
+  sport: 'basketball_nba',
   kHideTicks: true,
   auto: true,
   sound: false,
@@ -850,7 +1025,7 @@ state.count = 60;
 function saveSettings() {
   store.settings = { minSize: state.minSize, radarFilter: state.radarFilter, lbWindow: state.lbWindow,
     pair: state.pair, cbThresh: state.cbThresh, kThresh: state.kThresh, kHideTicks: state.kHideTicks,
-    mHideSports: state.mHideSports, radarSpeed: state.radarSpeed, alertThresh: state.alertThresh, theme: state.theme || '', ntfyTopic: state.ntfyTopic || '', fmpKey: state.fmpKey || '', polWatch: state.polWatch || '', sound: state.sound, notify: state.notify };
+    mHideSports: state.mHideSports, radarSpeed: state.radarSpeed, alertThresh: state.alertThresh, oddsKey: state.oddsKey || '', sport: state.sport, cvSrc: state.cvSrc, theme: state.theme || '', ntfyTopic: state.ntfyTopic || '', fmpKey: state.fmpKey || '', polWatch: state.polWatch || '', sound: state.sound, notify: state.notify };
   return persist();
 }
 
@@ -1053,6 +1228,9 @@ async function _loadRadar() {
     trades.forEach(applyContext);
     renderClusters(clusters);
     clustersSeeded = true;   // armed only after a completed batch, whatever it contained
+    try { renderBriefing(); } catch (e) {}
+    const _cl = clusters.find(c => c.newsy);
+    if (_cl) recordSignal('wallet cluster', _cl.title, _cl.side === 'BUY' ? 1 : -1, `${_cl.wallets} wallets, ${fmtUSD(_cl.usd)}`);
     // Bookkeeping and alerts run on the FULL batch; the "Show:" control is display-only.
     // Filtering first meant a 92-score trade was never alerted or remembered while a filter
     // was active, then alerted on an hour-old trade the moment the filter changed.
@@ -1083,6 +1261,7 @@ async function _loadRadar() {
     // Outside the length check: a filter matching zero rows must still enrich, re-score and
     // record the full batch, or a hidden whale is permanently under-scored.
     autoDossier(scored, trades, ++radarRenderGen);
+    Promise.allSettled([botConsider(scored), botCheckExits(scored)]).then(() => { try { renderBot(); } catch (e) {} });
     hotSeeded = true;   // armed only after a completed batch, whatever it contained
     setFeed('#radarState', true);
     $('#radarFallback').hidden = true;
@@ -1205,6 +1384,7 @@ async function loadLeaderboard() {
     if (!res.ok) throw new Error(res.status);
     const rows = await res.json();
     if (!seqCurrent('lb', my)) return;   // window changed mid-flight
+    lastLeaders = rows.map(r => r.proxyWallet).filter(Boolean).slice(0, 6);
     const maxPnl = Math.max(...rows.map(r => Math.abs(r.pnl || 0)), 1);
     tbody.innerHTML = rows.map(r => {
       const nm = r.userName || r.proxyWallet;
@@ -1311,6 +1491,47 @@ async function loadCrypto() {
 /* ============================== SEC FORM 4 ============================== */
 async function loadSEC() {
   const tbody = $('#secTable tbody');
+  // Preferred path: FMP returns structured filings (ticker, insider, action, size, price).
+  // EDGAR full-text only yields filer names, so it is the fallback.
+  if ((state.fmpKey || '').trim()) {
+    try {
+      const rows = await fetchJSON(`https://financialmodelingprep.com/stable/insider-trading/latest?page=0&apikey=${encodeURIComponent(state.fmpKey.trim())}`);
+      if (!Array.isArray(rows) || !rows.length) throw new Error('empty');
+      const real = rows.filter(r => r.symbol && +r.securitiesTransacted > 0);
+      const isBuy = r => /^P/i.test(r.transactionType || '') || /^A$/i.test(r.acquisitionOrDisposition || '');
+      // cluster buys: 2+ distinct insiders buying the same ticker in this window
+      const byTicker = new Map();
+      for (const r of real.filter(isBuy)) {
+        if (!byTicker.has(r.symbol)) byTicker.set(r.symbol, new Map());
+        const m = byTicker.get(r.symbol);
+        m.set(r.reportingName, (m.get(r.reportingName) || 0) + (+r.securitiesTransacted * (+r.price || 0)));
+      }
+      const clusters = [...byTicker.entries()].filter(([, m]) => m.size >= 2)
+        .map(([sym, m]) => ({ sym, insiders: m.size, usd: [...m.values()].reduce((a, b) => a + b, 0) }))
+        .sort((a, b) => b.insiders - a.insiders || b.usd - a.usd).slice(0, 5);
+      $('#clusterBuys').innerHTML = clusters.length ? clusters.map(c => `
+        <div class="cluster calm" style="border-left-color:var(--status-good)">
+          <span class="big">📈 Cluster buy — ${esc(c.sym)}</span>
+          <span><strong>${c.insiders} different insiders</strong> bought${c.usd > 0 ? ' about ' + fmtUSD(c.usd) + ' combined' : ''} in this filing window</span>
+          <a href="http://openinsider.com/screener?s=${esc(c.sym)}" target="_blank" rel="noopener">history ↗</a>
+        </div>`).join('') : '';
+      tbody.innerHTML = real.slice(0, 15).map(r => {
+        const buy = isBuy(r), px = +r.price || 0, sh = +r.securitiesTransacted || 0;
+        return `<tr>
+          <td style="white-space:nowrap;color:var(--ink-3)">${esc(String(r.filingDate || r.transactionDate || '').slice(0, 10))}</td>
+          <td><strong>${esc(r.symbol)}</strong></td>
+          <td>${esc(r.reportingName || '—')}<div style="font-size:11px;color:var(--ink-3)">${esc((r.typeOfOwner || '').slice(0, 40))}</div></td>
+          <td><span class="chip ${buy ? 'good' : 'critical'}">${buy ? '▲ BUY' : '▼ SELL'}</span><div style="font-size:11px;color:var(--ink-3)">${esc(r.transactionType || '')}</div></td>
+          <td class="num">${fmtNum(sh)}</td>
+          <td class="num">${px ? '$' + fmtNum(px) : '—'}${px && sh ? `<div style="font-size:11px;color:var(--ink-3)">${fmtUSD(px * sh)}</div>` : ''}</td>
+          <td>${r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">filing →</a>` : ''}</td>
+        </tr>`;
+      }).join('');
+      setFeed('#secState', true);
+      $('#secFallback').hidden = true;
+      return;
+    } catch (e) {}
+  }
   try {
     // Without a date window this endpoint is relevance-ranked over the entire corpus and
     // returns filings from 2003-2014 under a "live" heading. Window it, then sort by date.
@@ -1328,7 +1549,7 @@ async function loadSEC() {
       const link = cikMatch ? `https://www.sec.gov/Archives/edgar/data/${parseInt(cikMatch[1],10)}/${acc}/${doc}` : 'https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&type=4&dateb=&owner=include&count=40';
       return `<tr>
         <td style="white-space:nowrap;color:var(--ink-3)">${esc(s.file_date || '')}</td>
-        <td>${names || '—'}</td>
+        <td colspan="5">${names || '—'}</td>
         <td><a href="${esc(link)}" target="_blank" rel="noopener">open filing →</a></td>
       </tr>`;
     }).join('');
@@ -1337,7 +1558,7 @@ async function loadSEC() {
   } catch (e) {
     setFeed('#secState', false);
     $('#secFallback').hidden = false;
-    tbody.innerHTML = '<tr><td colspan="3" class="empty">EDGAR full-text search unreachable.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">Insider-filing feeds unreachable.</td></tr>';
   }
 }
 
@@ -1443,6 +1664,9 @@ async function loadMovers() {
     if (state.mHideSports) ms = ms.filter(m => !SPORTSY.test(m.q));
     ms.sort((a,b) => Math.abs(b.chg) - Math.abs(a.chg));
     ms = ms.slice(0, 14);
+    lastMovers = ms;
+    const _lead = ms.find(m => classifyTitle(m.q) === 'news' && Math.abs(m.chg) >= 0.15);
+    if (_lead) recordSignal('odds swing', _lead.q, _lead.chg >= 0 ? 1 : -1, `${(_lead.chg * 100).toFixed(0)}pts to ${(_lead.last * 100).toFixed(0)}c`);
     if (!ms.length) {
       tbody.innerHTML = '<tr><td colspan="5" class="empty">No big non-sports odds swings right now — a quiet news day.</td></tr>';
     } else {
@@ -1467,6 +1691,748 @@ async function loadMovers() {
     $('#mvFallback').hidden = false;
     tbody.innerHTML = '<tr><td colspan="5" class="empty">Gamma API unreachable.</td></tr>';
   }
+}
+
+/* ============================== LEAD/LAG STUDY ============================== */
+/* Turning accumulated observation into evidence. Each signal is stored with the instruments it
+   implies and their prices at that moment; later re-checks measure whether the real market
+   followed. Directions are mechanical, not discretionary, so the result cannot be massaged. */
+const LEADLAG_MAP = {
+  rates:    { label: 'rate cut odds', tickers: [['TLT', 1], ['IWM', 1], ['SPY', 1]] },
+  geo:      { label: 'conflict/supply risk', tickers: [['USO', 1], ['GLD', 1], ['SPY', -1]] },
+  tariff:   { label: 'tariff risk', tickers: [['SMH', -1], ['XRT', -1], ['SPY', -1]] },
+  crypto:   { label: 'crypto-regulatory outcome', tickers: [['COIN', 1], ['MSTR', 1], ['IBIT', 1]] },
+  election: { label: 'political outcome', tickers: [['SPY', 1], ['XLE', 1]] },
+  fiscal:   { label: 'fiscal stress', tickers: [['TLT', -1], ['GLD', 1]] },
+};
+async function quoteOf(sym) {
+  const key = (state.fmpKey || '').trim();
+  if (!key) return null;
+  try {
+    const q = await fetchJSON(`https://financialmodelingprep.com/stable/quote?symbol=${sym}&apikey=${encodeURIComponent(key)}`);
+    const r = Array.isArray(q) ? q[0] : q;
+    return r && Number.isFinite(+r.price) ? +r.price : null;
+  } catch (e) { return null; }
+}
+async function recordSignal(kind, title, dir, detail) {
+  const bucket = confirmBucket(title);
+  if (!bucket || !LEADLAG_MAP[bucket] || !(state.fmpKey || '').trim()) return;
+  store.signals = store.signals || [];
+  const sigKey = bucket + '|' + (title || '').slice(0, 40) + '|' + Math.round(Date.now() / 36e5);
+  if (store.signals.some(s => s.key === sigKey)) return;      // one per bucket+market per hour
+  const map = LEADLAG_MAP[bucket];
+  const base = {};
+  for (const [sym] of map.tickers) { const px = await quoteOf(sym); if (px) base[sym] = px; }
+  if (!Object.keys(base).length) return;
+  store.signals.unshift({ key: sigKey, ts: Date.now(), kind, title, bucket, dir, detail, base, checks: {} });
+  if (store.signals.length > 120) store.signals.length = 120;
+  persist(); renderLeadLag();
+}
+async function updateSignals() {
+  store.signals = store.signals || [];
+  if (!(state.fmpKey || '').trim()) return;
+  const windows = [['h4', 4 * 3600e3], ['d1', 24 * 3600e3], ['d3', 72 * 3600e3]];
+  let changed = false;
+  for (const s of store.signals.slice(0, 30)) {
+    for (const [w, ms] of windows) {
+      if (s.checks[w] || Date.now() - s.ts < ms) continue;
+      const map = LEADLAG_MAP[s.bucket]; if (!map) continue;
+      const snap = {};
+      for (const [sym] of map.tickers) { const px = await quoteOf(sym); if (px) snap[sym] = px; }
+      if (Object.keys(snap).length) { s.checks[w] = snap; changed = true; }
+    }
+  }
+  if (changed) { persist(); renderLeadLag(); }
+}
+// Implied move = signal direction x the instrument's sign for that bucket.
+function llScore(s, w) {
+  const map = LEADLAG_MAP[s.bucket]; const snap = s.checks[w];
+  if (!map || !snap) return null;
+  let hits = 0, tot = 0, sum = 0;
+  for (const [sym, sign] of map.tickers) {
+    if (!s.base[sym] || !snap[sym]) continue;
+    const pct = (snap[sym] - s.base[sym]) / s.base[sym] * 100;
+    const implied = pct * sign * s.dir;      // positive = moved the way the signal implied
+    tot++; sum += implied;
+    if (implied >= 0.3) hits++;
+  }
+  return tot ? { hits, tot, avg: sum / tot } : null;
+}
+function renderLeadLag() {
+  const tb = $('#llTable tbody');
+  if (!tb) return;
+  const sigs = store.signals || [];
+  if (!sigs.length) {
+    $('#llState').textContent = (state.fmpKey || '').trim() ? 'collecting' : 'needs FMP key';
+    $('#llSummary').innerHTML = '';
+    return;
+  }
+  const agg = { h4: [], d1: [], d3: [] };
+  for (const s of sigs) for (const w of ['h4', 'd1', 'd3']) { const r = llScore(s, w); if (r) agg[w].push(r.avg); }
+  const stat = arr => arr.length ? { n: arr.length, avg: arr.reduce((a, b) => a + b, 0) / arr.length, hit: arr.filter(x => x >= 0.3).length / arr.length * 100 } : null;
+  const S = { h4: stat(agg.h4), d1: stat(agg.d1), d3: stat(agg.d3) };
+  const best = S.d1 || S.h4 || S.d3;
+  const enough = best && best.n >= 20;
+  $('#llSummary').innerHTML = `<div class="cluster ${enough && best.avg > 0.2 ? '' : 'calm'}" style="border-left-color:${!enough ? 'var(--ink-3)' : best.avg > 0.2 ? 'var(--status-good)' : Math.abs(best.avg) <= 0.2 ? 'var(--ink-3)' : 'var(--status-critical)'}">
+    <span class="big">${!enough ? '🔍 Still collecting' : best.avg > 0.2 ? '✅ Signals appear to lead' : Math.abs(best.avg) <= 0.2 ? '⚖️ No lead detected' : '⚠️ Signals appear to lag'}</span>
+    ${['h4', 'd1', 'd3'].map(w => S[w] ? `<span class="chip muted">${w === 'h4' ? '+4h' : w === 'd1' ? '+24h' : '+72h'}: ${S[w].avg >= 0 ? '+' : ''}${S[w].avg.toFixed(2)}% implied-direction move · ${S[w].hit.toFixed(0)}% hit · n=${S[w].n}</span>` : '').join('')}
+    ${!enough ? '<span class="chip warn">● need 20+ resolved signals before this means anything</span>' : ''}
+  </div>`;
+  $('#llState').textContent = `${sigs.length} signals`;
+  $('#llState').className = 'feedstate live';
+  tb.innerHTML = sigs.slice(0, 30).map(s => {
+    const cell = w => { const r = llScore(s, w); return r ? `<span style="color:${r.avg >= 0.3 ? 'var(--status-good)' : r.avg <= -0.3 ? 'var(--status-critical)' : 'var(--ink-2)'}">${r.avg >= 0 ? '+' : ''}${r.avg.toFixed(2)}%</span>` : '<span style="color:var(--ink-3)">—</span>'; };
+    const fin = llScore(s, 'd1') || llScore(s, 'h4');
+    const map = LEADLAG_MAP[s.bucket];
+    return `<tr title="${esc(s.detail || '')}">
+      <td style="white-space:nowrap;color:var(--ink-3)">${ago(s.ts / 1000)}</td>
+      <td>${esc((s.title || '').slice(0, 52))}<div style="font-size:11px;color:var(--ink-3)">${esc(s.kind)}</div></td>
+      <td style="font-size:12px;color:var(--ink-2)">${s.dir > 0 ? '↑' : '↓'} ${esc(map ? map.label : s.bucket)}<div style="font-size:11px;color:var(--ink-3)">${map ? map.tickers.map(([t, g]) => `${t}${g * s.dir > 0 ? '↑' : '↓'}`).join(' ') : ''}</div></td>
+      <td class="num">${cell('h4')}</td><td class="num">${cell('d1')}</td><td class="num">${cell('d3')}</td>
+      <td>${!fin ? '<span class="chip muted">pending</span>' : fin.avg >= 0.3 ? '<span class="chip good">✓ market followed</span>' : fin.avg <= -0.3 ? '<span class="chip critical">✗ market went against</span>' : '<span class="chip muted">flat</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ============================== PAPER TRADING BOT ============================== */
+/* Execution realism is the whole point. Three things kill naive copy-bots and each is modelled:
+   1. FEES. Polymarket's real formula is fee = 0.06 * contracts * p * (1-p) for takers, with a
+      maker rebate of 0.0125 * the same term. At a 10c entry that is -5.4% of stake as a taker
+      versus +1.1% as a maker. Maker-first is not a preference, it is the difference between
+      positive and negative expectancy.
+   2. LATENCY. A trade only reaches the public feed after it is on-chain, so we are always late
+      and the price has already moved. Chasing means paying the new ask plus the taker fee. The
+      honest answer is to post a patient limit at the whale's price and accept missing fills.
+   3. PHANTOM P&L. We never read profit from Polymarket's positions or leaderboard endpoints —
+      both are known to lie (redeemed winners vanish; sold longshots book at full notional).
+      Every number below is derived from our own simulated fills. */
+const FEE_THETA = 0.06, MAKER_REBATE = 0.0125;
+function takerFee(shares, px) { return FEE_THETA * shares * px * (1 - px); }
+function makerCredit(shares, px) { return MAKER_REBATE * shares * px * (1 - px); }
+
+function botDefaults() {
+  return { on: false, bank: 1000, cash: 1000, minScore: 70, mode: 'maker', risk: 0.02,
+           newsOnly: true, exitCopy: true, startedAt: Date.now() };
+}
+function bot() { store.bot = store.bot || botDefaults(); return store.bot; }
+
+// Walk the real book. asks come back DESCENDING from Polymarket, so the best ask is the LAST
+// element — getting this backwards is the single most common Polymarket bot bug.
+function bestAskFrom(book) {
+  const a = (book && book.asks) || [];
+  if (!a.length) return null;
+  return a.reduce((m, x) => (+x.price < +m.price ? x : m), a[0]);
+}
+function bestBidFrom(book) {
+  const b = (book && book.bids) || [];
+  if (!b.length) return null;
+  return b.reduce((m, x) => (+x.price > +m.price ? x : m), b[0]);
+}
+function walkAsks(book, wantShares) {
+  const asks = ((book && book.asks) || []).slice().sort((x, y) => +x.price - +y.price);
+  let need = wantShares, cost = 0, got = 0;
+  for (const lvl of asks) {
+    if (need <= 0) break;
+    const take = Math.min(need, +lvl.size);
+    cost += take * +lvl.price; got += take; need -= take;
+  }
+  return got > 0 ? { shares: got, vwap: cost / got, filled: need <= 1e-9 } : null;
+}
+const bookCache = new Map();
+async function getBook(tokenId) {
+  const hit = bookCache.get(tokenId);
+  if (hit && Date.now() - hit.ts < 20000) return hit.book;
+  try {
+    const book = await fetchJSON('https://clob.polymarket.com/book?token_id=' + encodeURIComponent(tokenId));
+    bookCache.set(tokenId, { ts: Date.now(), book });
+    return book;
+  } catch (e) { return null; }
+}
+
+// Sizing: fixed-fractional scaled by conviction, then hard-capped by book depth so we never
+// simulate a fill the market could not actually absorb.
+function botSize(b, score, px, depthShares) {
+  const conviction = Math.min(1.5, Math.max(0.5, score / 70));
+  let stake = b.cash * b.risk * conviction;
+  stake = Math.min(stake, b.cash * 0.10);          // never more than 10% of remaining cash
+  stake = Math.min(stake, b.bank * 0.05);          // never more than 5% of starting bankroll
+  let shares = stake / px;
+  if (depthShares != null) shares = Math.min(shares, depthShares * 0.10);  // max 10% of visible depth
+  return { shares, stake: shares * px };
+}
+
+async function botConsider(trades) {
+  const b = bot();
+  if (!b.on) return;
+  store.botPos = store.botPos || [];
+  const openCount = store.botPos.filter(p => p.status !== 'closed').length;
+  for (const t of trades) {
+    if (openCount >= 12) break;
+    if (t.side !== 'BUY' || t._s.score < b.minScore) continue;
+    if (b.newsOnly && !t._s.isNewsy) continue;
+    if (!t.asset || !t.conditionId) continue;
+    const key = t.transactionHash || (t.proxyWallet + t.timestamp);
+    if (store.botPos.some(p => p.srcKey === key)) continue;
+    if (store.botPos.some(p => p.tokenId === t.asset && p.status !== 'closed')) continue;
+    const book = await getBook(t.asset);
+    if (!book) continue;
+    const ask = bestAskFrom(book), bid = bestBidFrom(book);
+    if (!ask || !bid) continue;
+    const nowAsk = +ask.price;
+    const slippage = (nowAsk - t.price) / Math.max(t.price, 0.01);
+    const pos = { id: key, srcKey: key, wallet: t.proxyWallet, srcName: t.name || t.pseudonym || t.proxyWallet.slice(0, 10),
+      conditionId: t.conditionId, tokenId: t.asset, outcome: t.outcome, outcomeIndex: t.outcomeIndex ?? 0,
+      title: t.title, score: t._s.score, whalePx: t.price, openedAt: Date.now(), status: 'pending',
+      mode: b.mode, limitPx: t.price, slipAtSignal: slippage };
+    if (b.mode === 'taker') {
+      const want = botSize(b, t._s.score, nowAsk, null).shares;
+      const fill = walkAsks(book, want);
+      if (!fill) continue;
+      const fee = takerFee(fill.shares, fill.vwap);
+      const cost = fill.shares * fill.vwap + fee;
+      if (cost > b.cash) continue;
+      Object.assign(pos, { status: 'open', shares: fill.shares, entryPx: fill.vwap, fee, cost });
+      b.cash -= cost;
+    } else {
+      // Maker: rest a limit at the whale's price. Fill only if the book comes to us.
+      const want = botSize(b, t._s.score, t.price, +ask.size).shares;
+      if (nowAsk <= t.price) {
+        const fill = walkAsks(book, want);
+        if (!fill || fill.vwap > t.price) { Object.assign(pos, { shares: want }); }
+        else {
+          const credit = makerCredit(fill.shares, fill.vwap);
+          const cost = fill.shares * fill.vwap - credit;
+          if (cost > b.cash) continue;
+          Object.assign(pos, { status: 'open', shares: fill.shares, entryPx: fill.vwap, fee: -credit, cost });
+          b.cash -= cost;
+        }
+      } else {
+        Object.assign(pos, { shares: want });   // stays pending until the ask comes down to us
+      }
+    }
+    store.botPos.unshift(pos);
+  }
+  if (store.botPos.length > 300) store.botPos.length = 300;
+  persist();
+}
+
+async function botUpdate() {
+  const b = bot();
+  store.botPos = store.botPos || [];
+  const live = store.botPos.filter(p => p.status !== 'closed').slice(0, 14);
+  for (const p of live) {
+    const book = await getBook(p.tokenId);
+    if (!book) continue;
+    const ask = bestAskFrom(book), bid = bestBidFrom(book);
+    if (p.status === 'pending') {
+      // resting limit — fills only if someone offers at or below our price
+      if (ask && +ask.price <= p.limitPx && b.on) {
+        const fill = walkAsks(book, p.shares);
+        if (fill && fill.vwap <= p.limitPx) {
+          const credit = makerCredit(fill.shares, fill.vwap);
+          const cost = fill.shares * fill.vwap - credit;
+          if (cost <= b.cash) {
+            Object.assign(p, { status: 'open', shares: fill.shares, entryPx: fill.vwap, fee: -credit, cost });
+            b.cash -= cost;
+          }
+        }
+      } else if (Date.now() - p.openedAt > 6 * 3600e3) {
+        Object.assign(p, { status: 'closed', pnl: 0, exitReason: 'limit never filled — cancelled' });
+      }
+      continue;
+    }
+    p.markPx = bid ? +bid.price : (p.entryPx || 0);      // exit-realistic mark, not the mid
+    // resolution check
+    const res = await getMarketResolution(p.conditionId);
+    if (res && res.closed && res.winnerIndex != null && !res.provisional) {
+      const won = res.winnerIndex === p.outcomeIndex;
+      const proceeds = won ? p.shares : 0;                // winners redeem at $1/share
+      p.pnl = proceeds - p.cost;
+      p.exitPx = won ? 1 : 0;
+      p.status = 'closed';
+      p.exitReason = won ? 'market resolved — redeemed at $1' : 'market resolved — expired worthless';
+      b.cash += proceeds;
+    }
+  }
+  persist();
+}
+
+// Exit when the source wallet exits: their SELL of the same token is our exit trigger.
+async function botCheckExits(trades) {
+  const b = bot();
+  if (!b.on || !b.exitCopy) return;
+  store.botPos = store.botPos || [];
+  for (const t of trades) {
+    if (t.side !== 'SELL') continue;
+    const pos = store.botPos.find(p => p.status === 'open' && p.wallet === t.proxyWallet && p.tokenId === t.asset);
+    if (!pos) continue;
+    const book = await getBook(pos.tokenId);
+    const bid = bestBidFrom(book);
+    if (!bid) continue;
+    const px = +bid.price;
+    const fee = b.mode === 'taker' ? takerFee(pos.shares, px) : -makerCredit(pos.shares, px);
+    const proceeds = pos.shares * px - fee;
+    pos.status = 'closed'; pos.exitPx = px; pos.pnl = proceeds - pos.cost;
+    pos.exitReason = 'source wallet sold — copied their exit';
+    pos.exitFee = fee;
+    b.cash += proceeds;
+  }
+  persist();
+}
+
+function botEquity() {
+  const b = bot();
+  const open = (store.botPos || []).filter(p => p.status === 'open');
+  const mark = open.reduce((a, p) => a + p.shares * (p.markPx != null ? p.markPx : p.entryPx || 0), 0);
+  return b.cash + mark;
+}
+
+function renderBot() {
+  const b = bot();
+  $('#botState').textContent = b.on ? 'running' : 'off';
+  $('#botState').className = 'feedstate ' + (b.on ? 'live' : '');
+  $('#botToggle').textContent = b.on ? '⏸ Pause paper trading' : '▶ Start paper trading';
+  const pos = store.botPos || [];
+  const closed = pos.filter(p => p.status === 'closed' && p.pnl != null);
+  const open = pos.filter(p => p.status === 'open');
+  const pend = pos.filter(p => p.status === 'pending');
+  const realised = closed.reduce((a, p) => a + p.pnl, 0);
+  const unreal = open.reduce((a, p) => a + (p.shares * ((p.markPx != null ? p.markPx : p.entryPx || 0)) - p.cost), 0);
+  const eq = botEquity();
+  const wins = closed.filter(p => p.pnl > 0).length;
+  const fees = pos.reduce((a, p) => a + (p.fee || 0) + (p.exitFee || 0), 0);
+  const ret = b.bank ? (eq - b.bank) / b.bank * 100 : 0;
+  $('#botStats').innerHTML = `
+    <div class="tile"><div class="v" style="color:${eq >= b.bank ? 'var(--status-good)' : 'var(--status-critical)'}">${fmtUSD(eq)}</div><div class="l">Equity</div><div class="s">${ret >= 0 ? '+' : ''}${ret.toFixed(1)}% from ${fmtUSD(b.bank)}</div></div>
+    <div class="tile"><div class="v">${fmtUSD(realised)}</div><div class="l">Realised P&L</div><div class="s">${closed.length} closed · ${closed.length ? Math.round(wins / closed.length * 100) : 0}% win rate</div></div>
+    <div class="tile"><div class="v">${fmtUSD(unreal)}</div><div class="l">Unrealised</div><div class="s">${open.length} open · ${pend.length} resting limit${pend.length === 1 ? '' : 's'}</div></div>
+    <div class="tile"><div class="v" style="color:${fees > 0 ? 'var(--status-critical)' : 'var(--status-good)'}">${fmtUSD(-fees)}</div><div class="l">Fees ${fees < 0 ? 'earned (maker rebates)' : 'paid'}</div><div class="s">${b.mode === 'maker' ? 'maker mode — rebates credited' : 'taker mode — 6% × p × (1−p)'}</div></div>
+    <div class="tile"><div class="v">${fmtUSD(b.cash)}</div><div class="l">Cash free</div><div class="s">risk ${(b.risk * 100).toFixed(0)}%/trade, copy at ${b.minScore}+</div></div>`;
+
+  // equity curve
+  store.botEq = store.botEq || [];
+  const last = store.botEq[store.botEq.length - 1];
+  if (!last || Math.abs(last.e - eq) > 0.005 || Date.now() - last.t > 3e5) { store.botEq.push({ t: Date.now(), e: eq }); if (store.botEq.length > 400) store.botEq.shift(); }
+  const pts = store.botEq;
+  if (pts.length > 1) {
+    const w = 640, h = 90, min = Math.min(...pts.map(x => x.e), b.bank), max = Math.max(...pts.map(x => x.e), b.bank);
+    const rng = (max - min) || 1;
+    const d = pts.map((x, i) => `${(i / (pts.length - 1) * w).toFixed(1)},${(h - (x.e - min) / rng * h).toFixed(1)}`).join(' ');
+    const baseY = (h - (b.bank - min) / rng * h).toFixed(1);
+    $('#botCurve').innerHTML = `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:${h}px" preserveAspectRatio="none" role="img" aria-label="Equity curve">
+      <line x1="0" y1="${baseY}" x2="${w}" y2="${baseY}" stroke="var(--baseline)" stroke-dasharray="4 4" stroke-width="1"/>
+      <polyline points="${d}" fill="none" stroke="${eq >= b.bank ? 'var(--status-good)' : 'var(--status-critical)'}" stroke-width="2" stroke-linejoin="round"/>
+    </svg><div style="font-size:11.5px;color:var(--ink-3);margin-top:4px">Dashed line is the starting bankroll. ${pts.length} samples since ${new Date(b.startedAt).toLocaleString()}.</div>`;
+  } else {
+    $('#botCurve').innerHTML = '<div class="empty">The curve draws once the bot has taken its first position.</div>';
+  }
+
+  const tb = $('#botPosTable tbody');
+  if (!pos.length) { tb.innerHTML = '<tr><td colspan="9" class="empty">No positions yet. The bot copies qualifying flagged trades as the radar finds them.</td></tr>'; }
+  else tb.innerHTML = pos.slice(0, 40).map(p => {
+    const mark = p.status === 'closed' ? p.exitPx : (p.markPx != null ? p.markPx : p.entryPx);
+    const pnl = p.status === 'closed' ? p.pnl : (p.status === 'open' ? p.shares * (p.markPx != null ? p.markPx : p.entryPx || 0) - p.cost : null);
+    const chip = p.status === 'open' ? '<span class="chip good">open</span>' : p.status === 'pending' ? '<span class="chip warn">● resting limit</span>' : (p.pnl > 0 ? '<span class="chip good">✓ won</span>' : '<span class="chip critical">✗ lost</span>');
+    return `<tr title="${esc(p.exitReason || '')}">
+      <td>${chip}</td>
+      <td>${esc((p.title || '').slice(0, 52))}<div style="font-size:11px;color:var(--ink-3)">score ${p.score} · ${esc(p.mode)}</div></td>
+      <td>${positionLabel('BUY', p.outcome)}</td>
+      <td class="num">${p.entryPx != null ? (p.entryPx * 100).toFixed(1) + '¢' : '@' + (p.limitPx * 100).toFixed(1) + '¢'}</td>
+      <td class="num">${mark != null ? (mark * 100).toFixed(1) + '¢' : '—'}</td>
+      <td class="num">${p.cost != null ? fmtUSD(p.cost) : '—'}</td>
+      <td class="num" style="color:${(p.fee || 0) > 0 ? 'var(--status-critical)' : 'var(--status-good)'}">${p.fee != null ? fmtUSD(-(p.fee || 0)) : '—'}</td>
+      <td class="num" style="color:${pnl == null ? 'var(--ink-3)' : pnl >= 0 ? 'var(--status-good)' : 'var(--status-critical)'}"><strong>${pnl == null ? '—' : fmtUSD(pnl)}</strong></td>
+      <td><a class="walletlink" data-dossier="${esc(p.wallet)}" data-label="${esc(p.srcName)}">${esc(p.srcName)}</a></td>
+    </tr>`;
+  }).join('');
+
+  const exFee = takerFee(1000, 0.10), exCred = makerCredit(1000, 0.10);
+  $('#botFeeNote').innerHTML = `<strong>Fee model is Polymarket's real one:</strong> taker fee = 0.06 × contracts × p × (1−p); maker rebate = 0.0125 × the same. On 1,000 contracts at 10¢ that is <strong>${fmtUSD(exFee)} paid</strong> as a taker (5.4% of a ${fmtUSD(100)} stake) versus <strong>${fmtUSD(exCred)} credited</strong> as a maker. Maker mode posts a limit at the whale's price and only fills if the book comes to you — you miss trades, but you avoid both the fee and the chase. Taker mode shows what chasing actually costs. Positions are marked at the <em>best bid</em>, i.e. what you could really exit at.`;
+}
+
+/* ============================== SPORTS LINE MOVEMENT ============================== */
+/* Free tier is 500 requests/month, so every call is rationed: at most one per 30 minutes,
+   only while the page is open, with the running count shown to the user. We build our own
+   history because no free API exposes odds *history* — only the current line. */
+const ODDS_MIN_INTERVAL = 30 * 60 * 1000;
+function americanToProb(p) {
+  const v = +p;
+  if (!Number.isFinite(v) || v === 0) return null;
+  return v > 0 ? 100 / (v + 100) : -v / (-v + 100);
+}
+async function checkOdds(manual) {
+  const key = (state.oddsKey || '').trim();
+  const tbody = $('#lnTable tbody');
+  if (!key) { setFeed('#lnState', 'link'); $('#lnState').textContent = 'needs a key'; renderLines(); return; }
+  store.oddsMeta = store.oddsMeta || { count: 0, month: new Date().getMonth(), last: 0 };
+  if (store.oddsMeta.month !== new Date().getMonth()) store.oddsMeta = { count: 0, month: new Date().getMonth(), last: 0 };
+  if (!manual && Date.now() - (store.oddsMeta.last || 0) < ODDS_MIN_INTERVAL) { renderLines(); return; }
+  try {
+    const sport = state.sport || 'basketball_nba';
+    const url = `https://api.the-odds-api.com/v4/sports/${encodeURIComponent(sport)}/odds/?apiKey=${encodeURIComponent(key)}&regions=us&markets=h2h,spreads&oddsFormat=american`;
+    const games = await fetchJSON(url);
+    store.oddsMeta.count++; store.oddsMeta.last = Date.now();
+    if (!Array.isArray(games)) throw new Error('unexpected response — check the key');
+    store.oddsSnaps = store.oddsSnaps || {};
+    const now = Date.now();
+    for (const g of games) {
+      if (!g || !g.id) continue;
+      const rec = { ts: now, h2h: {}, spread: {} };
+      for (const bk of (g.bookmakers || [])) {
+        for (const mk of (bk.markets || [])) {
+          if (mk.key === 'h2h') {
+            const home = (mk.outcomes || []).find(o => o.name === g.home_team);
+            const pr = home ? americanToProb(home.price) : null;
+            if (pr != null) rec.h2h[bk.key] = pr;
+          } else if (mk.key === 'spreads') {
+            const home = (mk.outcomes || []).find(o => o.name === g.home_team);
+            if (home && Number.isFinite(+home.point)) rec.spread[bk.key] = +home.point;
+          }
+        }
+      }
+      if (!Object.keys(rec.h2h).length && !Object.keys(rec.spread).length) continue;
+      const prev = store.oddsSnaps[g.id] || { home: g.home_team, away: g.away_team, start: g.commence_time, snaps: [] };
+      prev.home = g.home_team; prev.away = g.away_team; prev.start = g.commence_time;
+      prev.snaps.push(rec);
+      if (prev.snaps.length > 12) prev.snaps = prev.snaps.slice(-12);
+      store.oddsSnaps[g.id] = prev;
+    }
+    // drop games that started over a day ago
+    for (const [id, g] of Object.entries(store.oddsSnaps)) {
+      if (g.start && Date.parse(g.start) < Date.now() - 864e5) delete store.oddsSnaps[id];
+    }
+    persist();
+    setFeed('#lnState', true);
+  } catch (e) {
+    setFeed('#lnState', false);
+    tbody.innerHTML = `<tr><td colspan="6" class="empty">Odds API error: ${esc(e.message || 'unreachable')}. Check the key, or you may have hit the free monthly limit.</td></tr>`;
+  }
+  renderLines();
+}
+function renderLines() {
+  const tbody = $('#lnTable tbody');
+  const meta = store.oddsMeta || { count: 0 };
+  $('#oddsQuota').textContent = meta.count ? `${meta.count} of ~500 free requests used this month` : '';
+  const snaps = store.oddsSnaps || {};
+  const rows = [];
+  for (const [id, g] of Object.entries(snaps)) {
+    if (!g.snaps || g.snaps.length < 2) continue;
+    const first = g.snaps[0], last = g.snaps[g.snaps.length - 1];
+    // h2h consensus (home win probability)
+    const p0 = Object.values(first.h2h || {}), p1 = Object.values(last.h2h || {});
+    if (p0.length && p1.length) {
+      const a = p0.reduce((x, y) => x + y, 0) / p0.length, b = p1.reduce((x, y) => x + y, 0) / p1.length;
+      const move = (b - a) * 100;
+      const agree = Object.keys(last.h2h).filter(k => first.h2h[k] != null && Math.sign(last.h2h[k] - first.h2h[k]) === Math.sign(b - a)).length;
+      if (Math.abs(move) >= 3) rows.push({ g, market: 'Moneyline (home)', from: (a * 100).toFixed(0) + '%', to: (b * 100).toFixed(0) + '%', move, agree, books: Object.keys(last.h2h).length, unit: 'pts' });
+    }
+    const s0 = Object.values(first.spread || {}), s1 = Object.values(last.spread || {});
+    if (s0.length && s1.length) {
+      const a = s0.reduce((x, y) => x + y, 0) / s0.length, b = s1.reduce((x, y) => x + y, 0) / s1.length;
+      const move = b - a;
+      const agree = Object.keys(last.spread).filter(k => first.spread[k] != null && Math.sign(last.spread[k] - first.spread[k]) === Math.sign(move)).length;
+      if (Math.abs(move) >= 1) rows.push({ g, market: 'Spread (home)', from: (a > 0 ? '+' : '') + a.toFixed(1), to: (b > 0 ? '+' : '') + b.toFixed(1), move, agree, books: Object.keys(last.spread).length, unit: '' });
+    }
+  }
+  rows.sort((x, y) => Math.abs(y.move) - Math.abs(x.move));
+  if (!rows.length) {
+    const tracked = Object.keys(snaps).length;
+    tbody.innerHTML = `<tr><td colspan="6" class="empty">${(state.oddsKey || '').trim()
+      ? (tracked ? `Tracking ${tracked} game${tracked === 1 ? '' : 's'} — no meaningful movement yet. Movement can only be measured between snapshots, so take another one later (or leave the page open).`
+                 : 'No games returned. Try a different sport, or the season may be out of window.')
+      : 'Add a free key from <a href="https://the-odds-api.com" target="_blank" rel="noopener">the-odds-api.com</a> (500 requests/month, no card) to start building line history.'}</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.slice(0, 20).map(r => {
+    const steam = r.books >= 3 && r.agree >= Math.ceil(r.books * 0.75) && Math.abs(r.move) >= (r.unit ? 5 : 1.5);
+    const col = steam ? 'var(--status-critical)' : 'var(--status-warn)';
+    return `<tr>
+      <td><strong>${esc(r.g.away)}</strong> @ <strong>${esc(r.g.home)}</strong><div style="font-size:11px;color:var(--ink-3)">${esc(String(r.g.start || '').slice(0, 16).replace('T', ' '))}</div></td>
+      <td>${esc(r.market)}</td>
+      <td style="color:var(--ink-2)">${esc(r.from)} → <strong style="color:var(--ink-1)">${esc(r.to)}</strong></td>
+      <td class="num" style="color:${col}"><strong>${r.move >= 0 ? '+' : ''}${r.move.toFixed(1)}${r.unit ? '' : ''}</strong></td>
+      <td class="num">${r.agree}/${r.books}</td>
+      <td>${steam ? '<span class="chip critical">▲ steam move — books moving together</span>' : '<span class="chip warn">● line drifting</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ============================== TODAY'S BRIEFING ============================== */
+/* Rule-based cross-market context. Each entry maps a market subject to the instruments that
+   subject normally transmits to, and what would confirm or kill the move. Deliberately framed
+   as "what to watch", never "what to buy". */
+const TRANSMISSION = [
+  { re: /(rate cut|rate hike|cuts? rates|federal reserve|\bfomc\b|\bfed\b(?! cup)|inflation|\bcpi\b|powell)/i,
+    chain: 'Rate-path bets reprice fed funds futures and the 2-year yield first, usually within minutes. Equity duration follows: long-duration growth and small caps are the most rate-sensitive, along with housing, regional banks and utilities. The dollar generally moves inversely to cut odds.',
+    watch: 'The next CPI print and FOMC date are the resolution events. If prediction odds moved but 2-year yields did not, one of the two is wrong — and the bond market is usually right.' },
+  { re: /(iran|israel|venezuela|hormuz|\bopec\b|missile|nuclear|\bstrikes?\b|military|invasion|\bwar\b)/i,
+    chain: 'Geopolitical supply risk transmits to crude (WTI/Brent) first, then energy equities, defense primes and tanker rates. A genuine escalation also bids gold, the dollar and volatility while pressuring risk assets broadly.',
+    watch: 'Crude futures are the tell: if oil has not moved, the market does not believe the supply story yet. Shipping advisories and airspace notices often precede formal announcements.' },
+  { re: /(tariff|trade deal|trade war|sanction|embargo|export control)/i,
+    chain: 'Tariff and sanction news hits import-dependent retail, autos and semiconductors, plus the specific country ETFs involved. The dollar and affected-currency pairs move alongside.',
+    watch: 'Effective dates and carve-outs matter far more than the headline rate — equity reactions usually fade unless implementation is imminent.' },
+  { re: /(\betf\b|\bsec\b|cftc|crypto|bitcoin|ethereum|stablecoin|genius act|token|airdrop|listing)/i,
+    chain: 'Crypto regulatory outcomes reprice BTC and ETH first, then the listed proxies — exchanges, miners and treasury-holding companies — which typically move at higher beta than the coin itself.',
+    watch: 'Check the actual agency docket for the decision date. Crypto prediction markets are the most prone to manufactured hype, so weight on-chain flow above odds alone.' },
+  { re: /(election|primary|senate|congress|governor|president|nomination|confirmation|impeach)/i,
+    chain: 'Election and appointment odds shift sector expectations rather than the index: healthcare, energy, defense and financial regulation carry the clearest policy exposure. Moves tend to be slow and to reverse often.',
+    watch: 'Polling releases and debate dates are the catalysts. An odds swing arriving before a poll drops is the kind worth examining for leakage.' },
+  { re: /(shutdown|debt ceiling|\bdefault\b|downgrade)/i,
+    chain: 'Fiscal brinkmanship shows up in Treasury bills maturing around the deadline, then gold and volatility. Equities historically shrug until very close to the date.',
+    watch: 'The bill curve around the X-date is the cleanest read on whether markets actually price a miss.' },
+  { re: /(merger|acquisi|acquire|antitrust|lawsuit|indict|pardon|bankrupt|earnings|\bipo\b)/i,
+    chain: 'Company-specific outcomes move the named ticker and its close competitors; deal outcomes also move the acquirer inversely to the target.',
+    watch: 'Check the named company directly — unusual options activity and Form 4 filings around the same date are the corroborating signals.' },
+];
+function transmissionFor(title) { return TRANSMISSION.find(t => t.re.test(title || '')) || null; }
+
+/* The most valuable line in any briefing: did the real market agree? If prediction odds lurched
+   but the instrument that should have moved did not, the prediction market is usually the one
+   that is wrong. Needs the FMP key (same one the congress feed uses). */
+const CONFIRM_TICKERS = {
+  rates: ['TLT', 'SPY', 'IWM'], geo: ['USO', 'XLE', 'GLD'], tariff: ['SPY', 'SMH', 'XRT'],
+  crypto: ['COIN', 'MSTR', 'IBIT'], election: ['SPY', 'XLV', 'XLE'], fiscal: ['TLT', 'GLD'], corp: [],
+};
+function confirmBucket(title) {
+  const t = title || '';
+  if (/(rate cut|rate hike|cuts? rates|federal reserve|\bfomc\b|inflation|\bcpi\b|powell)/i.test(t)) return 'rates';
+  if (/(iran|israel|venezuela|hormuz|\bopec\b|missile|nuclear|\bstrikes?\b|military|invasion|\bwar\b)/i.test(t)) return 'geo';
+  if (/(tariff|trade war|sanction|embargo|export control)/i.test(t)) return 'tariff';
+  if (/(\betf\b|crypto|bitcoin|ethereum|stablecoin|token|\bsec\b)/i.test(t)) return 'crypto';
+  if (/(election|primary|senate|congress|president|nomination)/i.test(t)) return 'election';
+  if (/(shutdown|debt ceiling|\bdefault\b|downgrade)/i.test(t)) return 'fiscal';
+  return null;
+}
+async function fetchConfirm(title) {
+  const key = (state.fmpKey || '').trim();
+  const bucket = confirmBucket(title);
+  if (!key || !bucket || !CONFIRM_TICKERS[bucket] || !CONFIRM_TICKERS[bucket].length) return null;
+  try {
+    const out = [];
+    for (const sym of CONFIRM_TICKERS[bucket]) {
+      const q = await fetchJSON(`https://financialmodelingprep.com/stable/quote?symbol=${sym}&apikey=${encodeURIComponent(key)}`);
+      const r = Array.isArray(q) ? q[0] : q;
+      if (r && Number.isFinite(+r.changePercentage)) out.push({ sym, chg: +r.changePercentage, price: +r.price });
+    }
+    return out.length ? out : null;
+  } catch (e) { return null; }
+}
+
+function renderBriefing() {
+  const el = $('#brBody');
+  if (!el) return;
+  const items = [];
+  const now = Date.now() / 1000;
+  const recentFlags = (store.flagged || []).filter(f => now - f.ts < 86400);
+  const topFlag = recentFlags.slice().sort((a, b) => b.score - a.score)[0];
+  const topCluster = (lastClusters || []).slice().sort((a, b) => (b.newsy - a.newsy) || (b.usd - a.usd))[0];
+  const movers = (lastMovers || []).filter(m => classifyTitle(m.q) === 'news');
+  const topMover = movers[0];
+  const watchedPols = (lastCongressRows || []).filter(r => r._watched);
+  const provenWallets = Object.entries(store.walletStats || {}).filter(([, v]) => (v.wins || 0) >= 3 && v.wins > 3 * (v.losses || 0));
+
+  let head = null;
+  if (topCluster && topCluster.newsy) head = { icon: '🚨', kind: 'Coordinated flow',
+    text: `<strong>${topCluster.wallets} separate wallets</strong> are ${topCluster.side === 'BUY' ? 'backing' : 'exiting'} <em>${esc(topCluster.outcome)}</em> on “${esc(topCluster.title)}” — ${fmtUSD(topCluster.usd)} combined at about ${(topCluster.avgPx * 100).toFixed(0)}¢. Independent wallets converging on one side of a news-sensitive market is the strongest pattern this tool looks for.`,
+    subject: topCluster.title, action: `<button class="ctrl" data-clusterkey="${esc(topCluster.key)}">Inspect the wallets →</button>` };
+  else if (topFlag && topFlag.score >= 70) head = { icon: '🐋', kind: 'Highest-conviction bet',
+    text: `A wallet put <strong>${fmtUSD(topFlag.usd)}</strong> on <em>${esc(topFlag.outcome)}</em> at ${(topFlag.price * 100).toFixed(0)}¢ in “${esc(topFlag.market)}”, scoring ${topFlag.score}. Flags: ${esc((topFlag.reasons || '').split(' | ').slice(0, 3).join(', '))}.`,
+    subject: topFlag.market, action: `<button class="ctrl" data-dossier="${esc(topFlag.wallet)}" data-label="${esc(topFlag.name)}">Open the wallet →</button>` };
+  else if (topMover) head = { icon: '⚡', kind: 'Biggest repricing',
+    text: `“${esc(topMover.q)}” moved <strong>${topMover.chg >= 0 ? '+' : '−'}${Math.abs(topMover.chg * 100).toFixed(0)} points</strong> in 24h to ${(topMover.last * 100).toFixed(0)}¢ on ${fmtUSD(topMover.vol)} of volume. A news-sensitive market repricing that hard is where information usually surfaces first.`,
+    subject: topMover.q, action: topMover.conditionId ? `<button class="ctrl" data-early="${esc(topMover.conditionId)}" data-q="${esc(topMover.q)}" data-chg="${topMover.chg}">Who bought early? →</button>` : '' };
+
+  if (!head) {
+    el.innerHTML = `<div class="card"><div class="card-pad">
+      <strong>Quiet right now.</strong>
+      <p class="dim" style="margin-top:6px">No wallet clusters, no high-scoring bets in the last 24h, and no news-sensitive market repricing hard. That is a real finding rather than a gap — the patterns this tool hunts arrive in bursts around events, and silence between them is the normal state. The radar keeps scanning every ${state.radarSpeed}s, and the hourly monitor keeps watching while this page is closed.</p>
+      ${recentFlags.length ? `<p class="dim">${recentFlags.length} flagged trade${recentFlags.length === 1 ? '' : 's'} recorded in the last 24h, none above the notable threshold.</p>` : ''}
+    </div></div>`;
+    $('#brState').textContent = 'quiet'; $('#brState').className = 'feedstate';
+    return;
+  }
+
+  const tr = transmissionFor(head.subject);
+  fetchConfirm(head.subject).then(q => {
+    const box = $('#brConfirm');
+    if (!box) return;
+    if (!q) { box.innerHTML = (state.fmpKey || '').trim() ? '' : '<span class="chip muted">add the FMP key to cross-check against real instruments</span>'; return; }
+    const moved = q.filter(x => Math.abs(x.chg) >= 0.5);
+    box.innerHTML = `<div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:600">Did the real market agree today?</div>
+      <p class="dim" style="margin-top:4px">${q.map(x => `<strong>${esc(x.sym)}</strong> ${x.chg >= 0 ? '+' : ''}${x.chg.toFixed(2)}%`).join(' · ')} —
+      ${moved.length ? 'these instruments did move, which is consistent with the signal being real.' : 'none of these moved meaningfully. When a prediction market lurches and the instrument that should react sits still, the prediction market is usually the one that is wrong.'}</p>`;
+  });
+  items.push(`<div class="card" style="border-left:4px solid var(--status-critical)">
+    <div class="card-pad">
+      <div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap">
+        <span style="font-size:19px">${head.icon}</span>
+        <strong style="font-size:15px">${esc(head.kind)}</strong>
+        <span style="margin-left:auto">${head.action || ''}</span>
+      </div>
+      <p style="margin-top:8px">${head.text}</p>
+      ${tr ? `<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--grid)">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:600">Where this normally transmits</div>
+        <p class="dim" style="margin-top:4px">${tr.chain}</p>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:600;margin-top:8px">What would confirm or kill it</div>
+        <p class="dim" style="margin-top:4px">${tr.watch}</p>
+        <div id="brConfirm" style="margin-top:10px"></div>
+      </div>` : '<div id="brConfirm"></div>'}
+    </div></div>`);
+
+  const rows = [];
+  if (topCluster && head.kind !== 'Coordinated flow') rows.push(['🚨', `${topCluster.wallets} wallets, ${fmtUSD(topCluster.usd)} same-side on “${esc(topCluster.title.slice(0, 60))}”`, `<button class="ctrl" data-clusterkey="${esc(topCluster.key)}">wallets →</button>`]);
+  if (topFlag && head.kind !== 'Highest-conviction bet') rows.push(['🐋', `Top bet: ${fmtUSD(topFlag.usd)} on ${esc(topFlag.outcome)} at ${(topFlag.price * 100).toFixed(0)}¢ (score ${topFlag.score})`, `<button class="ctrl" data-dossier="${esc(topFlag.wallet)}" data-label="${esc(topFlag.name)}">wallet →</button>`]);
+  const skip = head.kind === 'Biggest repricing' ? 1 : 0;
+  movers.slice(skip, skip + 3).forEach(m => rows.push(['⚡', `“${esc(m.q.slice(0, 62))}” ${m.chg >= 0 ? '+' : '−'}${Math.abs(m.chg * 100).toFixed(0)}pts → ${(m.last * 100).toFixed(0)}¢`,
+    m.conditionId ? `<button class="ctrl" data-early="${esc(m.conditionId)}" data-q="${esc(m.q)}" data-chg="${m.chg}">early buyers →</button>` : '']));
+  watchedPols.slice(0, 3).forEach(r => rows.push(['🏦', `${esc(r._nm)} disclosed ${esc(String(r.type || '').toLowerCase())} of ${esc(r.symbol || '—')} (${esc(r.amount || '')})`, `<button class="ctrl" data-pol="${esc(r._nm)}">filings →</button>`]));
+  if (provenWallets.length) rows.push(['✅', `${provenWallets.length} wallet${provenWallets.length === 1 ? '' : 's'} now carry a proven record — their open bets are on the conviction board`, '<a class="ctrl" style="text-decoration:none;display:inline-block" href="#conviction">board →</a>']);
+
+  if (rows.length) items.push(`<div class="card"><div class="card-pad" style="border-bottom:1px solid var(--grid)"><strong>Also on the board</strong></div>
+    <table><tbody>${rows.map(([ic, txt, act]) => `<tr><td style="width:26px">${ic}</td><td>${txt}</td><td style="text-align:right">${act}</td></tr>`).join('')}</tbody></table></div>`);
+
+  el.innerHTML = items.join('');
+  $('#brState').textContent = 'updated ' + new Date().toLocaleTimeString();
+  $('#brState').className = 'feedstate live';
+}
+
+/* ============================== BACKTEST ENGINE ============================== */
+/* The benchmark is the price paid, NOT 50%. A bet at 20c should win ~20% of the time in an
+   efficient market, so "edge" = actual win rate minus average implied probability. That is the
+   only formulation that can distinguish a genuine signal from simply betting on favourites. */
+let btBusy = false;
+async function runBacktest() {
+  if (btBusy) return;
+  btBusy = true;
+  const N = state.btSize || 15;
+  const newsOnly = $('#btNewsOnly').checked;
+  const prog = $('#btProgress');
+  const tbody = $('#btTable tbody');
+  $('#btVerdict').innerHTML = '';
+  setFeed('#btState', 'link');
+  $('#btState').textContent = 'running…';
+  try {
+    prog.textContent = 'fetching resolved markets…';
+    let pool = [];
+    for (const off of [0, 200, 400]) {
+      try {
+        const batch = await fetchJSON(`https://gamma-api.polymarket.com/markets?closed=true&limit=200&offset=${off}&order=volumeNum&ascending=false&volume_num_min=40000`);
+        if (Array.isArray(batch)) pool = pool.concat(batch);
+      } catch (e) {}
+      if (pool.length >= 300) break;
+    }
+    pool = pool.filter(m => m.conditionId && m.outcomePrices);
+    if (newsOnly) pool = pool.filter(m => classifyTitle(m.question || '') === 'news');
+    if (!pool.length) throw new Error('no resolved markets returned');
+    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+    const sample = pool.slice(0, N);
+
+    const bets = [];
+    let done = 0;
+    for (let i = 0; i < sample.length; i += 4) {
+      const chunk = sample.slice(i, i + 4);
+      await Promise.allSettled(chunk.map(async m => {
+        let prices = [];
+        try { prices = typeof m.outcomePrices === 'string' ? JSON.parse(m.outcomePrices) : m.outcomePrices; } catch (e) { return; }
+        const winnerIndex = prices.findIndex(x => +x >= 0.99);
+        if (winnerIndex < 0) return;                       // not cleanly resolved
+        let trs = [];
+        try { trs = await fetchJSON(`https://data-api.polymarket.com/trades?market=${encodeURIComponent(m.conditionId)}&limit=500`); } catch (e) { return; }
+        if (!Array.isArray(trs)) return;
+        for (const t of trs) {
+          if (t.side !== 'BUY') continue;                  // a BUY is an unambiguous directional bet
+          const px = +t.price;
+          if (!(px > 0.01 && px < 0.99)) continue;         // strip settled/dust noise
+          const usd = t.size * px;
+          if (usd < 100) continue;
+          const sc = scoreTrade({ ...t, title: m.question || t.title });
+          bets.push({ score: sc.score, price: px, usd,
+            won: (t.outcomeIndex ?? 0) === winnerIndex ? 1 : 0,
+            reasons: sc.reasons, isNewsy: sc.isNewsy });
+        }
+      }));
+      done += chunk.length;
+      prog.textContent = `replaying market ${Math.min(done, sample.length)}/${sample.length} · ${bets.length.toLocaleString()} bets graded`;
+    }
+    if (!bets.length) throw new Error('no gradeable bets found');
+    renderBacktest(bets, sample.length);
+    $('#btState').textContent = 'complete';
+    $('#btState').className = 'feedstate live';
+  } catch (e) {
+    setFeed('#btState', false);
+    tbody.innerHTML = `<tr><td colspan="7" class="empty">Backtest failed: ${esc(e.message || 'unknown error')}. The market data APIs may be unreachable right now.</td></tr>`;
+  } finally {
+    btBusy = false;
+    prog.textContent = '';
+  }
+}
+
+function bandOf(s) { return s >= 80 ? '80–100 insider-pattern' : s >= 60 ? '60–79 high' : s >= 40 ? '40–59 notable' : '0–39 routine'; }
+function renderBacktest(bets, nMarkets) {
+  const bands = ['80–100 insider-pattern', '60–79 high', '40–59 notable', '0–39 routine'];
+  const agg = {};
+  for (const b of bands) agg[b] = { n: 0, won: 0, implied: 0, usd: 0 };
+  for (const b of bets) {
+    const k = bandOf(b.score);
+    agg[k].n++; agg[k].won += b.won; agg[k].implied += b.price; agg[k].usd += b.usd;
+  }
+  $('#btTable tbody').innerHTML = bands.map(k => {
+    const a = agg[k];
+    if (!a.n) return `<tr><td>${esc(k)}</td><td class="num">0</td><td colspan="5" class="empty" style="text-align:left">no bets in this band</td></tr>`;
+    const actual = a.won / a.n * 100, implied = a.implied / a.n * 100, edge = actual - implied;
+    const thin = a.n < 30;
+    const col = edge > 3 ? 'var(--status-good)' : edge < -3 ? 'var(--status-critical)' : 'var(--ink-2)';
+    const w = Math.min(100, Math.abs(edge) * 3);
+    return `<tr>
+      <td>${scoreChip(k.startsWith('80') ? 85 : k.startsWith('60') ? 70 : k.startsWith('40') ? 50 : 20)}</td>
+      <td class="num">${a.n.toLocaleString()}${thin ? '<div style="font-size:10.5px;color:var(--ink-3)">thin</div>' : ''}</td>
+      <td class="num"><strong>${actual.toFixed(1)}%</strong></td>
+      <td class="num" style="color:var(--ink-2)">${implied.toFixed(1)}%</td>
+      <td class="num" style="color:${col}"><strong>${edge >= 0 ? '+' : ''}${edge.toFixed(1)} pts</strong></td>
+      <td style="min-width:90px"><span class="scorebar" style="width:80px"><i style="width:${w}%;background:${col}"></i></span></td>
+      <td style="color:var(--ink-2);font-size:12px">${thin ? 'too few bets to trust' : edge > 3 ? 'beat the odds it paid' : edge < -3 ? 'underperformed its odds' : 'roughly fair — no edge'}</td>
+    </tr>`;
+  }).join('');
+
+  // verdict: compare the top two bands against the routine band
+  const hi = { n: agg['80–100 insider-pattern'].n + agg['60–79 high'].n,
+               won: agg['80–100 insider-pattern'].won + agg['60–79 high'].won,
+               implied: agg['80–100 insider-pattern'].implied + agg['60–79 high'].implied };
+  const lo = agg['0–39 routine'];
+  const hiEdge = hi.n ? (hi.won / hi.n - hi.implied / hi.n) * 100 : 0;
+  const loEdge = lo.n ? (lo.won / lo.n - lo.implied / lo.n) * 100 : 0;
+  const enough = hi.n >= 30 && lo.n >= 30;
+  const works = enough && hiEdge > 3 && hiEdge > loEdge + 2;
+  const nothing = enough && Math.abs(hiEdge) <= 3;
+  $('#btVerdict').innerHTML = `<div class="cluster ${works ? '' : 'calm'}" style="border-left-color:${works ? 'var(--status-good)' : nothing ? 'var(--ink-3)' : 'var(--status-warn)'}">
+    <span class="big">${!enough ? '🔍 Not enough data yet' : works ? '✅ The score has measurable edge' : nothing ? '⚖️ No edge detected' : '⚠️ Mixed / inconclusive'}</span>
+    <span>High-scoring bets (60+) won <strong>${hi.n ? (hi.won / hi.n * 100).toFixed(1) : '—'}%</strong> of the time against implied odds of <strong>${hi.n ? (hi.implied / hi.n * 100).toFixed(1) : '—'}%</strong> — an edge of <strong style="color:${hiEdge > 0 ? 'var(--status-good)' : 'var(--status-critical)'}">${hiEdge >= 0 ? '+' : ''}${hiEdge.toFixed(1)} points</strong>. Routine bets (under 40) ran ${loEdge >= 0 ? '+' : ''}${loEdge.toFixed(1)}.</span>
+    <span class="chip muted">${bets.length.toLocaleString()} bets across ${nMarkets} resolved markets</span>
+    ${!enough ? '<span class="chip warn">● run a bigger sample before trusting this</span>' : ''}
+  </div>`;
+
+  // per-signal contribution
+  const SIGNALS = [
+    ['Longshot entry (≤20¢)', r => /longshot/i.test(r)],
+    ['News-sensitive market', r => /news-sensitive/i.test(r)],
+    ['Anonymous wallet', r => /anonymous|auto-pseudonym/i.test(r)],
+    ['Very large size', r => /very large size/i.test(r)],
+  ];
+  $('#btSigTable tbody').innerHTML = SIGNALS.map(([label, test]) => {
+    const withS = bets.filter(b => b.reasons.some(test));
+    const without = bets.filter(b => !b.reasons.some(test));
+    const e = arr => arr.length ? (arr.reduce((a, b) => a + b.won, 0) / arr.length - arr.reduce((a, b) => a + b.price, 0) / arr.length) * 100 : null;
+    const ew = e(withS), eo = e(without);
+    const thin = withS.length < 30;
+    const good = ew != null && eo != null && ew > eo + 2;
+    return `<tr>
+      <td>${esc(label)}</td>
+      <td class="num">${withS.length.toLocaleString()}${thin ? '<div style="font-size:10.5px;color:var(--ink-3)">thin</div>' : ''}</td>
+      <td class="num" style="color:${ew > 0 ? 'var(--status-good)' : 'var(--status-critical)'}"><strong>${ew == null ? '—' : (ew >= 0 ? '+' : '') + ew.toFixed(1)}</strong></td>
+      <td class="num" style="color:var(--ink-2)">${eo == null ? '—' : (eo >= 0 ? '+' : '') + eo.toFixed(1)}</td>
+      <td>${thin ? '<span class="chip muted">too few</span>' : good ? '<span class="chip good">✓ earns its weight</span>' : '<span class="chip warn">● no better than without</span>'}</td>
+    </tr>`;
+  }).join('');
 }
 
 /* ============================== INVESTIGATE: EARLY BUYERS ============================== */
@@ -1861,7 +2827,7 @@ async function _checkOutcomes() {
 }
 
 /* ============================== FOLLOW ALERTS (starred wallets) ============================== */
-let lastCongressRows = [];
+let lastCongressRows = [], lastMovers = [], lastLeaders = [];
 let starCursor = 0;
 async function checkStarred() {
   const all = Object.keys(store.stars);
@@ -2007,7 +2973,11 @@ async function loadConviction() {
   const tbody = $('#cvTable tbody');
   const proven = Object.entries(store.walletStats)
     .filter(([w, s]) => (s.wins || 0) >= 3 && s.wins > 3 * (s.losses || 0)).map(([w]) => w);
-  const wallets = [...new Set([...Object.keys(store.stars), ...proven])].slice(0, 8);
+  const src = state.cvSrc || 'proven';
+  let pool = [...Object.keys(store.stars)];
+  if (src !== 'starred') pool = pool.concat(proven);
+  if (src === 'top') pool = pool.concat(lastLeaders || []);
+  const wallets = [...new Set(pool)].slice(0, 8);
   if (!wallets.length) {
     setFeed('#cvState', 'link');
     $('#cvScoreTable tbody').innerHTML = '<tr><td colspan="8" class="empty">Loads with the board above.</td></tr>';
@@ -2340,6 +3310,49 @@ segWire('#cbThreshSeg','cbThresh', loadCrypto);
 segWire('#kThreshSeg','kThresh', loadKalshi);
 segWire('#speedSeg','radarSpeed', () => { state.radarCount = state.radarSpeed; });
 segWire('#alertThreshSeg','alertThresh', () => {});
+segWire('#btSizeSeg','btSize', () => {});
+segWire('#cvSrcSeg','cvSrc', () => loadConviction());
+$('#btRun').addEventListener('click', runBacktest);
+$('#oddsKey').value = state.oddsKey || '';
+$('#oddsSave').addEventListener('click', () => { state.oddsKey = $('#oddsKey').value.trim(); saveSettings(); checkOdds(true); });
+$('#oddsCheck').addEventListener('click', () => checkOdds(true));
+segWire('#sportSeg','sport', () => renderLines());
+
+/* ---- paper bot controls ---- */
+(function wireBot() {
+  const b = bot();
+  $('#botBank').value = b.bank;
+  $('#botNewsOnly').checked = b.newsOnly;
+  $('#botExitCopy').checked = b.exitCopy;
+  [['#botScoreSeg', 'minScore'], ['#botModeSeg', 'mode'], ['#botRiskSeg', 'risk']].forEach(([sel, key]) => {
+    $$(`${sel} button`).forEach(x => {
+      const v = isNaN(+x.dataset.v) ? x.dataset.v : +x.dataset.v;
+      if (v === b[key]) { $$(`${sel} button`).forEach(y => y.removeAttribute('aria-pressed')); x.setAttribute('aria-pressed', 'true'); }
+    });
+    $(sel).addEventListener('click', e => {
+      const btn = e.target.closest('button'); if (!btn) return;
+      $$(`${sel} button`).forEach(x => x.removeAttribute('aria-pressed'));
+      btn.setAttribute('aria-pressed', 'true');
+      b[key] = isNaN(+btn.dataset.v) ? btn.dataset.v : +btn.dataset.v;
+      persist(); renderBot();
+    });
+  });
+  $('#botToggle').addEventListener('click', () => { b.on = !b.on; persist(); renderBot(); });
+  $('#botBank').addEventListener('change', () => {
+    const v = Math.max(10, +$('#botBank').value || 1000);
+    const used = b.bank - b.cash;
+    b.bank = v; b.cash = Math.max(0, v - used); persist(); renderBot();
+  });
+  $('#botNewsOnly').addEventListener('change', e => { b.newsOnly = e.target.checked; persist(); });
+  $('#botExitCopy').addEventListener('change', e => { b.exitCopy = e.target.checked; persist(); });
+  $('#botReset').addEventListener('click', () => {
+    if (!confirm('Reset the paper bot? All simulated positions and the equity curve are cleared.')) return;
+    store.bot = botDefaults(); store.bot.bank = +$('#botBank').value || 1000; store.bot.cash = store.bot.bank;
+    store.botPos = []; store.botEq = []; persist(); renderBot();
+  });
+  renderBot();
+})();
+try { renderLeadLag(); } catch (e) {}
 
 $('#kHideTicks').checked = state.kHideTicks;
 $('#kHideTicks').addEventListener('change', e => { state.kHideTicks = e.target.checked; saveSettings(); loadKalshi(); });
@@ -2518,7 +3531,8 @@ $('#refreshBtn').addEventListener('click', () => refreshAll());
 async function refreshAll() {
   state.count = 60;
   await Promise.allSettled([loadRadar(), loadMovers(), loadKalshi(), loadLeaderboard(), loadCrypto(), loadHyper(), loadSEC(), loadCT()]);
-  Promise.allSettled([checkStarred(), checkOutcomes(), loadConviction()]);
+  Promise.allSettled([updateSignals(), checkStarred(), checkOutcomes(), loadConviction(), checkOdds(false), botUpdate().then(() => { try { renderBot(); } catch (e) {} })]);
+  try { renderBriefing(); } catch (e) {}
   $('#lastUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString();
 }
 // restore toggles from saved settings
