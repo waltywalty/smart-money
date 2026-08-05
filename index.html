@@ -214,7 +214,7 @@
 
 <header class="top">
   <div class="top-inner">
-    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v5.3</span></div>
+    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v6.0</span></div>
     <div class="top-meta">
       <span id="lastUpdated">loading…</span>
       <span id="countdown" title="Auto-refresh countdown"></span>
@@ -264,6 +264,12 @@
       <button class="ctrl" id="ntfyTest">Send test push</button>
       <button class="ctrl" id="syncLink">🔗 Copy setup link</button>
       <button class="ctrl" id="syncImport">📥 Paste setup link</button>
+      <span style="font-size:12px;color:var(--ink-2)">Alert me at score</span>
+      <div class="seg" id="alertThreshSeg">
+        <button data-v="60">60+</button>
+        <button data-v="70" aria-pressed="true">70+</button>
+        <button data-v="80">80+</button>
+      </div>
       <span id="ntfyStatus" style="font-size:12px;color:var(--ink-3)"></span>
     </div>
     <div class="fallback" style="border-top:1px solid var(--grid)">
@@ -305,7 +311,7 @@
       <div class="tscroll">
         <table id="radarTable">
           <thead><tr>
-            <th>Time</th><th>Market</th><th>Bet</th><th class="num">Odds paid</th><th class="num">Amount</th><th>Trader</th><th>Suspicion</th>
+            <th>Time</th><th>Market</th><th>Position taken</th><th class="num">Odds paid</th><th class="num">Amount</th><th>Trader</th><th>Suspicion</th>
           </tr></thead>
           <tbody><tr><td colspan="7" class="empty">Loading live trades…</td></tr></tbody>
         </table>
@@ -325,7 +331,7 @@
     <div class="block-head">
       <h2>⚡ Sudden odds swings — markets repricing right now</h2>
       <span class="feedstate" id="mvState">connecting…</span>
-      <span class="desc">The biggest 24h odds moves on Polymarket with real volume behind them. When a "will X happen" market lurches 20+ points before any headline, someone is trading on something.</span>
+      <span class="desc">The biggest 24h odds moves on Polymarket with real volume behind them. When a market lurches before any headline, someone is trading on something — hit <strong>Who bought early?</strong> on any row and I'll replay that market's trade history and rank the wallets that were accumulating before the crowd.</span>
     </div>
     <div class="card">
       <div class="controls">
@@ -432,7 +438,7 @@
       <div class="card-pad" style="border-bottom:1px solid var(--grid)"><strong>Recently flagged trades (score ≥ 60)</strong> <span class="note" style="display:inline">— persisted in this browser</span></div>
       <div class="tscroll">
         <table id="flaggedTable">
-          <thead><tr><th>When</th><th>Market</th><th>Bet</th><th class="num">Amount</th><th>Trader</th><th class="num">Score</th></tr></thead>
+          <thead><tr><th>When</th><th>Market</th><th>Position taken</th><th class="num">Amount</th><th>Trader</th><th class="num">Score</th></tr></thead>
           <tbody><tr><td colspan="6" class="empty">No flagged trades stored yet.</td></tr></tbody>
         </table>
       </div>
@@ -449,8 +455,8 @@
     <div class="card">
       <div class="tscroll">
         <table id="cvTable">
-          <thead><tr><th>Wallet</th><th>Betting that…</th><th>Position</th><th class="num">At stake now</th><th class="num">Entry → now</th><th>Signal</th></tr></thead>
-          <tbody><tr><td colspan="6" class="empty">Loading conviction board…</td></tr></tbody>
+          <thead><tr><th>Wallet</th><th>Betting that…</th><th>Position</th><th class="num">At stake now</th><th class="num">Unrealised P&L</th><th class="num">Entry → now</th><th>Signal</th></tr></thead>
+          <tbody><tr><td colspan="7" class="empty">Loading conviction board…</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -463,7 +469,7 @@
         </table>
       </div>
     </div>
-    <p class="note">Fed by your starred wallets and any wallet that earns a "proven" record (3+ graded wins on flagged bets). Entry → now shows whether the market has moved toward their bet since they placed it — green means the money is so far being proven right.</p>
+    <p class="note">Click any politician for their recent filings and a deep link to their full portfolio. Fed by your starred wallets and any wallet that earns a "proven" record (3+ graded wins on flagged bets). Entry → now shows whether the market has moved toward their bet since they placed it — green means the money is so far being proven right.</p>
   </section>
 
   <!-- ======================= CRYPTO TAPE ======================= -->
@@ -483,8 +489,10 @@
         </div>
         <span>Whale threshold:</span>
         <div class="seg" id="cbThreshSeg">
+          <button data-v="25000">$25k</button>
+          <button data-v="50000" aria-pressed="true">$50k</button>
           <button data-v="100000">$100k</button>
-          <button data-v="250000" aria-pressed="true">$250k</button>
+          <button data-v="250000">$250k</button>
           <button data-v="1000000">$1M</button>
         </div>
         <span id="cbStats" style="margin-left:auto"></span>
@@ -518,7 +526,7 @@
       <div class="controls">
         <input class="addr" id="hlInput" placeholder="0x… add a wallet to watch" spellcheck="false">
         <button class="ctrl" id="hlAdd">+ Watch</button>
-        <span style="color:var(--ink-3)">Preloaded: the Garrett Jin "Trump Insider Whale" cluster</span>
+        <span style="color:var(--ink-3)">Preloaded: Jin's cluster, James Wynn, Arthur Hayes, Andrew Kang, 0xSifu, Galaxy Digital, a16z</span>
       </div>
       <div id="hlBody"><div class="empty">Loading positions…</div></div>
       <div class="fallback" id="hlFallback" hidden>
@@ -672,6 +680,8 @@ async function fetchJSON(url) {
     u => 'https://corsproxy.io/?url=' + encodeURIComponent(u),
     u => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u),
     u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u),
+    u => 'https://api.cors.lol/?url=' + encodeURIComponent(u),
+    u => 'https://whateverorigin.org/get?url=' + encodeURIComponent(u),
   ];
   let lastErr;
   for (const wrap of attempts) {
@@ -757,6 +767,15 @@ function scoreTrade(t) {
   return { score: Math.round(Math.max(0, Math.min(100, pts))), reasons, usd, isNewsy };
 }
 
+// A trade carries two independent facts: WHICH token (Yes/No) and WHETHER the trader added or
+// reduced. Rendering "BUY" beside a separate "Yes" made these read as one redundant fact. Buying
+// YES and selling NO are similar economically but are different actions on different tokens, so
+// both facts are real — they just need saying in a single phrase.
+function positionLabel(side, outcome) {
+  const oc = (outcome || '').toString().trim() || '—';
+  const adding = String(side).toUpperCase() === 'BUY';
+  return `<span class="chip ${adding ? 'good' : 'critical'}">${adding ? '▲ Backing' : '▼ Exiting'} ${esc(oc)}</span>`;
+}
 function scoreChip(score) {
   if (score >= 80) return `<span class="chip critical">▲ ${score} insider-pattern</span>`;
   if (score >= 60) return `<span class="chip serious">◆ ${score} high</span>`;
@@ -816,9 +835,10 @@ const state = Object.assign({
   radarFilter: 'all',
   lbWindow: 'MONTH',
   pair: 'BTC-USD',
-  cbThresh: 250000,
+  cbThresh: 50000,
   kThresh: 10000,
   radarSpeed: 15,
+  alertThresh: 70,
   kHideTicks: true,
   auto: true,
   sound: false,
@@ -830,7 +850,7 @@ state.count = 60;
 function saveSettings() {
   store.settings = { minSize: state.minSize, radarFilter: state.radarFilter, lbWindow: state.lbWindow,
     pair: state.pair, cbThresh: state.cbThresh, kThresh: state.kThresh, kHideTicks: state.kHideTicks,
-    mHideSports: state.mHideSports, radarSpeed: state.radarSpeed, theme: state.theme || '', ntfyTopic: state.ntfyTopic || '', fmpKey: state.fmpKey || '', polWatch: state.polWatch || '', sound: state.sound, notify: state.notify };
+    mHideSports: state.mHideSports, radarSpeed: state.radarSpeed, alertThresh: state.alertThresh, theme: state.theme || '', ntfyTopic: state.ntfyTopic || '', fmpKey: state.fmpKey || '', polWatch: state.polWatch || '', sound: state.sound, notify: state.notify };
   return persist();
 }
 
@@ -998,8 +1018,8 @@ async function openDossier(wallet, label) {
     <table><tbody>
       ${d.recent.map(t => `<tr>
         <td style="color:var(--ink-3); white-space:nowrap">${ago(t.timestamp)}</td>
-        <td>${esc((t.title || '—').slice(0, 60))}<div style="font-size:11px;color:var(--ink-3)">${esc(t.outcome || '')}</div></td>
-        <td><strong>${esc(t.side)}</strong> @ ${(t.price * 100).toFixed(0)}¢</td>
+        <td>${esc((t.title || '—').slice(0, 60))}</td>
+        <td>${positionLabel(t.side, t.outcome)} @ ${(t.price * 100).toFixed(0)}¢</td>
         <td class="num">${fmtUSD(t.size * t.price)}</td>
       </tr>`).join('')}
     </tbody></table>
@@ -1038,7 +1058,7 @@ async function _loadRadar() {
     // was active, then alerted on an hour-old trade the moment the filter changed.
     const scored = trades.slice().sort((a,b) => b.timestamp - a.timestamp);
     recordFlagged(scored);
-    const hot = scored.filter(t => t._s.score >= 80);
+    const hot = scored.filter(t => t._s.score >= (state.alertThresh || 70));
     const firstLoad = !hotSeeded;
     for (const t of hot) {
       const k = t.transactionHash || (t.proxyWallet + t.timestamp);
@@ -1079,8 +1099,8 @@ function radarRow(t, i) {
   const starred = !!store.stars[t.proxyWallet];
   return `<tr title="${esc(s.reasons.join(' · ') || 'no flags')}" class="${starred ? 'watched' : ''}">
     <td style="white-space:nowrap;color:var(--ink-3)">${ago(t.timestamp)}</td>
-    <td><a href="${esc(mkt)}" target="_blank" rel="noopener">${esc(t.title||'—')}</a><div style="font-size:11.5px;color:var(--ink-3)">${esc(t.outcome||'')}</div></td>
-    <td><strong>${t.side === 'BUY' ? 'BUY' : 'SELL'}</strong></td>
+    <td><a href="${esc(mkt)}" target="_blank" rel="noopener">${esc(t.title||'—')}</a></td>
+    <td>${positionLabel(t.side, t.outcome)}</td>
     <td class="num">${(t.price*100).toFixed(1)}¢</td>
     <td class="num"><strong>${fmtUSD(s.usd)}</strong></td>
     <td><button class="star ${starred ? 'on' : ''}" data-star="${esc(t.proxyWallet)}" data-name="${esc(traderName)}" title="Star to watchlist">${starred ? '★' : '☆'}</button><a class="walletlink" data-dossier="${esc(t.proxyWallet)}" data-label="${esc(traderName)}" title="Open wallet dossier">${esc(traderName)}</a></td>
@@ -1348,24 +1368,35 @@ function detectClusters(trades) {
       // cluster whose true average entry was 6.2c) because big fills were counted twice.
       const shares = arr.reduce((a, t) => a + (t.size || 0), 0);
       const avgPx = shares > 0 ? usd / shares : 0;
+      const members = [...byWallet.entries()].map(([w, v]) => {
+        const fills = arr.filter(x => x.proxyWallet === w);
+        const sh = fills.reduce((a, x) => a + (x.size || 0), 0);
+        return { wallet: w, usd: v, fills: fills.length,
+          name: fills[0].name || fills[0].pseudonym || '',
+          first: Math.min(...fills.map(x => x.timestamp)),
+          px: sh > 0 ? v / sh : 0 };
+      }).sort((a, b) => b.usd - a.usd);
       clusters.push({ key, title: t0.title, outcome: t0.outcome, side: t0.side,
-        slug: t0.eventSlug || t0.slug, wallets: wallets.size, usd, avgPx, newsy });
+        slug: t0.eventSlug || t0.slug, wallets: wallets.size, usd, avgPx, newsy, members });
       for (const t of arr) t._cluster = wallets.size;
     }
   }
   return clusters.sort((a,b) => (b.newsy - a.newsy) || (b.usd - a.usd));
 }
+let lastClusters = [];
 function renderClusters(clusters) {
   const el = $('#clusterAlerts');
   if (!clusters.length) { el.innerHTML = ''; return; }   // seeding happens after every batch, not just empty ones
   el.innerHTML = clusters.slice(0, 4).map(c => `
     <div class="cluster ${c.newsy ? '' : 'calm'}">
-      <span class="big">${c.newsy ? '🚨' : '👀'} ${c.wallets} wallets ${c.side === 'BUY' ? 'buying' : 'selling'} the same side</span>
+      <span class="big">${c.newsy ? '🚨' : '👀'} ${c.wallets} wallets ${c.side === 'BUY' ? 'backing' : 'exiting'} the same side</span>
       <a href="https://polymarket.com/event/${esc(c.slug)}" target="_blank" rel="noopener">${esc(c.title || '—')}</a>
-      <span class="chip muted">${esc(c.outcome || '')}</span>
+      ${positionLabel(c.side, c.outcome)}
       <span><strong>${fmtUSD(c.usd)}</strong> combined @ ~${(c.avgPx * 100).toFixed(0)}¢ avg</span>
       ${c.newsy ? '<span class="chip critical">▲ news-sensitive market</span>' : '<span class="chip warn">● coordinated flow</span>'}
+      <button class="ctrl" data-clusterkey="${esc(c.key)}" style="margin-left:auto">Show the ${c.wallets} wallets →</button>
     </div>`).join('');
+  lastClusters = clusters;
   for (const c of clusters) {
     // Bucket on magnitude so a cluster growing 3 wallets/$31k -> 30 wallets/$2.4M re-alerts.
     // Keyed on identity alone, the single notification described its least interesting moment.
@@ -1402,8 +1433,9 @@ async function loadMovers() {
     const seen = new Set();
     let ms = [...up, ...down].map(m => ({
       q: m.question || '—', chg: +m.oneDayPriceChange || 0, last: +m.lastTradePrice || 0,
-      vol: +m.volume24hr || 0,
+      vol: +m.volume24hr || 0, outcomes: m.outcomes,
       slug: (m.events && m.events[0] && m.events[0].slug) || m.slug,
+      conditionId: m.conditionId || '',
     })).filter(m => {
       if (seen.has(m.q)) return false; seen.add(m.q);
       return m.last > 0.03 && m.last < 0.97 && Math.abs(m.chg) >= 0.10;
@@ -1422,7 +1454,8 @@ async function loadMovers() {
           <td class="num"><strong>${(m.last * 100).toFixed(0)}¢</strong></td>
           <td class="num" style="color:${upMove ? 'var(--status-good)' : 'var(--status-critical)'}"><strong>${upMove ? '▲ +' : '▼ −'}${Math.abs(m.chg * 100).toFixed(0)}pts</strong></td>
           <td class="num" style="color:var(--ink-2)">${fmtUSD(m.vol)}</td>
-          <td>${newsy ? '<span class="chip serious">◆ news-sensitive — check who bought early</span>' : '<span class="chip muted">—</span>'}</td>
+          <td>${newsy ? '<span class="chip serious">◆ news-sensitive</span>' : '<span class="chip muted">—</span>'}
+            ${m.conditionId ? `<button class="ctrl" data-early="${esc(m.conditionId)}" data-q="${esc(m.q)}" data-chg="${m.chg}">Who bought early? →</button>` : ''}</td>
         </tr>`;
       }).join('');
     }
@@ -1434,6 +1467,116 @@ async function loadMovers() {
     $('#mvFallback').hidden = false;
     tbody.innerHTML = '<tr><td colspan="5" class="empty">Gamma API unreachable.</td></tr>';
   }
+}
+
+/* ============================== INVESTIGATE: EARLY BUYERS ============================== */
+// Answers "who bought before the move?" by replaying the market's own trade history.
+async function openEarlyBuyers(conditionId, question, chg) {
+  $('#modalBack').classList.add('open');
+  $('#dossierModal').classList.add('open');
+  $('#dTitle').textContent = 'Who bought early: ' + (question || '').slice(0, 70);
+  $('#dBody').innerHTML = '<div class="empty">Replaying this market\'s trade history…</div>';
+  const my = seqStart('dossier');
+  let trs = [];
+  try { trs = await fetchJSON(`https://data-api.polymarket.com/trades?market=${encodeURIComponent(conditionId)}&limit=500`); } catch (e) {}
+  if (!seqCurrent('dossier', my)) return;
+  if (!Array.isArray(trs) || !trs.length) {
+    $('#dBody').innerHTML = '<div class="empty">No public trade history available for this market.</div>';
+    return;
+  }
+  const asc = trs.slice().sort((a, b) => a.timestamp - b.timestamp);
+  const rose = (+chg || 0) >= 0;
+  // The move went one way; the informed side is whoever was accumulating that side BEFORE it.
+  // Approximate "before" as the earliest 40% of the window, and rank by size.
+  const t0 = asc[0].timestamp, tN = asc[asc.length - 1].timestamp;
+  const cutoff = t0 + (tN - t0) * 0.4;
+  const early = asc.filter(t => t.timestamp <= cutoff && t.side === 'BUY');
+  const byWallet = new Map();
+  for (const t of early) {
+    const k = t.proxyWallet + '|' + (t.outcome || '');
+    if (!byWallet.has(k)) byWallet.set(k, { wallet: t.proxyWallet, outcome: t.outcome,
+      name: t.name || t.pseudonym || '', usd: 0, shares: 0, first: t.timestamp, fills: 0 });
+    const e = byWallet.get(k);
+    e.usd += t.size * t.price; e.shares += t.size; e.fills++;
+    e.first = Math.min(e.first, t.timestamp);
+  }
+  const ranked = [...byWallet.values()].sort((a, b) => b.usd - a.usd).slice(0, 15);
+  const startPx = asc[0].price, endPx = asc[asc.length - 1].price;
+  $('#dBody').innerHTML = `
+    <div class="dstats">
+      <div class="dstat"><div class="v">${(startPx * 100).toFixed(0)}¢ → ${(endPx * 100).toFixed(0)}¢</div><div class="l">first to last trade in this sample</div></div>
+      <div class="dstat"><div class="v">${asc.length}${asc.length >= 500 ? '+' : ''}</div><div class="l">trades replayed</div></div>
+      <div class="dstat"><div class="v">${ranked.length}</div><div class="l">early buyers found</div></div>
+    </div>
+    <p class="note" style="margin:4px 0 10px">Ranked by size among buyers in the <strong>earliest 40%</strong> of the available window — i.e. before the crowd. Click any wallet for its full dossier: a fresh wallet with a large early position on the side that then moved ${rose ? 'up' : 'down'} is the pattern worth investigating.</p>
+    <div class="tscroll"><table>
+      <thead><tr><th>Wallet</th><th>Position taken</th><th class="num">Staked early</th><th class="num">Avg entry</th><th>First in</th></tr></thead>
+      <tbody>${ranked.map(e => `<tr>
+        <td><button class="star ${store.stars[e.wallet] ? 'on' : ''}" data-star="${esc(e.wallet)}" data-name="${esc(e.name || e.wallet.slice(0,10))}">${store.stars[e.wallet] ? '★' : '☆'}</button><a class="walletlink" data-dossier="${esc(e.wallet)}" data-label="${esc(e.name || e.wallet.slice(0,10))}">${esc(e.name || e.wallet.slice(0, 12) + '…')}</a></td>
+        <td>${positionLabel('BUY', e.outcome)}</td>
+        <td class="num"><strong>${fmtUSD(e.usd)}</strong></td>
+        <td class="num">${e.shares > 0 ? (e.usd / e.shares * 100).toFixed(0) + '¢' : '—'}</td>
+        <td style="color:var(--ink-2)">${ago(e.first)}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>
+    <p class="note">Limits: the public feed returns taker fills only and caps at 500, so for very busy markets this window may not reach back to the true start. Early size is not proof of foreknowledge.</p>`;
+}
+
+/* ============================== INVESTIGATE: CLUSTER MEMBERS ============================== */
+function openCluster(key) {
+  const c = lastClusters.find(x => x.key === key);
+  if (!c) return;
+  $('#modalBack').classList.add('open');
+  $('#dossierModal').classList.add('open');
+  seqStart('dossier');
+  $('#dTitle').textContent = 'Cluster: ' + (c.title || '').slice(0, 60);
+  $('#dBody').innerHTML = `
+    <div class="dflags">${positionLabel(c.side, c.outcome)} ${c.newsy ? '<span class="chip critical">▲ news-sensitive market</span>' : '<span class="chip warn">● coordinated flow</span>'}</div>
+    <div class="dstats">
+      <div class="dstat"><div class="v">${c.wallets}</div><div class="l">material wallets, same side</div></div>
+      <div class="dstat"><div class="v">${fmtUSD(c.usd)}</div><div class="l">combined stake</div></div>
+      <div class="dstat"><div class="v">${(c.avgPx * 100).toFixed(0)}¢</div><div class="l">average entry (share-weighted)</div></div>
+    </div>
+    <div class="tscroll"><table>
+      <thead><tr><th>Wallet</th><th class="num">Stake</th><th class="num">Avg entry</th><th class="num">Fills</th><th>First in</th></tr></thead>
+      <tbody>${(c.members || []).map(m => `<tr>
+        <td><button class="star ${store.stars[m.wallet] ? 'on' : ''}" data-star="${esc(m.wallet)}" data-name="${esc(m.name || m.wallet.slice(0,10))}">${store.stars[m.wallet] ? '★' : '☆'}</button><a class="walletlink" data-dossier="${esc(m.wallet)}" data-label="${esc(m.name || m.wallet.slice(0,10))}">${esc(m.name || m.wallet.slice(0, 12) + '…')}</a> <a href="https://polymarket.com/profile/${esc(m.wallet)}" target="_blank" rel="noopener" style="font-size:11px">↗</a></td>
+        <td class="num"><strong>${fmtUSD(m.usd)}</strong></td>
+        <td class="num">${(m.px * 100).toFixed(0)}¢</td>
+        <td class="num">${m.fills}</td>
+        <td style="color:var(--ink-2)">${ago(m.first)}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>
+    <p class="note">Open each wallet's dossier to check age and record — several <em>fresh</em> wallets entering the same side within minutes is the Iran-strike signature. Same-operator proof needs funding-path tracing (Arkham / Polygonscan links are inside each dossier).</p>
+    <div style="margin-top:10px"><a class="ctrl" style="display:inline-block;text-decoration:none" href="https://polymarket.com/event/${esc(c.slug)}" target="_blank" rel="noopener">Open the market ↗</a></div>`;
+}
+
+/* ============================== INVESTIGATE: POLITICIAN ============================== */
+function openPolitician(name) {
+  $('#modalBack').classList.add('open');
+  $('#dossierModal').classList.add('open');
+  seqStart('dossier');
+  $('#dTitle').textContent = name;
+  const last = (name || '').split(' ').slice(-1)[0].toLowerCase();
+  const hits = (lastCongressRows || []).filter(r => (r._nm || '').toLowerCase().includes(last));
+  const q = encodeURIComponent(name.replace(/^(Rep\.|Sen\.)\s*/, ''));
+  $('#dBody').innerHTML = `
+    ${hits.length ? `<div class="tscroll"><table>
+      <thead><tr><th>Ticker</th><th>Type</th><th class="num">Amount</th><th>Traded</th><th>Disclosed</th></tr></thead>
+      <tbody>${hits.slice(0, 25).map(r => `<tr>
+        <td><strong>${esc(r.symbol || '—')}</strong></td>
+        <td><span class="chip ${/SALE|SELL/i.test(r.type || '') ? 'critical' : /PURCHASE|BUY/i.test(r.type || '') ? 'good' : 'muted'}">${esc(String(r.type || '').toUpperCase())}</span></td>
+        <td class="num">${esc(r.amount || '—')}</td>
+        <td style="color:var(--ink-2)">${esc(r.transactionDate || '—')}</td>
+        <td style="color:var(--ink-2)">${esc(r.disclosureDate || '—')}</td>
+      </tr>`).join('')}</tbody></table></div>`
+      : '<div class="empty">No trades by this member in the current disclosure feed.</div>'}
+    <p class="note" style="margin-top:12px">The free data tier only returns the most recent disclosures across all of Congress, so a member with no filings this week shows nothing here. For a full portfolio and history, open one of these:</p>
+    <div style="display:flex; gap:8px; flex-wrap:wrap">
+      <a class="ctrl" style="display:inline-block;text-decoration:none" href="https://www.capitoltrades.com/politicians?search=${q}" target="_blank" rel="noopener">Capitol Trades ↗</a>
+      <a class="ctrl" style="display:inline-block;text-decoration:none" href="https://www.quiverquant.com/congresstrading/" target="_blank" rel="noopener">Quiver ↗</a>
+      <a class="ctrl" style="display:inline-block;text-decoration:none" href="https://unusualwhales.com/politics" target="_blank" rel="noopener">Unusual Whales ↗</a>
+    </div>`;
 }
 
 /* ============================== KALSHI ============================== */
@@ -1508,6 +1651,13 @@ async function loadKalshi() {
 const HL_SEED = [
   ['0xb317d2bc2d3d2df5fa441b5bae0ab9d8b07283ae', 'Garrett Jin — "Trump Insider Whale" (primary)'],
   ['0x4f9a37bc2a4a2861682c0e9be1f9417df03cc27c', 'Jin cluster — $386M USDC wallet'],
+  ['0x5078c2fbea2b2ad61bc840bc023e35fce56bedb6', 'James Wynn — 40x leverage megatrader'],
+  ['0x827ca75d54a9b7f2cbff42555e318e4ebd3d3d55', 'Arthur Hayes — BitMEX founder'],
+  ['0xbb876071a63bc4d9bfcf46b012b4437ea7ff4281', 'Andrew Kang — Mechanism Capital'],
+  ['0xf967239debef10dbc78e9bbbb2d8a16b72a614eb', '0xSifu — Wonderland/serial whale'],
+  ['0xa59963a565d622c4bfc00e57a4add8871561490c', 'Colin Hong'],
+  ['0x62bc1fe6009388219dd84f9dca37930f6fb6fa22', 'Galaxy Digital'],
+  ['0x72b23aebbd4abfc1cea755686710e74c93696fae', 'a16z'],
 ];
 async function loadHyper() {
   const body = $('#hlBody');
@@ -1539,7 +1689,7 @@ async function loadHyper() {
       <span class="chip muted">perp account ${fmtUSD(acct)}</span>
       ${custom ? `<button class="ctrl" data-hlrm="${esc(addr)}" style="margin-left:auto">remove</button>` : ''}
     </div>`;
-    if (!poss.length) return `<div>${head}<div class="fallback">Flat — no open perp positions right now (spot/vault holdings not shown).</div></div>`;
+    if (!poss.length) return `<div>${head}<div class="fallback">Flat — no open perp positions right now. These wallets trade in bursts, so an empty row is itself information: a known leveraged trader sitting flat ahead of a big event is a signal. Spot and vault holdings are not shown here.</div></div>`;
     return `<div>${head}<div class="tscroll"><table>
       <thead><tr><th>Asset</th><th>Direction</th><th class="num">Size</th><th class="num">Entry</th><th class="num">Position value</th><th class="num">Leverage</th><th class="num">Unrealized P&L</th></tr></thead>
       <tbody>${poss.map(p => {
@@ -1630,6 +1780,8 @@ async function loadCT() {
         const ks = Object.keys(store.polSeen); ks.slice(0, ks.length - 400).forEach(k => delete store.polSeen[k]);
       }
       persist();
+      rows.forEach(r => { r._nm = [r.firstName, r.lastName].filter(Boolean).join(' ') || r.representative || r.senator || ''; });
+      lastCongressRows = rows;
       rows.sort((a,b) => (b._watched?1:0) - (a._watched?1:0) || String(b.disclosureDate||'').localeCompare(String(a.disclosureDate||'')));
       tbody.innerHTML = rows.slice(0, 15).map(t => {
         const nm = [t.firstName, t.lastName].filter(Boolean).join(' ') || t.representative || t.senator || t.office || '—';
@@ -1654,7 +1806,7 @@ async function loadCT() {
 }
 function ctRow(name, party, tick, type, val, traded, disclosed) {
   return `<tr>
-    <td><strong>${esc(name)}</strong>${party ? ` <span style="color:var(--ink-3);font-size:11.5px">(${esc(party)})</span>` : ''}</td>
+    <td><a class="walletlink" data-pol="${esc(String(name).replace(/^⭐ /, ''))}"><strong>${esc(name)}</strong></a>${party ? ` <span style="color:var(--ink-3);font-size:11.5px">(${esc(party)})</span>` : ''}</td>
     <td>${esc(String(tick).replace(':US',''))}</td>
     <td><span class="chip ${type.includes('SELL') || type.includes('SALE') ? 'critical' : type.includes('BUY') || type.includes('PURCHASE') ? 'good' : 'muted'}">${esc(type)}</span></td>
     <td class="num">${esc(val)}</td>
@@ -1709,6 +1861,7 @@ async function _checkOutcomes() {
 }
 
 /* ============================== FOLLOW ALERTS (starred wallets) ============================== */
+let lastCongressRows = [];
 let starCursor = 0;
 async function checkStarred() {
   const all = Object.keys(store.stars);
@@ -1858,7 +2011,7 @@ async function loadConviction() {
   if (!wallets.length) {
     setFeed('#cvState', 'link');
     $('#cvScoreTable tbody').innerHTML = '<tr><td colspan="8" class="empty">Loads with the board above.</td></tr>';
-    tbody.innerHTML = '<tr><td colspan="6" class="empty">Empty for now — this board fills with the open positions of wallets you ⭐ star and wallets that earn a proven win record. Star a suspicious whale in the radar and its bets appear here.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">Empty for now — this board fills with the open positions of wallets you ⭐ star and wallets that earn a proven win record. Star a suspicious whale in the radar and its bets appear here.</td></tr>';
     return;
   }
   const all = [];
@@ -1879,6 +2032,7 @@ async function loadConviction() {
       const val = +p.currentValue || 0;
       if (val < 1000) continue;
       all.push({ w, nm, isProven, title: p.title || '—', outcome: p.outcome || '', val,
+        pnl: +p.cashPnl || 0, pct: +p.percentPnl || 0,
         avg: +p.avgPrice || 0, cur, slug: p.eventSlug || p.slug || '',
         newsy: NEWSY.test(p.title || '') && !SPORTSY.test(p.title || '') });
     }
@@ -1886,7 +2040,7 @@ async function loadConviction() {
   if (!anyOk) {
     setFeed('#cvState', false);
     $('#cvScoreTable tbody').innerHTML = '<tr><td colspan="8" class="empty">Loads with the board above.</td></tr>';
-    tbody.innerHTML = '<tr><td colspan="6" class="empty">Positions API unreachable right now.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">Positions API unreachable right now.</td></tr>';
     return;
   }
   setFeed('#cvState', true);
@@ -1912,7 +2066,7 @@ async function loadConviction() {
     }).join('');
   }
   if (!all.length) {
-    tbody.innerHTML = '<tr><td colspan="6" class="empty">Your followed wallets hold no open positions over $1k right now — they\'re flat or fully resolved.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">Your followed wallets hold no open positions over $1k right now — they\'re flat or fully resolved.</td></tr>';
     return;
   }
   all.sort((a, b) => (b.newsy - a.newsy) || (b.val - a.val));
@@ -1922,8 +2076,9 @@ async function loadConviction() {
     return `<tr class="${store.stars[p.w] ? 'watched' : ''}">
       <td><a class="walletlink" data-dossier="${esc(p.w)}" data-label="${esc(p.nm)}">${esc(p.nm)}</a>${p.isProven ? ' <span class="chip critical">▲ proven</span>' : ''}</td>
       <td><a href="https://polymarket.com/event/${esc(p.slug)}" target="_blank" rel="noopener">${esc(p.title)}</a></td>
-      <td><span class="chip muted">${esc(p.outcome)}</span></td>
+      <td>${positionLabel('BUY', p.outcome)}</td>
       <td class="num"><strong>${fmtUSD(p.val)}</strong></td>
+      <td class="num" style="color:${p.pnl >= 0 ? 'var(--status-good)' : 'var(--status-critical)'}"><strong>${fmtUSD(p.pnl)}</strong><div style="font-size:11px">${p.pct >= 0 ? '+' : ''}${(p.pct || 0).toFixed(0)}%</div></td>
       <td class="num" style="color:${right ? 'var(--status-good)' : 'var(--status-critical)'}">${(p.avg * 100).toFixed(0)}¢ → ${(p.cur * 100).toFixed(0)}¢ (${edge >= 0 ? '+' : ''}${edge.toFixed(0)}%)</td>
       <td>${p.newsy ? '<span class="chip serious">◆ news-sensitive</span>' : '<span style="color:var(--ink-3)">—</span>'}</td>
     </tr>`;
@@ -1975,8 +2130,8 @@ function renderWatch() {
   } else {
     ft.innerHTML = store.flagged.slice(0, 40).map(f => `<tr title="${esc(f.reasons || '')}">
       <td style="white-space:nowrap;color:var(--ink-3)">${ago(f.ts)}</td>
-      <td>${esc((f.market || '—').slice(0, 70))}<div style="font-size:11px;color:var(--ink-3)">${esc(f.outcome || '')}</div></td>
-      <td><strong>${esc(f.side)}</strong> @ ${(f.price * 100).toFixed(0)}¢</td>
+      <td>${esc((f.market || '—').slice(0, 70))}</td>
+      <td>${positionLabel(f.side, f.outcome)} @ ${(f.price * 100).toFixed(0)}¢</td>
       <td class="num">${fmtUSD(f.usd)}</td>
       <td><a class="walletlink" data-dossier="${esc(f.wallet)}" data-label="${esc(f.name)}">${esc(f.name)}</a></td>
       <td class="num">${scoreChip(f.score)}${f.result === 'WIN' ? ' <span class="chip critical">✓ WON</span>' : f.result === 'LOSS' ? ' <span class="chip muted">✗ lost</span>' : ''}</td>
@@ -2156,7 +2311,7 @@ $('#cryptoCases').innerHTML = CRYPTO_CASES.map(caseCard).join('');
 $('#sportsCases').innerHTML = SPORTS_CASES.map(caseCard).join('');
 $('#arsenalGrid').innerHTML = ARSENAL.map(([n,u,d]) => `<div class="lk"><a href="${esc(u)}" target="_blank" rel="noopener">${esc(n)} →</a><p>${esc(d)}</p></div>`).join('');
 $('#returnsTable tbody').innerHTML = RETURNS.map((r,i) => `<tr>
-  <td class="num" style="color:var(--ink-3)">${i+1}</td><td>${esc(r[0])}</td><td style="color:var(--ink-2)">${esc(r[1])}</td>
+  <td class="num" style="color:var(--ink-3)">${i+1}</td><td><a class="walletlink" data-pol="${esc(r[0])}">${esc(r[0])}</a></td><td style="color:var(--ink-2)">${esc(r[1])}</td>
   <td class="num"><strong>+${r[2].toFixed(1)}%</strong></td>
   <td style="min-width:130px"><span class="scorebar" style="width:120px"><i style="width:${Math.round(r[2]/80*100)}%;background:var(--series-1)"></i></span></td>
 </tr>`).join('');
@@ -2184,6 +2339,7 @@ segWire('#pairSeg','pair', loadCrypto);
 segWire('#cbThreshSeg','cbThresh', loadCrypto);
 segWire('#kThreshSeg','kThresh', loadKalshi);
 segWire('#speedSeg','radarSpeed', () => { state.radarCount = state.radarSpeed; });
+segWire('#alertThreshSeg','alertThresh', () => {});
 
 $('#kHideTicks').checked = state.kHideTicks;
 $('#kHideTicks').addEventListener('change', e => { state.kHideTicks = e.target.checked; saveSettings(); loadKalshi(); });
@@ -2195,6 +2351,12 @@ $('#mHideSports').addEventListener('change', e => { state.mHideSports = e.target
 document.addEventListener('click', e => {
   const d = e.target.closest('[data-dossier]');
   if (d) { openDossier(d.dataset.dossier, d.dataset.label); return; }
+  const ck = e.target.closest('[data-clusterkey]');
+  if (ck) { openCluster(ck.dataset.clusterkey); return; }
+  const eb = e.target.closest('[data-early]');
+  if (eb) { openEarlyBuyers(eb.dataset.early, eb.dataset.q, eb.dataset.chg); return; }
+  const pol = e.target.closest('[data-pol]');
+  if (pol) { openPolitician(pol.dataset.pol); return; }
   const s = e.target.closest('[data-star]');
   if (s) { toggleStar(s.dataset.star, s.dataset.name); return; }
   const u = e.target.closest('[data-unstar]');
