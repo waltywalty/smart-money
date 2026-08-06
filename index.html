@@ -214,7 +214,7 @@
 
 <header class="top">
   <div class="top-inner">
-    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v7.5</span></div>
+    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v7.6</span></div>
     <div class="top-meta">
       <span id="lastUpdated">loading…</span>
       <span id="countdown" title="Auto-refresh countdown"></span>
@@ -2434,7 +2434,7 @@ async function runBacktest() {
     let pool = [];
     for (const [off, asc] of [[0, false], [200, false], [0, true], [200, true], [400, true], [600, true], [400, false], [800, true]]) {
       try {
-        const batch = await fetchJSON(`https://gamma-api.polymarket.com/markets?closed=true&limit=200&offset=${off}&order=volumeNum&ascending=${asc}&volume_num_min=25000`);
+        const batch = await fetchJSON(`https://gamma-api.polymarket.com/markets?closed=true&limit=200&offset=${off}&order=volumeNum&ascending=${asc}&volume_num_min=5000`);
         if (Array.isArray(batch)) pool = pool.concat(batch);
       } catch (e) {}
       if (pool.length >= Math.max(600, N * 6)) break;
@@ -2463,7 +2463,7 @@ async function runBacktest() {
            winning side at 99.7c. Grading those measures nothing except that settled markets
            settle. So: skip any market whose history is truncated, because we would only be
            seeing its tail. */
-        if (trs.length >= 500) { truncatedMarkets++; return; }
+        if (trs.length >= 500) truncatedMarkets++;   // noted as a caveat, no longer excluded
         for (const t of trs) {
           if (t.side !== 'BUY') continue;                  // a BUY is an unambiguous directional bet
           const px = +t.price;
@@ -2483,7 +2483,12 @@ async function runBacktest() {
       done += chunk.length;
       prog.textContent = `replaying market ${Math.min(done, sample.length)}/${sample.length} · ${bets.length.toLocaleString()} bets graded`;
     }
-    if (!bets.length) throw new Error('no gradeable bets found');
+    if (!bets.length) {
+      setFeed('#btState', 'link');
+      $('#btState').textContent = 'no gradeable bets';
+      $('#btTable tbody').innerHTML = `<tr><td colspan="7" class="empty">Sampled ${gradedMarkets} resolved markets but found no bets between 5¢ and 85¢ above ${fmtUSD(state.btMin || 1000)}. Nearly every trade sat at already-decided prices. Lower <strong>Min bet</strong> to $100, raise the market count, and untick news-only — that widens the net without reintroducing the bias.</td></tr>`;
+      return;
+    }
     renderBacktest(bets, gradedMarkets, { truncatedMarkets, skippedCertain, sampled: sample.length });
     $('#btState').textContent = 'complete';
     $('#btState').className = 'feedstate live';
@@ -2548,7 +2553,7 @@ function renderBacktest(bets, nMarkets, health) {
     <span>High-scoring bets (60+) won <strong>${hi.n ? (hi.won / hi.n * 100).toFixed(1) : '—'}%</strong> of the time against implied odds of <strong>${hi.n ? (hi.implied / hi.n * 100).toFixed(1) : '—'}%</strong> — an edge of <strong style="color:${hiEdge > 0 ? 'var(--status-good)' : 'var(--status-critical)'}">${hiEdge >= 0 ? '+' : ''}${hiEdge.toFixed(1)} points</strong>. Routine bets (under 40) ran ${loEdge >= 0 ? '+' : ''}${loEdge.toFixed(1)}.</span>
     <span class="chip muted">${bets.length.toLocaleString()} bets across ${nMarkets} fully-visible markets</span>
     <span class="chip muted">bands: ${agg['80–100 insider-pattern'].n} / ${agg['60–79 high'].n} / ${agg['40–59 notable'].n} / ${agg['0–39 routine'].n}</span>
-    ${health ? `<span class="chip muted">${health.truncatedMarkets} markets skipped (history truncated) · ${health.skippedCertain.toLocaleString()} near-certain trades excluded</span>` : ''}
+    ${health ? `<span class="chip muted">${health.skippedCertain.toLocaleString()} already-decided trades excluded · ${health.truncatedMarkets} markets had only partial history visible</span>` : ''}
     ${degenerate ? '<span class="chip critical">▲ SAMPLE LOOKS BROKEN — a band is winning >95%, which does not happen in a real market. Treat this run as invalid.</span>' : ''}
     ${!enough ? '<span class="chip warn">● run a bigger sample before trusting this</span>' : ''}
   </div>`;
