@@ -214,7 +214,7 @@
 
 <header class="top">
   <div class="top-inner">
-    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v8.3</span></div>
+    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v8.4</span></div>
     <div class="top-meta">
       <span id="lastUpdated">loading…</span>
       <span id="countdown" title="Auto-refresh countdown"></span>
@@ -577,8 +577,8 @@
       <div class="card-pad" style="border-bottom:1px solid var(--grid)"><strong>Which individual signals earn their weight?</strong> <span class="note" style="display:inline">edge contributed by each scoring component, measured the same way</span></div>
       <div class="tscroll">
         <table id="btSigTable">
-          <thead><tr><th>Signal</th><th class="num">Bets with it</th><th class="num">Edge with</th><th class="num">Edge without</th><th>Verdict</th></tr></thead>
-          <tbody><tr><td colspan="5" class="empty">Runs with the backtest above.</td></tr></tbody>
+          <thead><tr><th>Signal</th><th class="num">Bets with it</th><th class="num">Edge with</th><th class="num">Edge without</th><th class="num">Difference ±2 s.e.</th><th>Verdict</th></tr></thead>
+          <tbody><tr><td colspan="6" class="empty">Runs with the backtest above.</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -1285,8 +1285,11 @@ async function _loadRadar() {
     renderClusters(clusters);
     clustersSeeded = true;   // armed only after a completed batch, whatever it contained
     try { renderBriefing(); } catch (e) {}
-    const _cl = clusters.find(c => c.newsy);
-    if (_cl) recordSignal('wallet cluster', _cl.title, _cl.side === 'BUY' ? 1 : -1, `${_cl.wallets} wallets, ${fmtUSD(_cl.usd)}`);
+    /* Record EVERY qualifying cluster, not just the first. This study is now the main remaining
+       hypothesis and it had gathered 3 signals in several days, because each refresh logged at most
+       one — a quiet throttle that starved the one experiment still capable of a positive result. */
+    for (const _cl of clusters.filter(c => c.newsy).slice(0, 3))
+      recordSignal('wallet cluster', _cl.title, _cl.side === 'BUY' ? 1 : -1, `${_cl.wallets} wallets, ${fmtUSD(_cl.usd)}`);
     // Bookkeeping and alerts run on the FULL batch; the "Show:" control is display-only.
     // Filtering first meant a 92-score trade was never alerted or remembered while a filter
     // was active, then alerted on an hour-old trade the moment the filter changed.
@@ -1728,8 +1731,11 @@ async function loadMovers() {
     ms.sort((a,b) => Math.abs(b.chg) - Math.abs(a.chg));
     ms = ms.slice(0, 14);
     lastMovers = ms;
-    const _lead = ms.find(m => classifyTitle(m.q) === 'news' && Math.abs(m.chg) >= 0.15);
-    if (_lead) recordSignal('odds swing', _lead.q, _lead.chg >= 0 ? 1 : -1, `${(_lead.chg * 100).toFixed(0)}pts to ${(_lead.last * 100).toFixed(0)}c`);
+    // 15pts was set when only one signal per refresh was kept; at 10pts with all of them logged
+    // the study reaches its 20-signal threshold in days rather than months. Capped at 3 per refresh
+    // so a busy hour cannot burn the FMP quote quota.
+    for (const _lead of ms.filter(m => classifyTitle(m.q) === 'news' && Math.abs(m.chg) >= 0.10).slice(0, 3))
+      recordSignal('odds swing', _lead.q, _lead.chg >= 0 ? 1 : -1, `${(_lead.chg * 100).toFixed(0)}pts to ${(_lead.last * 100).toFixed(0)}c`);
     if (!ms.length) {
       tbody.innerHTML = '<tr><td colspan="5" class="empty">No big non-sports odds swings right now — a quiet news day.</td></tr>';
     } else {
@@ -3017,15 +3023,22 @@ function renderBacktest(bets, nMarkets, health, runGaps) {
   $('#btSigTable tbody').innerHTML = SIGNALS.map(([label, test]) => {
     const withS = bets.filter(b => b.reasons.some(test));
     const without = bets.filter(b => !b.reasons.some(test));
-    const e = arr => arr.length ? (arr.reduce((a, b) => a + b.won, 0) / arr.length - arr.reduce((a, b) => a + b.price, 0) / arr.length) * 100 : null;
-    const ew = e(withS), eo = e(without);
+    /* This table was the last place still judging by a bare threshold — "edge with" beating
+       "edge without" by 2 points, with no error bar anywhere. On the real sample that declared
+       anonymous-wallet a winner at +2.0 vs -0.5 on 858 bets, where the standard error alone is
+       larger than the difference, and it contradicted the size panel next door, which correctly
+       called +6.9 ± 11.3 a null. Same statistics everywhere or the rigour means nothing. */
+    const sw = statsOf(withS), so = statsOf(without);
+    const ew = sw.n ? sw.edge : null, eo = so.n ? so.edge : null;
     const thin = withS.length < 30;
-    const good = ew != null && eo != null && ew > eo + 2;
+    const dse = Math.sqrt((sw.se || 0) ** 2 + (so.se || 0) ** 2);
+    const good = ew != null && eo != null && (ew - eo) > 2 * dse && (!nf || (ew - eo) > nf.diff);
     return `<tr>
       <td>${esc(label)}</td>
       <td class="num">${withS.length.toLocaleString()}${thin ? '<div style="font-size:10.5px;color:var(--ink-3)">thin</div>' : ''}</td>
-      <td class="num" style="color:${ew > 0 ? 'var(--status-good)' : 'var(--status-critical)'}"><strong>${ew == null ? '—' : (ew >= 0 ? '+' : '') + ew.toFixed(1)}</strong></td>
+      <td class="num" style="color:${good ? 'var(--status-good)' : 'var(--ink-2)'}"><strong>${ew == null ? '—' : (ew >= 0 ? '+' : '') + ew.toFixed(1)}</strong></td>
       <td class="num" style="color:var(--ink-2)">${eo == null ? '—' : (eo >= 0 ? '+' : '') + eo.toFixed(1)}</td>
+      <td class="num" style="color:var(--ink-2)">${ew == null || eo == null ? '—' : `${(ew - eo) >= 0 ? '+' : ''}${(ew - eo).toFixed(1)} <span style="font-size:10.5px;color:var(--ink-3)">±${(2 * dse).toFixed(1)}</span>`}</td>
       <td>${thin ? '<span class="chip muted">too few</span>' : good ? '<span class="chip good">✓ earns its weight</span>' : '<span class="chip warn">● no better than without</span>'}</td>
     </tr>`;
   }).join('');
