@@ -214,7 +214,7 @@
 
 <header class="top">
   <div class="top-inner">
-    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v8.0</span></div>
+    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v8.1</span></div>
     <div class="top-meta">
       <span id="lastUpdated">loading…</span>
       <span id="countdown" title="Auto-refresh countdown"></span>
@@ -2175,7 +2175,8 @@ async function loadCloudBot() {
           <strong>${(d.gates.sports || 0).toLocaleString()}</strong> were sports,
           <strong>${(d.gates.dupe || 0).toLocaleString()}</strong> already held or already copied,
           <strong>${(d.gates.noBook || 0).toLocaleString()}</strong> had no order book.
-          ${d.bestNearMiss ? `<div style="margin-top:6px">Closest it came last cycle: <strong>${esc(d.bestNearMiss.title)}</strong> — ${fmtUSD(d.bestNearMiss.usd)} at ${(d.bestNearMiss.px * 100).toFixed(0)}¢, ${esc(d.bestNearMiss.why)}.</div>` : ''}
+          ${d.bestNearMiss ? `<div style="margin-top:6px">Closest it came last cycle: <strong>${esc(d.bestNearMiss.title)}</strong> — ${fmtUSD(d.bestNearMiss.usd)} at ${(d.bestNearMiss.px * 100).toFixed(0)}¢, ${esc(d.bestNearMiss.why)}${d.bestNearMiss.shape != null && d.bestNearMiss.shape !== d.bestNearMiss.score ? ` (trade shape ${d.bestNearMiss.shape}, live context added ${d.bestNearMiss.score - d.bestNearMiss.shape})` : ''}.</div>` : ''}
+          <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--grid)">The backtest disproved the <em>trade-shape</em> half of the score. The <em>live context</em> half — volume share, repricing, clusters — cannot be tested on history at all, because it is contemporaneous. Every fill below records both, so once enough close, this is the only place that answer can come from.</div>
         </div></div></div>` : ''}
       ${(d.lastNotes || []).length ? `<div class="card"><div class="card-pad"><strong>Last cycle</strong><div style="margin-top:6px;font-size:13px;color:var(--ink-2)">${d.lastNotes.map(x => esc(x)).join('<br>')}</div></div></div>` : ''}
       ${(d.positions || []).length ? `<div class="card"><div class="tscroll"><table>
@@ -2638,17 +2639,46 @@ async function backtestOnce(run, RUNS) {
    win more than LOWER-scoring ones". That is a ranking question, so the sample is cut into its
    own quintiles and the top is compared with the bottom. It needs no calibration and it cannot
    be starved by a threshold nobody can reach offline. */
+/* Cut on SCORE VALUE, never mid-tie.
+   Slicing by rank position looked fine until a real sample arrived where 40% of bets scored
+   exactly 0 — the bottom two "fifths" were then both score 0–0, i.e. one tied blob split at an
+   arbitrary index. Comparing those two is comparing a group against itself, and the top-vs-bottom
+   gap inherits that meaninglessness. Groups now break only where the score actually changes, so
+   every group is a genuinely different score, and a sample too tied to split says so. */
 function quintiles(bets) {
   const sorted = bets.slice().sort((a, b) => a.score - b.score);
-  const n = sorted.length, k = 5, out = [];
-  for (let q = 0; q < k; q++) {
-    const a = Math.floor(n * q / k), b = Math.floor(n * (q + 1) / k);
-    const slice = sorted.slice(a, b);
-    if (!slice.length) continue;
-    out.push({ q, label: ['lowest fifth', 'second', 'middle', 'fourth', 'TOP fifth'][q],
-      lo: slice[0].score, hi: slice[slice.length - 1].score, bets: slice });
+  const n = sorted.length, k = 5, target = n / k, out = [];
+  let cur = [], i = 0;
+  while (i < n) {
+    const v = sorted[i].score;
+    const tie = [];
+    while (i < n && sorted[i].score === v) tie.push(sorted[i++]);
+    // keep the tie whole: start a new group only if the current one has already met its quota
+    if (cur.length >= target && out.length < k - 1) { out.push(cur); cur = []; }
+    cur = cur.concat(tie);
   }
-  return out;
+  if (cur.length) out.push(cur);
+  const names = out.length === 5 ? ['lowest fifth', 'second', 'middle', 'fourth', 'TOP fifth']
+    : out.map((_, x) => x === 0 ? 'lowest group' : x === out.length - 1 ? 'TOP group' : 'group ' + (x + 1));
+  return out.map((slice, q) => ({ q, label: names[q],
+    lo: slice[0].score, hi: slice[slice.length - 1].score, bets: slice }));
+}
+
+/* PLACEBO / NOISE FLOOR.
+   Take the biggest set of bets that all share an IDENTICAL score, split it at random, and measure
+   the edge difference between the two halves. Their scores are the same, so the true difference is
+   zero by construction and whatever comes out is pure noise. Any real gap has to beat this. */
+function noiseFloor(bets) {
+  const byScore = new Map();
+  for (const b of bets) { const k = b.score; if (!byScore.has(k)) byScore.set(k, []); byScore.get(k).push(b); }
+  let biggest = null;
+  for (const [, arr] of byScore) if (!biggest || arr.length > biggest.length) biggest = arr;
+  if (!biggest || biggest.length < 60) return null;
+  const sh = biggest.slice();
+  for (let i = sh.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [sh[i], sh[j]] = [sh[j], sh[i]]; }
+  const h = Math.floor(sh.length / 2);
+  const a = statsOf(sh.slice(0, h)), b = statsOf(sh.slice(h));
+  return { score: biggest[0].score, n: biggest.length, diff: Math.abs(a.edge - b.edge) };
 }
 function statsOf(arr) {
   const n = arr.length;
@@ -2697,11 +2727,25 @@ function renderBacktest(bets, nMarkets, health, runGaps) {
     stable = gapPos === gaps.length || gapPos === 0;   // every run agreed on the direction
   }
 
-  // With repeats available, a single run's significance is not enough — the runs must also agree.
-  const worksRaw = enough && spread > 2 * spreadSE && top.edge > 0;
+  /* When repeats exist, the spread ACROSS runs is the honest error bar and it replaces the
+     single-run one entirely. Standard error of the mean = SD / sqrt(k). Note the earlier version
+     of this code applied the reproducibility requirement only to the POSITIVE verdict, so a set
+     of runs reading -15.6, -11.9, -2.3, -7.7, +15.5 — mean -4.4 against a spread of ±12.2, i.e.
+     indistinguishable from zero — still printed "the score is INVERTED" in red. Asymmetric rigour
+     is just bias with extra steps. Both directions now face the same test. */
+  const nf = noiseFloor(bets);
+  const multi = gaps.length >= 2;
+  const gapSEM = multi ? gapSD / Math.sqrt(gaps.length) : spreadSE;
+  const estimate = multi ? gapMean : spread;
+  const bar = 2 * gapSEM;
+  const beatsNoise = !nf || Math.abs(estimate) > nf.diff;   // must also clear the placebo
+  const sigGap = Math.abs(estimate) > bar && beatsNoise;
+  const worksRaw = enough && sigGap && estimate > 0;
   const works = worksRaw && (stable === null || stable);
-  const backwards = enough && spread < -2 * spreadSE;
-  const nothing = enough && !works && !backwards;
+  const backwardsRaw = enough && sigGap && estimate < 0;
+  const backwards = backwardsRaw && (stable === null || stable);
+  const notRepro = (worksRaw || backwardsRaw) && stable === false;
+  const nothing = enough && !works && !backwards && !notRepro;
   // No band in a healthy sample wins >95%. If one does, the sample is dominated by
   // already-decided trades and the whole run should be discarded rather than believed.
   const degenerate = qs.some(q => q.bets.length >= 20 && q.bets.reduce((a, b) => a + b.won, 0) / q.bets.length > 0.95);
@@ -2720,16 +2764,19 @@ function renderBacktest(bets, nMarkets, health, runGaps) {
 
   const headline = degenerate ? '🛑 Sample invalid — discard this run'
     : !enough ? '🔍 Not enough data yet'
-    : worksRaw && stable === false ? '⚠️ One run says yes, another says no — not reproducible'
+    : notRepro ? '⚠️ Not reproducible — the runs point in different directions'
     : works ? '✅ The score ranks bets correctly'
     : backwards ? '🛑 The score is INVERTED — high scores did worse'
     : '⚖️ No ranking power — the score is not separating winners from losers';
   const colr = degenerate || backwards ? 'var(--status-critical)' : works ? 'var(--status-good)' : nothing ? 'var(--ink-3)' : 'var(--status-warn)';
+  const tied = qs.length < 3;
   $('#btVerdict').innerHTML = `<div class="cluster ${works && !degenerate ? '' : 'calm'}" style="border-left-color:${colr}">
     <span class="big">${headline}</span>
     ${degenerate ? '<span style="width:100%">The numbers below are shown for diagnosis only — do not read a verdict from them.</span>' : ''}
     ${!degenerate && !enough ? `<span style="width:100%">Need 30+ bets in both the top and bottom fifth (have ${top.n} and ${bot.n}). Raise <strong>Traders</strong> to 50–90.</span>` : ''}
-    <span style="width:100%">Top fifth (scores ${topQ ? topQ.lo + '–' + topQ.hi : '—'}) beat its odds by <strong style="color:${(top.edge || 0) > 0 ? 'var(--status-good)' : 'var(--status-critical)'}">${top.n ? (top.edge >= 0 ? '+' : '') + top.edge.toFixed(1) : '—'} pts</strong>; bottom fifth (${botQ ? botQ.lo + '–' + botQ.hi : '—'}) by <strong>${bot.n ? (bot.edge >= 0 ? '+' : '') + bot.edge.toFixed(1) : '—'} pts</strong>. The gap is what matters: <strong>${spread >= 0 ? '+' : ''}${spread.toFixed(1)} ± ${(2 * spreadSE).toFixed(1)} pts</strong>${enough ? (Math.abs(spread) > 2 * spreadSE ? ' — larger than the noise' : ' — inside the noise, so it means nothing yet') : ''}.</span>
+    <span style="width:100%">Top fifth (scores ${topQ ? topQ.lo + '–' + topQ.hi : '—'}) beat its odds by <strong style="color:${(top.edge || 0) > 0 ? 'var(--status-good)' : 'var(--status-critical)'}">${top.n ? (top.edge >= 0 ? '+' : '') + top.edge.toFixed(1) : '—'} pts</strong>; bottom fifth (${botQ ? botQ.lo + '–' + botQ.hi : '—'}) by <strong>${bot.n ? (bot.edge >= 0 ? '+' : '') + bot.edge.toFixed(1) : '—'} pts</strong>. The gap is what matters: <strong>${estimate >= 0 ? '+' : ''}${estimate.toFixed(1)} ± ${bar.toFixed(1)} pts</strong>${multi ? ' (mean of the runs, ± twice the standard error of that mean)' : ''}${enough ? (sigGap ? ' — larger than the noise' : ' — inside the noise, so it means nothing') : ''}.</span>
+    ${nf ? `<span class="chip ${beatsNoise ? 'muted' : 'warn'}">Placebo check: ${nf.n.toLocaleString()} bets that all scored exactly ${nf.score} were split at random, and the two halves — identical by construction — still differed by <strong>${nf.diff.toFixed(1)} pts</strong>. That is this sample's noise floor${beatsNoise ? '' : ', and the measured gap does not clear it'}.</span>` : ''}
+    ${tied ? '<span class="chip warn">● the score is too tied to split into five groups — most bets share the same value, which is itself a finding: the score barely varies across real trades</span>' : ''}
     ${gaps.length >= 2 ? `<span style="width:100%">Across <strong>${gaps.length} independent runs</strong> the gap came out ${gaps.map(g => (g >= 0 ? '+' : '') + g.toFixed(1)).join(', ')} — mean <strong>${gapMean >= 0 ? '+' : ''}${gapMean.toFixed(1)}</strong>, spread ±${gapSD.toFixed(1)}, positive in ${gapPos} of ${gaps.length}. ${stable ? 'Every run agreed on the direction.' : 'The runs disagree, which is what noise looks like.'}</span>` : ''}
     ${gaps.length < 2 ? '<span class="chip warn">● single run — set <strong>Repeat</strong> to 3 or 5 before believing any gap. One look at a 2-s.e. bar crosses by luck about 1 time in 20.</span>' : ''}
     <span class="chip ${biased ? 'warn' : 'muted'}">Bias meter: the whole sample beat its odds by ${whole.edge >= 0 ? '+' : ''}${whole.edge.toFixed(1)} pts${biased ? ' — a neutral sample should sit near 0, so treat the absolute win rates as inflated and read only the gap between fifths' : ' — close enough to zero that the sample looks neutral'}</span>
