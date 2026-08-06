@@ -214,7 +214,7 @@
 
 <header class="top">
   <div class="top-inner">
-    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v7.8</span></div>
+    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v7.9</span></div>
     <div class="top-meta">
       <span id="lastUpdated">loading…</span>
       <span id="countdown" title="Auto-refresh countdown"></span>
@@ -534,6 +534,28 @@
         </table>
       </div>
     </div>
+    <div class="card">
+      <div class="card-pad" style="border-bottom:1px solid var(--grid)"><strong>Same test, controlled for price</strong> <span class="note" style="display:inline">cheap outcomes are systematically overpriced on prediction markets, and the score loads on cheap outcomes — so comparing the top fifth against the bottom fifth compares two different price worlds. Splitting high vs low score <em>within</em> each price band removes that, because both halves then carry the same bias.</span></div>
+      <div id="btPriceVerdict" style="padding:0 14px 10px"></div>
+      <div class="tscroll">
+        <table id="btPriceTable">
+          <thead><tr><th>Entry price</th><th class="num">Bets</th><th class="num">Edge, lower-scoring half</th><th class="num">Edge, higher-scoring half</th><th class="num">Difference ±2 s.e.</th></tr></thead>
+          <tbody><tr><td colspan="5" class="empty">Runs with the backtest above.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-pad" style="border-bottom:1px solid var(--grid)"><strong>Does skill persist? — the question that decides whether copy-trading works</strong> <span class="note" style="display:inline">everything above asks whether a trade's <em>shape</em> predicts its outcome. This asks something different and more important: whether a <em>trader</em> who beat the odds early goes on beating them later. Each trader's own history is split in half by time and the halves are compared. If early edge does not forecast late edge, then a good record is luck and following it forward earns nothing.</span></div>
+      <div id="btPersistVerdict" style="padding:0 14px 10px"></div>
+      <div class="tscroll">
+        <table id="btPersistTable">
+          <thead><tr><th>Trader</th><th class="num">Graded bets</th><th class="num">Edge, first half</th><th class="num">Edge, second half</th></tr></thead>
+          <tbody><tr><td colspan="4" class="empty">Runs with the backtest above.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
     <div class="card">
       <div class="card-pad" style="border-bottom:1px solid var(--grid)"><strong>Which individual signals earn their weight?</strong> <span class="note" style="display:inline">edge contributed by each scoring component, measured the same way</span></div>
       <div class="tscroll">
@@ -2536,6 +2558,7 @@ async function runBacktest() {
         sc.score = Math.min(100, Math.round(sc.score));
       }
       bets.push({ score: sc.score, price: c.px, usd: c.usd,
+        wallet: c.t.proxyWallet, ts: c.t.timestamp,
         won: (c.t.outcomeIndex ?? 0) === r.winnerIndex ? 1 : 0,
         reasons: sc.reasons, isNewsy: sc.isNewsy });
     }
@@ -2638,6 +2661,111 @@ function renderBacktest(bets, nMarkets, health) {
     ${health && health.lbSeeded ? `<span class="chip warn">● ${health.lbSeeded} of ${health.sampled} traders came from the top-P&L leaderboard — that part of the sample is winner-biased, so read the gap between fifths rather than the absolute win rates</span>` : ''}
     ${degenerate ? '<span class="chip critical">▲ SAMPLE LOOKS BROKEN — a fifth is winning >95%, which does not happen in a real market. Treat this run as invalid.</span>' : ''}
   </div>`;
+
+  /* ---- PRICE-CONTROLLED CHECK ----
+     The quintile comparison above has a confound. The score loads heavily on longshot entries
+     (+14 to +28 below 20c), so the top fifth is mostly cheap bets and the bottom fifth mostly
+     mid-priced ones. Prediction markets carry a favourite-longshot bias: cheap outcomes are
+     systematically OVERPRICED and lose more than their price implies. That bias sits on the
+     top fifth and not the bottom, so it can cancel out real skill and print "no ranking power"
+     when skill is actually there. Comparing high vs low score only WITHIN a price band removes
+     it — both sides of each comparison then carry the same bias. */
+  const PBANDS = [[0.05, 0.15], [0.15, 0.35], [0.35, 0.65], [0.65, 0.85]];
+  let sw = 0, swx = 0;
+  const prows = PBANDS.map(([lo, hi]) => {
+    const inb = bets.filter(b => b.price >= lo && b.price < hi);
+    if (inb.length < 20) return { lo, hi, n: inb.length, thin: true };
+    const sorted = inb.slice().sort((a, b) => a.score - b.score);
+    const cut = Math.floor(sorted.length / 2);
+    const lowH = statsOf(sorted.slice(0, cut)), highH = statsOf(sorted.slice(cut));
+    const diff = highH.edge - lowH.edge;
+    const se = Math.sqrt(highH.se ** 2 + lowH.se ** 2);
+    sw += inb.length; swx += diff * inb.length;
+    return { lo, hi, n: inb.length, low: lowH, high: highH, diff, se, thin: false };
+  });
+  const pooled = sw ? swx / sw : null;
+  const pRows = prows.map(r => {
+    if (r.thin) return `<tr><td>${(r.lo * 100).toFixed(0)}–${(r.hi * 100).toFixed(0)}¢</td><td class="num">${r.n}</td><td colspan="3" class="empty" style="text-align:left">too few bets at these odds to split</td></tr>`;
+    const sig = Math.abs(r.diff) > 2 * r.se;
+    const col = sig && r.diff > 0 ? 'var(--status-good)' : sig && r.diff < 0 ? 'var(--status-critical)' : 'var(--ink-2)';
+    return `<tr>
+      <td><strong>${(r.lo * 100).toFixed(0)}–${(r.hi * 100).toFixed(0)}¢</strong></td>
+      <td class="num">${r.n.toLocaleString()}</td>
+      <td class="num" style="color:var(--ink-2)">${r.low.edge >= 0 ? '+' : ''}${r.low.edge.toFixed(1)}</td>
+      <td class="num">${r.high.edge >= 0 ? '+' : ''}${r.high.edge.toFixed(1)}</td>
+      <td class="num" style="color:${col}"><strong>${r.diff >= 0 ? '+' : ''}${r.diff.toFixed(1)}</strong> <span style="font-size:10.5px;color:var(--ink-3)">±${(2 * r.se).toFixed(1)}</span></td>
+    </tr>`;
+  }).join('');
+  const pEl = $('#btPriceTable');
+  if (pEl) {
+    pEl.querySelector('tbody').innerHTML = pRows;
+    const pv = $('#btPriceVerdict');
+    if (pv) pv.innerHTML = pooled == null ? '' :
+      `<span class="chip ${Math.abs(pooled) < 1 ? 'muted' : pooled > 0 ? 'good' : 'critical'}">Pooled across price bands, higher-scoring bets beat lower-scoring ones by <strong>${pooled >= 0 ? '+' : ''}${pooled.toFixed(1)} points</strong> — this is the number the favourite-longshot bias cannot fake.</span>`;
+  }
+
+  /* ---- DOES SKILL PERSIST? ----
+     The pooled test above asks whether trade SHAPE predicts outcome across everyone. That is the
+     wrong question for this tool. The premise was never that all big longshot bets are informed —
+     it is that a small minority of WALLETS are. Pooling 25 random traders drowns two sharp ones in
+     twenty-three noisy ones, so a null there says almost nothing about whether following specific
+     wallets works. The question that decides it: does a wallet's past edge predict its future edge?
+     Split each wallet's own history in half by time and see whether the early half forecasts the
+     late half. If it does, copy-trading has a basis. If it does not, every "proven winner" this
+     dashboard has ever shown is survivorship, and the copy bot should be switched off. */
+  const byW = new Map();
+  for (const b of bets) {
+    if (!b.wallet) continue;
+    if (!byW.has(b.wallet)) byW.set(b.wallet, []);
+    byW.get(b.wallet).push(b);
+  }
+  const pers = [];
+  for (const [w, arr] of byW) {
+    if (arr.length < 20) continue;
+    const sorted = arr.slice().sort((a, b) => (a.ts || 0) - (b.ts || 0));
+    const cut = Math.floor(sorted.length / 2);
+    const e1 = statsOf(sorted.slice(0, cut)), e2 = statsOf(sorted.slice(cut));
+    if (!e1.n || !e2.n) continue;
+    pers.push({ w, n: arr.length, early: e1.edge, late: e2.edge, se: Math.sqrt(e1.se ** 2 + e2.se ** 2) });
+  }
+  const pEl2 = $('#btPersistTable');
+  if (pEl2) {
+    if (pers.length < 4) {
+      pEl2.querySelector('tbody').innerHTML = `<tr><td colspan="4" class="empty">Only ${pers.length} trader${pers.length === 1 ? '' : 's'} had 20+ graded bets — need at least 4 to say anything about persistence. Raise <strong>Traders</strong>.</td></tr>`;
+      const v = $('#btPersistVerdict'); if (v) v.innerHTML = '';
+    } else {
+      pers.sort((a, b) => b.early - a.early);
+      pEl2.querySelector('tbody').innerHTML = pers.slice(0, 14).map(r => {
+        const agree = (r.early > 0) === (r.late > 0);
+        return `<tr>
+          <td><span class="mono">${esc(r.w.slice(0, 10))}…</span></td>
+          <td class="num">${r.n}</td>
+          <td class="num" style="color:${r.early > 0 ? 'var(--status-good)' : 'var(--status-critical)'}">${r.early >= 0 ? '+' : ''}${r.early.toFixed(1)}</td>
+          <td class="num" style="color:${r.late > 0 ? 'var(--status-good)' : 'var(--status-critical)'}">${r.late >= 0 ? '+' : ''}${r.late.toFixed(1)}${agree ? ' <span class="chip good" style="font-size:10px">held</span>' : ' <span class="chip muted" style="font-size:10px">flipped</span>'}</td>
+        </tr>`;
+      }).join('');
+      // correlation between early and late edge across wallets
+      const n = pers.length;
+      const mx = pers.reduce((a, r) => a + r.early, 0) / n, my = pers.reduce((a, r) => a + r.late, 0) / n;
+      let num = 0, dx = 0, dy = 0;
+      for (const r of pers) { num += (r.early - mx) * (r.late - my); dx += (r.early - mx) ** 2; dy += (r.late - my) ** 2; }
+      const rho = (dx && dy) ? num / Math.sqrt(dx * dy) : 0;
+      const good = pers.filter(r => r.early > 0), bad = pers.filter(r => r.early <= 0);
+      const goodLate = good.length ? good.reduce((a, r) => a + r.late, 0) / good.length : null;
+      const badLate = bad.length ? bad.reduce((a, r) => a + r.late, 0) / bad.length : null;
+      // rough significance: correlation needs to clear ~2/sqrt(n) to mean anything
+      const crit = 2 / Math.sqrt(Math.max(n, 2));
+      const real = rho > crit;
+      const v = $('#btPersistVerdict');
+      if (v) v.innerHTML = `<div class="cluster ${real ? '' : 'calm'}" style="border-left-color:${real ? 'var(--status-good)' : 'var(--ink-3)'}">
+        <span class="big">${real ? '✅ Past edge predicts future edge — following specific wallets has a basis' : '⚖️ Past edge does NOT predict future edge'}</span>
+        <span style="width:100%">Across ${n} traders with 20+ graded bets each, the correlation between a trader's early-half edge and their late-half edge is <strong>${rho.toFixed(2)}</strong> (needs to clear ${crit.toFixed(2)} to beat chance).${goodLate != null && badLate != null ? ` Traders who were ahead early went on to average <strong>${goodLate >= 0 ? '+' : ''}${goodLate.toFixed(1)}</strong> later; those behind early averaged <strong>${badLate >= 0 ? '+' : ''}${badLate.toFixed(1)}</strong>.` : ''}</span>
+        <span style="width:100%;color:var(--ink-2);font-size:12.5px">${real
+          ? 'This is the result that justifies the copy bot: skill is sticky, so a wallet with a record is worth following.'
+          : 'Read this plainly — it means the wallets this dashboard calls "proven winners" are mostly lucky, and copying them forward has no demonstrated edge. Keep the tool as a news sensor, not a signal to trade on, until this number turns.'}</span>
+      </div>`;
+    }
+  }
 
   // per-signal contribution
   const SIGNALS = [
