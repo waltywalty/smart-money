@@ -214,7 +214,7 @@
 
 <header class="top">
   <div class="top-inner">
-    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v7.6</span></div>
+    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v7.7</span></div>
     <div class="top-meta">
       <span id="lastUpdated">loading…</span>
       <span id="countdown" title="Auto-refresh countdown"></span>
@@ -502,21 +502,21 @@
     <div class="block-head">
       <h2>🔬 Does the score actually work?</h2>
       <span class="feedstate" id="btState">not run yet</span>
-      <span class="desc">The honest test. Sample markets that have already resolved, score every trade with this dashboard's own algorithm, and check whether high-scoring bets won more often than the odds they paid implied.</span>
+      <span class="desc">The honest test. Sample real traders, replay their own betting history through this dashboard's scoring algorithm, and check whether high-scoring bets won more often than the odds they paid implied. Sampling by trader rather than by market is deliberate — a market's recent trades are all placed after the answer is obvious, whereas a trader's history spans months of genuine uncertainty.</span>
     </div>
     <div class="card">
       <div class="controls">
-        <span>Sample size:</span>
+        <span>Sample:</span>
         <div class="seg" id="btSizeSeg">
-          <button data-v="40">40</button>
-          <button data-v="80" aria-pressed="true">80</button>
-          <button data-v="150">150</button>
-          <button data-v="250">250 markets</button>
+          <button data-v="10">10</button>
+          <button data-v="25" aria-pressed="true">25</button>
+          <button data-v="50">50</button>
+          <button data-v="90">90 traders</button>
         </div>
         <span>Min bet</span>
         <div class="seg" id="btMinSeg">
-          <button data-v="100">$100</button>
-          <button data-v="1000" aria-pressed="true">$1k</button>
+          <button data-v="100" aria-pressed="true">$100</button>
+          <button data-v="1000">$1k</button>
           <button data-v="5000">$5k</button>
         </div>
         <label class="ck"><input type="checkbox" id="btNewsOnly"> news-sensitive markets only</label>
@@ -530,7 +530,7 @@
             <th>Score band</th><th class="num">Bets</th><th class="num">Actually won</th>
             <th class="num">Odds implied</th><th class="num">Edge</th><th></th><th>Read</th>
           </tr></thead>
-          <tbody><tr><td colspan="7" class="empty">Hit <strong>Run backtest</strong>. It samples resolved markets, replays their trades through the scoring algorithm, and grades every bet against what actually happened.</td></tr></tbody>
+          <tbody><tr><td colspan="7" class="empty">Hit <strong>Run backtest</strong>. It samples real traders, pulls each one's own betting history, replays every bet through the scoring algorithm, and grades it against how the market actually resolved.</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -1027,8 +1027,8 @@ const state = Object.assign({
   kThresh: 10000,
   radarSpeed: 15,
   alertThresh: 70,
-  btSize: 80,
-  btMin: 1000,
+  btSize: 25,
+  btMin: 100,
   cvSrc: 'proven',
   sport: 'basketball_nba',
   kHideTicks: true,
@@ -2419,10 +2419,15 @@ function renderBriefing() {
    efficient market, so "edge" = actual win rate minus average implied probability. That is the
    only formulation that can distinguish a genuine signal from simply betting on favourites. */
 let btBusy = false;
+/* Sampling axis matters more than sample size. Querying trades BY MARKET only ever returns that
+   market's last 500 fills, which on a resolved market are the ones placed after the answer was
+   obvious — 93 of 97 on one sampled market sat at 99.7c. Querying BY WALLET returns that wallet's
+   own history, which spans months and sits overwhelmingly at genuinely uncertain prices. Same
+   endpoint, completely different sample. */
 async function runBacktest() {
   if (btBusy) return;
   btBusy = true;
-  const N = state.btSize || 80;
+  const N = state.btSize || 25;
   const newsOnly = $('#btNewsOnly').checked;
   const prog = $('#btProgress');
   const tbody = $('#btTable tbody');
@@ -2430,71 +2435,106 @@ async function runBacktest() {
   setFeed('#btState', 'link');
   $('#btState').textContent = 'running…';
   try {
-    prog.textContent = 'fetching resolved markets…';
-    let pool = [];
-    for (const [off, asc] of [[0, false], [200, false], [0, true], [200, true], [400, true], [600, true], [400, false], [800, true]]) {
+    prog.textContent = 'collecting traders…';
+    const pool = new Map();
+    // Recent sizeable traders — a neutral cross-section of people actually betting real money.
+    for (const amt of [25000, 5000, 1000]) {
       try {
-        const batch = await fetchJSON(`https://gamma-api.polymarket.com/markets?closed=true&limit=200&offset=${off}&order=volumeNum&ascending=${asc}&volume_num_min=5000`);
-        if (Array.isArray(batch)) pool = pool.concat(batch);
+        const trs = await fetchJSON(`https://data-api.polymarket.com/trades?limit=500&takerOnly=true&filterType=CASH&filterAmount=${amt}`);
+        if (Array.isArray(trs)) for (const t of trs) if (t.proxyWallet) pool.set(t.proxyWallet, true);
       } catch (e) {}
-      if (pool.length >= Math.max(600, N * 6)) break;
+      if (pool.size >= N * 4) break;
     }
-    pool = pool.filter((m, i, a) => a.findIndex(x => x.conditionId === m.conditionId) === i);
-    pool = pool.filter(m => m.conditionId && m.outcomePrices);
-    if (newsOnly) pool = pool.filter(m => classifyTitle(m.question || '') === 'news');
-    if (!pool.length) throw new Error('no resolved markets returned');
-    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
-    const sample = pool.slice(0, N);
-
-    const bets = [];
-    let done = 0, truncatedMarkets = 0, skippedCertain = 0, gradedMarkets = 0;
-    for (let i = 0; i < sample.length; i += 4) {
-      const chunk = sample.slice(i, i + 4);
-      await Promise.allSettled(chunk.map(async m => {
-        let prices = [];
-        try { prices = typeof m.outcomePrices === 'string' ? JSON.parse(m.outcomePrices) : m.outcomePrices; } catch (e) { return; }
-        const winnerIndex = prices.findIndex(x => +x >= 0.99);
-        if (winnerIndex < 0) return;                       // not cleanly resolved
-        let trs = [];
-        try { trs = await fetchJSON(`https://data-api.polymarket.com/trades?market=${encodeURIComponent(m.conditionId)}&limit=500`); } catch (e) { return; }
-        if (!Array.isArray(trs)) return;
-        /* The endpoint returns the LAST 500 trades. On a resolved market those are placed after
-           the outcome was already obvious — on one sampled market, 93 of 97 trades sat on the
-           winning side at 99.7c. Grading those measures nothing except that settled markets
-           settle. So: skip any market whose history is truncated, because we would only be
-           seeing its tail. */
-        if (trs.length >= 500) truncatedMarkets++;   // noted as a caveat, no longer excluded
-        for (const t of trs) {
-          if (t.side !== 'BUY') continue;                  // a BUY is an unambiguous directional bet
-          const px = +t.price;
-          /* Symmetric uncertainty window. The old 0.01-0.99 filter was asymmetric in effect:
-             near settlement losers trade at 0.002-0.01 (excluded) while winners sit at 0.95-0.98
-             (kept), which quietly deleted the losing side and manufactured ~100% win rates. */
-          if (!(px >= 0.05 && px <= 0.85)) { skippedCertain++; continue; }
-          const usd = t.size * px;
-          if (usd < (state.btMin || 1000)) continue;   // tiny trades can never score high and only dilute the sample
-          const sc = scoreTrade({ ...t, title: m.question || t.title });
-          bets.push({ score: sc.score, price: px, usd,
-            won: (t.outcomeIndex ?? 0) === winnerIndex ? 1 : 0,
-            reasons: sc.reasons, isNewsy: sc.isNewsy });
+    /* Leaderboard names are a TOP-PNL list, so seeding from it stacks the sample with proven
+       winners and inflates every band. Only reach for it when the recent-trade pool came up
+       short, and never let it dominate — the routine band is the control and must stay honest. */
+    let lbSeeded = 0;
+    if (pool.size < N * 2) {
+      try {
+        const lb = await fetchJSON('https://data-api.polymarket.com/v1/leaderboard?timePeriod=MONTH&orderBy=PNL&limit=25');
+        if (Array.isArray(lb)) for (const r of lb) {
+          if (pool.size >= N * 2) break;
+          if (r.proxyWallet && !pool.has(r.proxyWallet)) { pool.set(r.proxyWallet, true); lbSeeded++; }
         }
-        gradedMarkets++;
-      }));
-      done += chunk.length;
-      prog.textContent = `replaying market ${Math.min(done, sample.length)}/${sample.length} · ${bets.length.toLocaleString()} bets graded`;
+      } catch (e) {}
     }
-    if (!bets.length) {
-      setFeed('#btState', 'link');
-      $('#btState').textContent = 'no gradeable bets';
-      $('#btTable tbody').innerHTML = `<tr><td colspan="7" class="empty">Sampled ${gradedMarkets} resolved markets but found no bets between 5¢ and 85¢ above ${fmtUSD(state.btMin || 1000)}. Nearly every trade sat at already-decided prices. Lower <strong>Min bet</strong> to $100, raise the market count, and untick news-only — that widens the net without reintroducing the bias.</td></tr>`;
+    let wallets = [...pool.keys()];
+    if (!wallets.length) throw new Error('no traders returned — the data API may be unreachable');
+    for (let i = wallets.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [wallets[i], wallets[j]] = [wallets[j], wallets[i]]; }
+    wallets = wallets.slice(0, N);
+
+    // 1. pull each wallet's own history
+    prog.textContent = `pulling history for ${wallets.length} traders…`;
+    const candidates = [];
+    let skippedCertain = 0, walletsWithHistory = 0;
+    for (let i = 0; i < wallets.length; i += 4) {
+      await Promise.allSettled(wallets.slice(i, i + 4).map(async w => {
+        let trs = [];
+        try { trs = await fetchJSON(`https://data-api.polymarket.com/trades?user=${w}&limit=500`); } catch (e) { return; }
+        if (!Array.isArray(trs) || !trs.length) return;
+        walletsWithHistory++;
+        for (const t of trs) {
+          if (t.side !== 'BUY' || !t.conditionId) continue;
+          const px = +t.price;
+          if (!(px >= 0.05 && px <= 0.85)) { skippedCertain++; continue; }   // symmetric uncertainty window
+          const usd = t.size * px;
+          if (usd < (state.btMin || 100)) continue;
+          const cls = classifyTitle(t.title || '');
+          if (newsOnly && cls !== 'news') continue;
+          candidates.push({ t, px, usd });
+        }
+      }));
+      prog.textContent = `pulling history… ${Math.min(i + 4, wallets.length)}/${wallets.length} traders · ${candidates.length} candidate bets`;
+    }
+    if (!candidates.length) {
+      setFeed('#btState', 'link'); $('#btState').textContent = 'no candidate bets';
+      tbody.innerHTML = `<tr><td colspan="7" class="empty">Pulled history for ${walletsWithHistory} traders but none had qualifying bets. Lower <strong>Min bet</strong> and untick news-only.</td></tr>`;
       return;
     }
-    renderBacktest(bets, gradedMarkets, { truncatedMarkets, skippedCertain, sampled: sample.length });
+
+    // 2. resolve the markets they bet on (cached across runs, so repeat runs are much faster)
+    /* Cap the resolution work, but SHUFFLE first. Slicing in insertion order would take the
+       first wallets' markets and drop the rest entirely — turning a 25-trader sample into a
+       4-trader one without saying so. Shuffling keeps the cut representative, and the count
+       is reported in the verdict rather than silently swallowed. */
+    const allIds = [...new Set(candidates.map(c => c.t.conditionId))];
+    for (let i = allIds.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [allIds[i], allIds[j]] = [allIds[j], allIds[i]]; }
+    const CAP = 400;
+    const ids = allIds.slice(0, CAP);
+    const droppedIds = allIds.length - ids.length;
+    prog.textContent = `resolving ${ids.length} markets…`;
+    const resMap = new Map();
+    for (let i = 0; i < ids.length; i += 10) {
+      const chunk = ids.slice(i, i + 10);
+      const got = await Promise.all(chunk.map(id => getMarketResolution(id).catch(() => null)));
+      chunk.forEach((id, k) => resMap.set(id, got[k]));
+      prog.textContent = `resolving markets… ${Math.min(i + 10, ids.length)}/${ids.length}`;
+    }
+    flushRes();
+
+    // 3. grade
+    const bets = [];
+    const gradedMarkets = new Set();
+    for (const c of candidates) {
+      const r = resMap.get(c.t.conditionId);
+      if (!r || !r.closed || r.winnerIndex == null || r.provisional) continue;
+      gradedMarkets.add(c.t.conditionId);
+      const sc = scoreTrade(c.t);
+      bets.push({ score: sc.score, price: c.px, usd: c.usd,
+        won: (c.t.outcomeIndex ?? 0) === r.winnerIndex ? 1 : 0,
+        reasons: sc.reasons, isNewsy: sc.isNewsy });
+    }
+    if (!bets.length) {
+      setFeed('#btState', 'link'); $('#btState').textContent = 'nothing settled yet';
+      tbody.innerHTML = `<tr><td colspan="7" class="empty">Found ${candidates.length.toLocaleString()} qualifying bets across ${ids.length} markets, but none of those markets have resolved yet — only settled markets can be graded. Raise the trader count so the sample reaches further back.</td></tr>`;
+      return;
+    }
+    renderBacktest(bets, gradedMarkets.size, { withHistory: walletsWithHistory, skippedCertain, sampled: wallets.length, lbSeeded, droppedIds });
     $('#btState').textContent = 'complete';
     $('#btState').className = 'feedstate live';
   } catch (e) {
     setFeed('#btState', false);
-    tbody.innerHTML = `<tr><td colspan="7" class="empty">Backtest failed: ${esc(e.message || 'unknown error')}. The market data APIs may be unreachable right now.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="empty">Backtest failed: ${esc(e.message || 'unknown error')}.</td></tr>`;
   } finally {
     btBusy = false;
     prog.textContent = '';
@@ -2541,21 +2581,27 @@ function renderBacktest(bets, nMarkets, health) {
   // No band in a healthy sample wins >95%. If one does, the sample is dominated by
   // already-decided trades and the whole run should be discarded rather than believed.
   const degenerate = bands.some(k => agg[k].n >= 20 && agg[k].won / agg[k].n > 0.95);
+  /* A broken sample must never render as a green tick. The guard used to sit in a chip
+     UNDER a headline that still said "the score has measurable edge" — which is the exact
+     reading that fooled us the first time round. Invalidity outranks the verdict. */
   const shortfall = [];
   if (hi.n < 30) shortfall.push(`only <strong>${hi.n}</strong> bet${hi.n === 1 ? '' : 's'} scored 60+ (need 30)`);
   if (lo.n < 30) shortfall.push(`only <strong>${lo.n}</strong> scored under 40 (need 30)`);
   const advice = hi.n < 30
-    ? 'A high score needs size AND longshot odds AND a news-sensitive market at once, which is rare in a random sample. Try 150–250 markets, set Min bet to $1k or $5k so tiny trades stop diluting it, and tick <em>news-sensitive only</em> — that is where high scores live.'
-    : 'Raise the market count for a cleaner read.';
-  $('#btVerdict').innerHTML = `<div class="cluster ${works ? '' : 'calm'}" style="border-left-color:${works ? 'var(--status-good)' : nothing ? 'var(--ink-3)' : 'var(--status-warn)'}">
-    <span class="big">${!enough ? '🔍 Not enough data yet' : works ? '✅ The score has measurable edge' : nothing ? '⚖️ No edge detected' : '⚠️ Mixed / inconclusive'}</span>
-    ${!enough ? `<span style="width:100%">${shortfall.join(' · ')}. ${advice}</span>` : ''}
+    ? 'A high score needs size AND longshot odds AND a news-sensitive market at once, which is rare. Raise <strong>Traders</strong> to 50–90 (each one contributes months of their own history) and keep <strong>Min bet</strong> low — $100 — so the sample stays big enough to contain the rare high scores.'
+    : 'Raise the trader count for a cleaner read.';
+  $('#btVerdict').innerHTML = `<div class="cluster ${works && !degenerate ? '' : 'calm'}" style="border-left-color:${degenerate ? 'var(--status-critical)' : works ? 'var(--status-good)' : nothing ? 'var(--ink-3)' : 'var(--status-warn)'}">
+    <span class="big">${degenerate ? '🛑 Sample invalid — discard this run' : !enough ? '🔍 Not enough data yet' : works ? '✅ The score has measurable edge' : nothing ? '⚖️ No edge detected' : '⚠️ Mixed / inconclusive'}</span>
+    ${degenerate ? '<span style="width:100%">The numbers below are shown for diagnosis only — do not read a verdict from them.</span>' : ''}
+    ${!degenerate && !enough ? `<span style="width:100%">${shortfall.join(' · ')}. ${advice}</span>` : ''}
     <span>High-scoring bets (60+) won <strong>${hi.n ? (hi.won / hi.n * 100).toFixed(1) : '—'}%</strong> of the time against implied odds of <strong>${hi.n ? (hi.implied / hi.n * 100).toFixed(1) : '—'}%</strong> — an edge of <strong style="color:${hiEdge > 0 ? 'var(--status-good)' : 'var(--status-critical)'}">${hiEdge >= 0 ? '+' : ''}${hiEdge.toFixed(1)} points</strong>. Routine bets (under 40) ran ${loEdge >= 0 ? '+' : ''}${loEdge.toFixed(1)}.</span>
-    <span class="chip muted">${bets.length.toLocaleString()} bets across ${nMarkets} fully-visible markets</span>
+    <span class="chip muted">${bets.length.toLocaleString()} graded bets across ${nMarkets} settled markets</span>
     <span class="chip muted">bands: ${agg['80–100 insider-pattern'].n} / ${agg['60–79 high'].n} / ${agg['40–59 notable'].n} / ${agg['0–39 routine'].n}</span>
-    ${health ? `<span class="chip muted">${health.skippedCertain.toLocaleString()} already-decided trades excluded · ${health.truncatedMarkets} markets had only partial history visible</span>` : ''}
+    ${health ? `<span class="chip muted">${health.sampled} traders sampled · ${health.skippedCertain.toLocaleString()} already-decided trades excluded</span>` : ''}
+    ${health && health.droppedIds ? `<span class="chip muted">${health.droppedIds.toLocaleString()} further markets left ungraded to cap the run — the graded ones were drawn at random across all traders, not taken from the first few</span>` : ''}
+    ${health && health.lbSeeded ? `<span class="chip warn">● ${health.lbSeeded} of ${health.sampled} traders came from the top-P&amp;L leaderboard — that part of the sample is winner-biased, so read the gap between bands rather than the absolute win rates</span>` : ''}
     ${degenerate ? '<span class="chip critical">▲ SAMPLE LOOKS BROKEN — a band is winning >95%, which does not happen in a real market. Treat this run as invalid.</span>' : ''}
-    ${!enough ? '<span class="chip warn">● run a bigger sample before trusting this</span>' : ''}
+    ${!degenerate && !enough ? '<span class="chip warn">● run a bigger sample before trusting this</span>' : ''}
   </div>`;
 
   // per-signal contribution
