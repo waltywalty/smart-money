@@ -214,7 +214,7 @@
 
 <header class="top">
   <div class="top-inner">
-    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v7.7</span></div>
+    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v7.8</span></div>
     <div class="top-meta">
       <span id="lastUpdated">loading…</span>
       <span id="countdown" title="Auto-refresh countdown"></span>
@@ -502,7 +502,7 @@
     <div class="block-head">
       <h2>🔬 Does the score actually work?</h2>
       <span class="feedstate" id="btState">not run yet</span>
-      <span class="desc">The honest test. Sample real traders, replay their own betting history through this dashboard's scoring algorithm, and check whether high-scoring bets won more often than the odds they paid implied. Sampling by trader rather than by market is deliberate — a market's recent trades are all placed after the answer is obvious, whereas a trader's history spans months of genuine uncertainty.</span>
+      <span class="desc">The honest test. Sample real traders, replay their own betting history through this dashboard's scoring algorithm, and check whether higher-scoring bets won more often than the odds they paid implied. Two deliberate choices: sampling by <em>trader</em> rather than by market, because a market's recent trades were all placed after the answer was obvious while a trader's history spans months of real uncertainty; and grading by <em>rank</em> — the sample's own top fifth against its bottom fifth — rather than against the live 60/80 thresholds, because a replayed trade cannot rebuild the live context bonuses and so never reaches them.</span>
     </div>
     <div class="card">
       <div class="controls">
@@ -527,8 +527,8 @@
       <div class="tscroll">
         <table id="btTable">
           <thead><tr>
-            <th>Score band</th><th class="num">Bets</th><th class="num">Actually won</th>
-            <th class="num">Odds implied</th><th class="num">Edge</th><th></th><th>Read</th>
+            <th>Score group (fifths of this sample)</th><th class="num">Bets</th><th class="num">Actually won</th>
+            <th class="num">Odds implied</th><th class="num">Edge ±2 s.e.</th><th></th><th>Read</th>
           </tr></thead>
           <tbody><tr><td colspan="7" class="empty">Hit <strong>Run backtest</strong>. It samples real traders, pulls each one's own betting history, replays every bet through the scoring algorithm, and grades it against how the market actually resolved.</td></tr></tbody>
         </table>
@@ -2473,6 +2473,13 @@ async function runBacktest() {
         try { trs = await fetchJSON(`https://data-api.polymarket.com/trades?user=${w}&limit=500`); } catch (e) { return; }
         if (!Array.isArray(trs) || !trs.length) return;
         walletsWithHistory++;
+        /* Wallet age is the one context signal that IS recoverable offline: we are already
+           holding this wallet's whole history. Only trustworthy when the API returned fewer
+           than the 500-row cap — at exactly 500 the history is truncated and the oldest row
+           we can see is not their first trade, so claiming "fresh wallet" would be a guess. */
+        const complete = trs.length < 500;
+        let firstTs = Infinity;
+        if (complete) for (const t of trs) if (t.timestamp && t.timestamp < firstTs) firstTs = t.timestamp;
         for (const t of trs) {
           if (t.side !== 'BUY' || !t.conditionId) continue;
           const px = +t.price;
@@ -2481,7 +2488,8 @@ async function runBacktest() {
           if (usd < (state.btMin || 100)) continue;
           const cls = classifyTitle(t.title || '');
           if (newsOnly && cls !== 'news') continue;
-          candidates.push({ t, px, usd });
+          const ageDays = complete && Number.isFinite(firstTs) ? (t.timestamp - firstTs) / 86400 : null;
+          candidates.push({ t, px, usd, ageDays });
         }
       }));
       prog.textContent = `pulling history… ${Math.min(i + 4, wallets.length)}/${wallets.length} traders · ${candidates.length} candidate bets`;
@@ -2520,6 +2528,13 @@ async function runBacktest() {
       if (!r || !r.closed || r.winnerIndex == null || r.provisional) continue;
       gradedMarkets.add(c.t.conditionId);
       const sc = scoreTrade(c.t);
+      // Mirror the live radar's wallet-age bonus wherever the history was complete enough to know it.
+      if (c.ageDays != null) {
+        if (c.ageDays <= 0.01) { sc.score += 15; sc.reasons.push("this wallet's FIRST-ever trade"); }
+        else if (c.ageDays <= 7) { sc.score += 15; sc.reasons.push(`fresh wallet (${c.ageDays.toFixed(0)}d old)`); }
+        else if (c.ageDays <= 30) { sc.score += 8; sc.reasons.push('wallet under 30 days old'); }
+        sc.score = Math.min(100, Math.round(sc.score));
+      }
       bets.push({ score: sc.score, price: c.px, usd: c.usd,
         won: (c.t.outcomeIndex ?? 0) === r.winnerIndex ? 1 : 0,
         reasons: sc.reasons, isNewsy: sc.isNewsy });
@@ -2541,67 +2556,87 @@ async function runBacktest() {
   }
 }
 
-function bandOf(s) { return s >= 80 ? '80–100 insider-pattern' : s >= 60 ? '60–79 high' : s >= 40 ? '40–59 notable' : '0–39 routine'; }
-function renderBacktest(bets, nMarkets, health) {
-  const bands = ['80–100 insider-pattern', '60–79 high', '40–59 notable', '0–39 routine'];
-  const agg = {};
-  for (const b of bands) agg[b] = { n: 0, won: 0, implied: 0, usd: 0 };
-  for (const b of bets) {
-    const k = bandOf(b.score);
-    agg[k].n++; agg[k].won += b.won; agg[k].implied += b.price; agg[k].usd += b.usd;
+/* RANK BANDS, not fixed thresholds.
+   The fixed 60/80 cut-points belong to the LIVE radar, where a score also collects up to +55
+   of context bonuses: share of the market's 24h volume, fast repricing, cluster membership,
+   wallet age, prior flags, proven record. None of that is reconstructible from a trade months
+   after the fact, so an offline score is the trade-shape part alone and lands far lower. Judging
+   it against live thresholds produced the useless result we kept getting — 0 bets above 60 out
+   of 1,157, and a permanent "not enough data".
+   The question that actually matters is not "did bets above 60 win" but "did HIGHER-scoring bets
+   win more than LOWER-scoring ones". That is a ranking question, so the sample is cut into its
+   own quintiles and the top is compared with the bottom. It needs no calibration and it cannot
+   be starved by a threshold nobody can reach offline. */
+function quintiles(bets) {
+  const sorted = bets.slice().sort((a, b) => a.score - b.score);
+  const n = sorted.length, k = 5, out = [];
+  for (let q = 0; q < k; q++) {
+    const a = Math.floor(n * q / k), b = Math.floor(n * (q + 1) / k);
+    const slice = sorted.slice(a, b);
+    if (!slice.length) continue;
+    out.push({ q, label: ['lowest fifth', 'second', 'middle', 'fourth', 'TOP fifth'][q],
+      lo: slice[0].score, hi: slice[slice.length - 1].score, bets: slice });
   }
-  $('#btTable tbody').innerHTML = bands.map(k => {
-    const a = agg[k];
-    if (!a.n) return `<tr><td>${esc(k)}</td><td class="num">0</td><td colspan="5" class="empty" style="text-align:left">no bets in this band</td></tr>`;
-    const actual = a.won / a.n * 100, implied = a.implied / a.n * 100, edge = actual - implied;
+  return out;
+}
+function statsOf(arr) {
+  const n = arr.length;
+  if (!n) return { n: 0 };
+  const won = arr.reduce((a, b) => a + b.won, 0);
+  const actual = won / n * 100, implied = arr.reduce((a, b) => a + b.price, 0) / n * 100;
+  // Binomial standard error on the win rate, in points. An "edge" inside one SE is noise.
+  const se = Math.sqrt(Math.max(actual, 1) * (100 - Math.max(actual, 1)) / n);
+  return { n, won, actual, implied, edge: actual - implied, se };
+}
+function renderBacktest(bets, nMarkets, health) {
+  const qs = quintiles(bets);
+  $('#btTable tbody').innerHTML = qs.map(q => {
+    const a = statsOf(q.bets);
     const thin = a.n < 30;
-    const col = edge > 3 ? 'var(--status-good)' : edge < -3 ? 'var(--status-critical)' : 'var(--ink-2)';
-    const w = Math.min(100, Math.abs(edge) * 3);
+    // Significant only if the edge clears twice its own standard error.
+    const sig = Math.abs(a.edge) > 2 * a.se;
+    const col = sig && a.edge > 0 ? 'var(--status-good)' : sig && a.edge < 0 ? 'var(--status-critical)' : 'var(--ink-2)';
+    const w = Math.min(100, Math.abs(a.edge) * 3);
     return `<tr>
-      <td>${scoreChip(k.startsWith('80') ? 85 : k.startsWith('60') ? 70 : k.startsWith('40') ? 50 : 20)}</td>
+      <td><strong>${esc(q.label)}</strong><div style="font-size:10.5px;color:var(--ink-3)">score ${q.lo}–${q.hi}</div></td>
       <td class="num">${a.n.toLocaleString()}${thin ? '<div style="font-size:10.5px;color:var(--ink-3)">thin</div>' : ''}</td>
-      <td class="num"><strong>${actual.toFixed(1)}%</strong></td>
-      <td class="num" style="color:var(--ink-2)">${implied.toFixed(1)}%</td>
-      <td class="num" style="color:${col}"><strong>${edge >= 0 ? '+' : ''}${edge.toFixed(1)} pts</strong></td>
+      <td class="num"><strong>${a.actual.toFixed(1)}%</strong></td>
+      <td class="num" style="color:var(--ink-2)">${a.implied.toFixed(1)}%</td>
+      <td class="num" style="color:${col}"><strong>${a.edge >= 0 ? '+' : ''}${a.edge.toFixed(1)}</strong><div style="font-size:10.5px;color:var(--ink-3)">±${(2 * a.se).toFixed(1)}</div></td>
       <td style="min-width:90px"><span class="scorebar" style="width:80px"><i style="width:${w}%;background:${col}"></i></span></td>
-      <td style="color:var(--ink-2);font-size:12px">${thin ? 'too few bets to trust' : edge > 3 ? 'beat the odds it paid' : edge < -3 ? 'underperformed its odds' : 'roughly fair — no edge'}</td>
+      <td style="color:var(--ink-2);font-size:12px">${thin ? 'too few bets to trust' : !sig ? 'within noise — no signal' : a.edge > 0 ? 'beat the odds it paid' : 'underperformed its odds'}</td>
     </tr>`;
   }).join('');
 
-  // verdict: compare the top two bands against the routine band
-  const hi = { n: agg['80–100 insider-pattern'].n + agg['60–79 high'].n,
-               won: agg['80–100 insider-pattern'].won + agg['60–79 high'].won,
-               implied: agg['80–100 insider-pattern'].implied + agg['60–79 high'].implied };
-  const lo = agg['0–39 routine'];
-  const hiEdge = hi.n ? (hi.won / hi.n - hi.implied / hi.n) * 100 : 0;
-  const loEdge = lo.n ? (lo.won / lo.n - lo.implied / lo.n) * 100 : 0;
-  const enough = hi.n >= 30 && lo.n >= 30;
-  const works = enough && hiEdge > 3 && hiEdge > loEdge + 2;
-  const nothing = enough && Math.abs(hiEdge) <= 3;
+  const topQ = qs.length ? qs[qs.length - 1] : null, botQ = qs.length ? qs[0] : null;
+  const top = statsOf(topQ ? topQ.bets : []);
+  const bot = statsOf(botQ ? botQ.bets : []);
+  const spread = (top.edge || 0) - (bot.edge || 0);
+  const spreadSE = Math.sqrt((top.se || 0) ** 2 + (bot.se || 0) ** 2);
+  const enough = top.n >= 30 && bot.n >= 30;
+  const works = enough && spread > 2 * spreadSE && top.edge > 0;
+  const backwards = enough && spread < -2 * spreadSE;
+  const nothing = enough && !works && !backwards;
   // No band in a healthy sample wins >95%. If one does, the sample is dominated by
   // already-decided trades and the whole run should be discarded rather than believed.
-  const degenerate = bands.some(k => agg[k].n >= 20 && agg[k].won / agg[k].n > 0.95);
-  /* A broken sample must never render as a green tick. The guard used to sit in a chip
-     UNDER a headline that still said "the score has measurable edge" — which is the exact
-     reading that fooled us the first time round. Invalidity outranks the verdict. */
-  const shortfall = [];
-  if (hi.n < 30) shortfall.push(`only <strong>${hi.n}</strong> bet${hi.n === 1 ? '' : 's'} scored 60+ (need 30)`);
-  if (lo.n < 30) shortfall.push(`only <strong>${lo.n}</strong> scored under 40 (need 30)`);
-  const advice = hi.n < 30
-    ? 'A high score needs size AND longshot odds AND a news-sensitive market at once, which is rare. Raise <strong>Traders</strong> to 50–90 (each one contributes months of their own history) and keep <strong>Min bet</strong> low — $100 — so the sample stays big enough to contain the rare high scores.'
-    : 'Raise the trader count for a cleaner read.';
-  $('#btVerdict').innerHTML = `<div class="cluster ${works && !degenerate ? '' : 'calm'}" style="border-left-color:${degenerate ? 'var(--status-critical)' : works ? 'var(--status-good)' : nothing ? 'var(--ink-3)' : 'var(--status-warn)'}">
-    <span class="big">${degenerate ? '🛑 Sample invalid — discard this run' : !enough ? '🔍 Not enough data yet' : works ? '✅ The score has measurable edge' : nothing ? '⚖️ No edge detected' : '⚠️ Mixed / inconclusive'}</span>
+  const degenerate = qs.some(q => q.bets.length >= 20 && q.bets.reduce((a, b) => a + b.won, 0) / q.bets.length > 0.95);
+  const headline = degenerate ? '🛑 Sample invalid — discard this run'
+    : !enough ? '🔍 Not enough data yet'
+    : works ? '✅ The score ranks bets correctly'
+    : backwards ? '🛑 The score is INVERTED — high scores did worse'
+    : '⚖️ No ranking power — the score is not separating winners from losers';
+  const colr = degenerate || backwards ? 'var(--status-critical)' : works ? 'var(--status-good)' : nothing ? 'var(--ink-3)' : 'var(--status-warn)';
+  $('#btVerdict').innerHTML = `<div class="cluster ${works && !degenerate ? '' : 'calm'}" style="border-left-color:${colr}">
+    <span class="big">${headline}</span>
     ${degenerate ? '<span style="width:100%">The numbers below are shown for diagnosis only — do not read a verdict from them.</span>' : ''}
-    ${!degenerate && !enough ? `<span style="width:100%">${shortfall.join(' · ')}. ${advice}</span>` : ''}
-    <span>High-scoring bets (60+) won <strong>${hi.n ? (hi.won / hi.n * 100).toFixed(1) : '—'}%</strong> of the time against implied odds of <strong>${hi.n ? (hi.implied / hi.n * 100).toFixed(1) : '—'}%</strong> — an edge of <strong style="color:${hiEdge > 0 ? 'var(--status-good)' : 'var(--status-critical)'}">${hiEdge >= 0 ? '+' : ''}${hiEdge.toFixed(1)} points</strong>. Routine bets (under 40) ran ${loEdge >= 0 ? '+' : ''}${loEdge.toFixed(1)}.</span>
+    ${!degenerate && !enough ? `<span style="width:100%">Need 30+ bets in both the top and bottom fifth (have ${top.n} and ${bot.n}). Raise <strong>Traders</strong> to 50–90.</span>` : ''}
+    <span style="width:100%">Top fifth (scores ${topQ ? topQ.lo + '–' + topQ.hi : '—'}) beat its odds by <strong style="color:${(top.edge || 0) > 0 ? 'var(--status-good)' : 'var(--status-critical)'}">${top.n ? (top.edge >= 0 ? '+' : '') + top.edge.toFixed(1) : '—'} pts</strong>; bottom fifth (${botQ ? botQ.lo + '–' + botQ.hi : '—'}) by <strong>${bot.n ? (bot.edge >= 0 ? '+' : '') + bot.edge.toFixed(1) : '—'} pts</strong>. The gap is what matters: <strong>${spread >= 0 ? '+' : ''}${spread.toFixed(1)} ± ${(2 * spreadSE).toFixed(1)} pts</strong>${enough ? (Math.abs(spread) > 2 * spreadSE ? ' — larger than the noise' : ' — inside the noise, so it means nothing yet') : ''}.</span>
     <span class="chip muted">${bets.length.toLocaleString()} graded bets across ${nMarkets} settled markets</span>
-    <span class="chip muted">bands: ${agg['80–100 insider-pattern'].n} / ${agg['60–79 high'].n} / ${agg['40–59 notable'].n} / ${agg['0–39 routine'].n}</span>
+    <span class="chip muted">offline score range ${Math.min(...bets.map(b => b.score))}–${Math.max(...bets.map(b => b.score))} · live scores run higher because they add context this test cannot rebuild</span>
     ${health ? `<span class="chip muted">${health.sampled} traders sampled · ${health.skippedCertain.toLocaleString()} already-decided trades excluded</span>` : ''}
     ${health && health.droppedIds ? `<span class="chip muted">${health.droppedIds.toLocaleString()} further markets left ungraded to cap the run — the graded ones were drawn at random across all traders, not taken from the first few</span>` : ''}
-    ${health && health.lbSeeded ? `<span class="chip warn">● ${health.lbSeeded} of ${health.sampled} traders came from the top-P&amp;L leaderboard — that part of the sample is winner-biased, so read the gap between bands rather than the absolute win rates</span>` : ''}
-    ${degenerate ? '<span class="chip critical">▲ SAMPLE LOOKS BROKEN — a band is winning >95%, which does not happen in a real market. Treat this run as invalid.</span>' : ''}
-    ${!degenerate && !enough ? '<span class="chip warn">● run a bigger sample before trusting this</span>' : ''}
+    ${health && health.lbSeeded ? `<span class="chip warn">● ${health.lbSeeded} of ${health.sampled} traders came from the top-P&L leaderboard — that part of the sample is winner-biased, so read the gap between fifths rather than the absolute win rates</span>` : ''}
+    ${degenerate ? '<span class="chip critical">▲ SAMPLE LOOKS BROKEN — a fifth is winning >95%, which does not happen in a real market. Treat this run as invalid.</span>' : ''}
   </div>`;
 
   // per-signal contribution
@@ -2610,6 +2645,7 @@ function renderBacktest(bets, nMarkets, health) {
     ['News-sensitive market', r => /news-sensitive/i.test(r)],
     ['Anonymous wallet', r => /anonymous|auto-pseudonym/i.test(r)],
     ['Very large size', r => /very large size/i.test(r)],
+    ['New wallet (≤30d at time of bet)', r => /fresh wallet|FIRST-ever|under 30 days/i.test(r)],
   ];
   $('#btSigTable tbody').innerHTML = SIGNALS.map(([label, test]) => {
     const withS = bets.filter(b => b.reasons.some(test));
