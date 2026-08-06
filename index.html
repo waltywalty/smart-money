@@ -214,7 +214,7 @@
 
 <header class="top">
   <div class="top-inner">
-    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v7.9</span></div>
+    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v8.0</span></div>
     <div class="top-meta">
       <span id="lastUpdated">loading…</span>
       <span id="countdown" title="Auto-refresh countdown"></span>
@@ -518,6 +518,12 @@
           <button data-v="100" aria-pressed="true">$100</button>
           <button data-v="1000">$1k</button>
           <button data-v="5000">$5k</button>
+        </div>
+        <span>Repeat</span>
+        <div class="seg" id="btRunsSeg">
+          <button data-v="1" aria-pressed="true">1×</button>
+          <button data-v="3">3×</button>
+          <button data-v="5">5× runs</button>
         </div>
         <label class="ck"><input type="checkbox" id="btNewsOnly"> news-sensitive markets only</label>
         <button class="ctrl" id="btRun">▶ Run backtest</button>
@@ -1049,7 +1055,7 @@ const state = Object.assign({
   kThresh: 10000,
   radarSpeed: 15,
   alertThresh: 70,
-  btSize: 25,
+  btSize: 25, btRuns: 1,
   btMin: 100,
   cvSrc: 'proven',
   sport: 'basketball_nba',
@@ -2161,6 +2167,16 @@ async function loadCloudBot() {
         <div class="tile"><div class="v">${d.open} / ${d.pending}</div><div class="l">Open / resting</div><div class="s">cash ${fmtUSD(d.cash)}</div></div>
       </div>
       <div class="card"><div class="card-pad" style="border-bottom:1px solid var(--grid)"><strong>Cloud equity curve</strong> <span class="note" style="display:inline">runs every 5 minutes whether or not this page is open</span></div><div style="padding:12px 16px">${curve || '<div class="empty">Curve draws after the first position.</div>'}</div></div>
+      ${d.gates ? `<div class="card"><div class="card-pad"><strong>Why the book is ${d.open || d.pending ? 'this size' : 'empty'}</strong>
+        <div style="margin-top:6px;font-size:13px;color:var(--ink-2)">
+          ${d.cyclesSinceFill > 3 ? `<div style="margin-bottom:6px"><span class="chip warn">● ${d.cyclesSinceFill} cycles without a fill</span></div>` : ''}
+          Entry bar: score <strong>${d.cfg ? d.cfg.minScore : '—'}</strong>+, at least <strong>$${d.cfg ? (d.cfg.minUsd / 1000) : '—'}k</strong>${d.cfg && d.cfg.newsOnly ? ', news-sensitive markets only' : ''}.
+          Rejected since start — <strong>${(d.gates.lowScore || 0).toLocaleString()}</strong> scored too low,
+          <strong>${(d.gates.sports || 0).toLocaleString()}</strong> were sports,
+          <strong>${(d.gates.dupe || 0).toLocaleString()}</strong> already held or already copied,
+          <strong>${(d.gates.noBook || 0).toLocaleString()}</strong> had no order book.
+          ${d.bestNearMiss ? `<div style="margin-top:6px">Closest it came last cycle: <strong>${esc(d.bestNearMiss.title)}</strong> — ${fmtUSD(d.bestNearMiss.usd)} at ${(d.bestNearMiss.px * 100).toFixed(0)}¢, ${esc(d.bestNearMiss.why)}.</div>` : ''}
+        </div></div></div>` : ''}
       ${(d.lastNotes || []).length ? `<div class="card"><div class="card-pad"><strong>Last cycle</strong><div style="margin-top:6px;font-size:13px;color:var(--ink-2)">${d.lastNotes.map(x => esc(x)).join('<br>')}</div></div></div>` : ''}
       ${(d.positions || []).length ? `<div class="card"><div class="tscroll"><table>
         <thead><tr><th>Status</th><th>Market</th><th>Position</th><th class="num">Entry</th><th class="num">Now</th><th class="num">Stake</th><th class="num">P&L</th></tr></thead>
@@ -2446,18 +2462,65 @@ let btBusy = false;
    obvious — 93 of 97 on one sampled market sat at 99.7c. Querying BY WALLET returns that wallet's
    own history, which spans months and sits overwhelmingly at genuinely uncertain prices. Same
    endpoint, completely different sample. */
+/* Repeating the run matters more than making one run bigger.
+   Reading a single sample and stopping when it agrees with you is how a null becomes a
+   "promising" result: at a 2-standard-error bar each look has roughly a 1-in-20 chance of
+   crossing by luck, so three looks is closer to 1-in-7. Independent repeats fix it — the
+   spread ACROSS runs is the honest error bar, and a gap that only appears in one run out of
+   five is noise no matter how large it looked in that run. */
 async function runBacktest() {
   if (btBusy) return;
   btBusy = true;
-  const N = state.btSize || 25;
-  const newsOnly = $('#btNewsOnly').checked;
+  const RUNS = state.btRuns || 1;
+  const allBets = [];
+  const runGaps = [];
+  let lastHealth = null, totalMarkets = 0;
   const prog = $('#btProgress');
   const tbody = $('#btTable tbody');
   $('#btVerdict').innerHTML = '';
   setFeed('#btState', 'link');
   $('#btState').textContent = 'running…';
   try {
-    prog.textContent = 'collecting traders…';
+    for (let run = 0; run < RUNS; run++) {
+      const r = await backtestOnce(run, RUNS);
+      if (!r) continue;
+      allBets.push(...r.bets);
+      totalMarkets += r.nMarkets;
+      lastHealth = r.health;
+      runGaps.push(gapOf(r.bets));
+    }
+    if (!allBets.length) {
+      setFeed('#btState', 'link'); $('#btState').textContent = 'no graded bets';
+      tbody.innerHTML = `<tr><td colspan="7" class="empty">No bets could be graded. Lower <strong>Min bet</strong>, untick news-only, or raise <strong>Traders</strong>.</td></tr>`;
+      return;
+    }
+    renderBacktest(allBets, totalMarkets, lastHealth, runGaps);
+    $('#btState').textContent = RUNS > 1 ? `complete · ${RUNS} runs pooled` : 'complete';
+    $('#btState').className = 'feedstate live';
+  } catch (e) {
+    setFeed('#btState', false);
+    tbody.innerHTML = `<tr><td colspan="7" class="empty">Backtest failed: ${esc(e.message || 'unknown error')}.</td></tr>`;
+  } finally {
+    btBusy = false;
+    prog.textContent = '';
+  }
+}
+
+// The gap between the sample's own top and bottom fifth — the single number each run contributes.
+function gapOf(bets) {
+  const qs = quintiles(bets);
+  if (qs.length < 2) return null;
+  const t = statsOf(qs[qs.length - 1].bets), b = statsOf(qs[0].bets);
+  return (t.n && b.n) ? t.edge - b.edge : null;
+}
+
+async function backtestOnce(run, RUNS) {
+  const N = state.btSize || 25;
+  const newsOnly = $('#btNewsOnly').checked;
+  const prog = $('#btProgress');
+  const tag = RUNS > 1 ? `run ${run + 1}/${RUNS} · ` : '';
+  {
+    prog.textContent = tag + 'collecting traders…';
     const pool = new Map();
     // Recent sizeable traders — a neutral cross-section of people actually betting real money.
     for (const amt of [25000, 5000, 1000]) {
@@ -2486,7 +2549,7 @@ async function runBacktest() {
     wallets = wallets.slice(0, N);
 
     // 1. pull each wallet's own history
-    prog.textContent = `pulling history for ${wallets.length} traders…`;
+    prog.textContent = tag + `pulling history for ${wallets.length} traders…`;
     const candidates = [];
     let skippedCertain = 0, walletsWithHistory = 0;
     for (let i = 0; i < wallets.length; i += 4) {
@@ -2514,13 +2577,9 @@ async function runBacktest() {
           candidates.push({ t, px, usd, ageDays });
         }
       }));
-      prog.textContent = `pulling history… ${Math.min(i + 4, wallets.length)}/${wallets.length} traders · ${candidates.length} candidate bets`;
+      prog.textContent = tag + `pulling history… ${Math.min(i + 4, wallets.length)}/${wallets.length} traders · ${candidates.length} candidate bets`;
     }
-    if (!candidates.length) {
-      setFeed('#btState', 'link'); $('#btState').textContent = 'no candidate bets';
-      tbody.innerHTML = `<tr><td colspan="7" class="empty">Pulled history for ${walletsWithHistory} traders but none had qualifying bets. Lower <strong>Min bet</strong> and untick news-only.</td></tr>`;
-      return;
-    }
+    if (!candidates.length) return null;
 
     // 2. resolve the markets they bet on (cached across runs, so repeat runs are much faster)
     /* Cap the resolution work, but SHUFFLE first. Slicing in insertion order would take the
@@ -2532,13 +2591,13 @@ async function runBacktest() {
     const CAP = 400;
     const ids = allIds.slice(0, CAP);
     const droppedIds = allIds.length - ids.length;
-    prog.textContent = `resolving ${ids.length} markets…`;
+    prog.textContent = tag + `resolving ${ids.length} markets…`;
     const resMap = new Map();
     for (let i = 0; i < ids.length; i += 10) {
       const chunk = ids.slice(i, i + 10);
       const got = await Promise.all(chunk.map(id => getMarketResolution(id).catch(() => null)));
       chunk.forEach((id, k) => resMap.set(id, got[k]));
-      prog.textContent = `resolving markets… ${Math.min(i + 10, ids.length)}/${ids.length}`;
+      prog.textContent = tag + `resolving markets… ${Math.min(i + 10, ids.length)}/${ids.length}`;
     }
     flushRes();
 
@@ -2562,20 +2621,9 @@ async function runBacktest() {
         won: (c.t.outcomeIndex ?? 0) === r.winnerIndex ? 1 : 0,
         reasons: sc.reasons, isNewsy: sc.isNewsy });
     }
-    if (!bets.length) {
-      setFeed('#btState', 'link'); $('#btState').textContent = 'nothing settled yet';
-      tbody.innerHTML = `<tr><td colspan="7" class="empty">Found ${candidates.length.toLocaleString()} qualifying bets across ${ids.length} markets, but none of those markets have resolved yet — only settled markets can be graded. Raise the trader count so the sample reaches further back.</td></tr>`;
-      return;
-    }
-    renderBacktest(bets, gradedMarkets.size, { withHistory: walletsWithHistory, skippedCertain, sampled: wallets.length, lbSeeded, droppedIds });
-    $('#btState').textContent = 'complete';
-    $('#btState').className = 'feedstate live';
-  } catch (e) {
-    setFeed('#btState', false);
-    tbody.innerHTML = `<tr><td colspan="7" class="empty">Backtest failed: ${esc(e.message || 'unknown error')}.</td></tr>`;
-  } finally {
-    btBusy = false;
-    prog.textContent = '';
+    if (!bets.length) return null;
+    return { bets, nMarkets: gradedMarkets.size,
+      health: { withHistory: walletsWithHistory, skippedCertain, sampled: wallets.length, lbSeeded, droppedIds } };
   }
 }
 
@@ -2611,7 +2659,7 @@ function statsOf(arr) {
   const se = Math.sqrt(Math.max(actual, 1) * (100 - Math.max(actual, 1)) / n);
   return { n, won, actual, implied, edge: actual - implied, se };
 }
-function renderBacktest(bets, nMarkets, health) {
+function renderBacktest(bets, nMarkets, health, runGaps) {
   const qs = quintiles(bets);
   $('#btTable tbody').innerHTML = qs.map(q => {
     const a = statsOf(q.bets);
@@ -2637,14 +2685,42 @@ function renderBacktest(bets, nMarkets, health) {
   const spread = (top.edge || 0) - (bot.edge || 0);
   const spreadSE = Math.sqrt((top.se || 0) ** 2 + (bot.se || 0) ** 2);
   const enough = top.n >= 30 && bot.n >= 30;
-  const works = enough && spread > 2 * spreadSE && top.edge > 0;
+  /* ---- CROSS-RUN STABILITY ----
+     The spread across independent runs is the honest error bar. A gap that appears in one run
+     out of five is noise however large it looked in that run. */
+  const gaps = (runGaps || []).filter(g => g != null);
+  let gapMean = null, gapSD = null, gapPos = 0, stable = null;
+  if (gaps.length >= 2) {
+    gapMean = gaps.reduce((a, b) => a + b, 0) / gaps.length;
+    gapSD = Math.sqrt(gaps.reduce((a, b) => a + (b - gapMean) ** 2, 0) / (gaps.length - 1));
+    gapPos = gaps.filter(g => g > 0).length;
+    stable = gapPos === gaps.length || gapPos === 0;   // every run agreed on the direction
+  }
+
+  // With repeats available, a single run's significance is not enough — the runs must also agree.
+  const worksRaw = enough && spread > 2 * spreadSE && top.edge > 0;
+  const works = worksRaw && (stable === null || stable);
   const backwards = enough && spread < -2 * spreadSE;
   const nothing = enough && !works && !backwards;
   // No band in a healthy sample wins >95%. If one does, the sample is dominated by
   // already-decided trades and the whole run should be discarded rather than believed.
   const degenerate = qs.some(q => q.bets.length >= 20 && q.bets.reduce((a, b) => a + b.won, 0) / q.bets.length > 0.95);
+  /* ---- BIAS METER ----
+     A neutral sample of real market trades should average an edge near zero: the price IS the
+     crowd's forecast, and on average the crowd is right. If EVERY fifth beats its odds by the
+     same several points, the score is not what is doing the work — the sample is tilted. The two
+     likeliest tilts here both push the same way. Survivorship: wallets are drawn from the recent
+     large-trade feed, and a wallet only shows up there if it still has money to bet, so traders
+     who blew up are invisible. And favourite bias: most buys in this window are on the likely
+     side, and favourites are mildly underpriced on prediction markets. Neither is a coding bug,
+     but both inflate the absolute numbers, so the gap between fifths is the only part that
+     survives them — and this meter says how much to distrust the rest. */
+  const whole = statsOf(bets);
+  const biased = Math.abs(whole.edge) > 3;
+
   const headline = degenerate ? '🛑 Sample invalid — discard this run'
     : !enough ? '🔍 Not enough data yet'
+    : worksRaw && stable === false ? '⚠️ One run says yes, another says no — not reproducible'
     : works ? '✅ The score ranks bets correctly'
     : backwards ? '🛑 The score is INVERTED — high scores did worse'
     : '⚖️ No ranking power — the score is not separating winners from losers';
@@ -2654,6 +2730,9 @@ function renderBacktest(bets, nMarkets, health) {
     ${degenerate ? '<span style="width:100%">The numbers below are shown for diagnosis only — do not read a verdict from them.</span>' : ''}
     ${!degenerate && !enough ? `<span style="width:100%">Need 30+ bets in both the top and bottom fifth (have ${top.n} and ${bot.n}). Raise <strong>Traders</strong> to 50–90.</span>` : ''}
     <span style="width:100%">Top fifth (scores ${topQ ? topQ.lo + '–' + topQ.hi : '—'}) beat its odds by <strong style="color:${(top.edge || 0) > 0 ? 'var(--status-good)' : 'var(--status-critical)'}">${top.n ? (top.edge >= 0 ? '+' : '') + top.edge.toFixed(1) : '—'} pts</strong>; bottom fifth (${botQ ? botQ.lo + '–' + botQ.hi : '—'}) by <strong>${bot.n ? (bot.edge >= 0 ? '+' : '') + bot.edge.toFixed(1) : '—'} pts</strong>. The gap is what matters: <strong>${spread >= 0 ? '+' : ''}${spread.toFixed(1)} ± ${(2 * spreadSE).toFixed(1)} pts</strong>${enough ? (Math.abs(spread) > 2 * spreadSE ? ' — larger than the noise' : ' — inside the noise, so it means nothing yet') : ''}.</span>
+    ${gaps.length >= 2 ? `<span style="width:100%">Across <strong>${gaps.length} independent runs</strong> the gap came out ${gaps.map(g => (g >= 0 ? '+' : '') + g.toFixed(1)).join(', ')} — mean <strong>${gapMean >= 0 ? '+' : ''}${gapMean.toFixed(1)}</strong>, spread ±${gapSD.toFixed(1)}, positive in ${gapPos} of ${gaps.length}. ${stable ? 'Every run agreed on the direction.' : 'The runs disagree, which is what noise looks like.'}</span>` : ''}
+    ${gaps.length < 2 ? '<span class="chip warn">● single run — set <strong>Repeat</strong> to 3 or 5 before believing any gap. One look at a 2-s.e. bar crosses by luck about 1 time in 20.</span>' : ''}
+    <span class="chip ${biased ? 'warn' : 'muted'}">Bias meter: the whole sample beat its odds by ${whole.edge >= 0 ? '+' : ''}${whole.edge.toFixed(1)} pts${biased ? ' — a neutral sample should sit near 0, so treat the absolute win rates as inflated and read only the gap between fifths' : ' — close enough to zero that the sample looks neutral'}</span>
     <span class="chip muted">${bets.length.toLocaleString()} graded bets across ${nMarkets} settled markets</span>
     <span class="chip muted">offline score range ${Math.min(...bets.map(b => b.score))}–${Math.max(...bets.map(b => b.score))} · live scores run higher because they add context this test cannot rebuild</span>
     ${health ? `<span class="chip muted">${health.sampled} traders sampled · ${health.skippedCertain.toLocaleString()} already-decided trades excluded</span>` : ''}
@@ -3678,6 +3757,7 @@ segWire('#speedSeg','radarSpeed', () => { state.radarCount = state.radarSpeed; }
 segWire('#alertThreshSeg','alertThresh', () => {});
 segWire('#btSizeSeg','btSize', () => {});
 segWire('#btMinSeg','btMin', () => {});
+segWire('#btRunsSeg','btRuns', () => {});
 segWire('#cvSrcSeg','cvSrc', () => loadConviction());
 $('#btRun').addEventListener('click', runBacktest);
 $('#oddsKey').value = state.oddsKey || '';
