@@ -214,7 +214,7 @@
 
 <header class="top">
   <div class="top-inner">
-    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v7.2</span></div>
+    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v7.3</span></div>
     <div class="top-meta">
       <span id="lastUpdated">loading…</span>
       <span id="countdown" title="Auto-refresh countdown"></span>
@@ -508,9 +508,16 @@
       <div class="controls">
         <span>Sample size:</span>
         <div class="seg" id="btSizeSeg">
-          <button data-v="15" aria-pressed="true">15 markets</button>
-          <button data-v="40">40 markets</button>
-          <button data-v="80">80 markets</button>
+          <button data-v="40">40</button>
+          <button data-v="80" aria-pressed="true">80</button>
+          <button data-v="150">150</button>
+          <button data-v="250">250 markets</button>
+        </div>
+        <span>Min bet</span>
+        <div class="seg" id="btMinSeg">
+          <button data-v="100">$100</button>
+          <button data-v="1000" aria-pressed="true">$1k</button>
+          <button data-v="5000">$5k</button>
         </div>
         <label class="ck"><input type="checkbox" id="btNewsOnly"> news-sensitive markets only</label>
         <button class="ctrl" id="btRun">▶ Run backtest</button>
@@ -1012,7 +1019,8 @@ const state = Object.assign({
   kThresh: 10000,
   radarSpeed: 15,
   alertThresh: 70,
-  btSize: 15,
+  btSize: 80,
+  btMin: 1000,
   cvSrc: 'proven',
   sport: 'basketball_nba',
   kHideTicks: true,
@@ -1026,7 +1034,7 @@ state.count = 60;
 function saveSettings() {
   store.settings = { minSize: state.minSize, radarFilter: state.radarFilter, lbWindow: state.lbWindow,
     pair: state.pair, cbThresh: state.cbThresh, kThresh: state.kThresh, kHideTicks: state.kHideTicks,
-    mHideSports: state.mHideSports, radarSpeed: state.radarSpeed, alertThresh: state.alertThresh, oddsKey: state.oddsKey || '', sport: state.sport, cvSrc: state.cvSrc, theme: state.theme || '', ntfyTopic: state.ntfyTopic || '', fmpKey: state.fmpKey || '', polWatch: state.polWatch || '', sound: state.sound, notify: state.notify };
+    mHideSports: state.mHideSports, radarSpeed: state.radarSpeed, alertThresh: state.alertThresh, btSize: state.btSize, btMin: state.btMin, oddsKey: state.oddsKey || '', sport: state.sport, cvSrc: state.cvSrc, theme: state.theme || '', ntfyTopic: state.ntfyTopic || '', fmpKey: state.fmpKey || '', polWatch: state.polWatch || '', sound: state.sound, notify: state.notify };
   return persist();
 }
 
@@ -2358,7 +2366,7 @@ let btBusy = false;
 async function runBacktest() {
   if (btBusy) return;
   btBusy = true;
-  const N = state.btSize || 15;
+  const N = state.btSize || 80;
   const newsOnly = $('#btNewsOnly').checked;
   const prog = $('#btProgress');
   const tbody = $('#btTable tbody');
@@ -2368,12 +2376,12 @@ async function runBacktest() {
   try {
     prog.textContent = 'fetching resolved markets…';
     let pool = [];
-    for (const off of [0, 200, 400]) {
+    for (const off of [0, 200, 400, 600, 800, 1000]) {
       try {
         const batch = await fetchJSON(`https://gamma-api.polymarket.com/markets?closed=true&limit=200&offset=${off}&order=volumeNum&ascending=false&volume_num_min=40000`);
         if (Array.isArray(batch)) pool = pool.concat(batch);
       } catch (e) {}
-      if (pool.length >= 300) break;
+      if (pool.length >= Math.max(400, N * 4)) break;
     }
     pool = pool.filter(m => m.conditionId && m.outcomePrices);
     if (newsOnly) pool = pool.filter(m => classifyTitle(m.question || '') === 'news');
@@ -2398,7 +2406,7 @@ async function runBacktest() {
           const px = +t.price;
           if (!(px > 0.01 && px < 0.99)) continue;         // strip settled/dust noise
           const usd = t.size * px;
-          if (usd < 100) continue;
+          if (usd < (state.btMin || 1000)) continue;   // tiny trades can never score high and only dilute the sample
           const sc = scoreTrade({ ...t, title: m.question || t.title });
           bets.push({ score: sc.score, price: px, usd,
             won: (t.outcomeIndex ?? 0) === winnerIndex ? 1 : 0,
@@ -2458,8 +2466,15 @@ function renderBacktest(bets, nMarkets) {
   const enough = hi.n >= 30 && lo.n >= 30;
   const works = enough && hiEdge > 3 && hiEdge > loEdge + 2;
   const nothing = enough && Math.abs(hiEdge) <= 3;
+  const shortfall = [];
+  if (hi.n < 30) shortfall.push(`only <strong>${hi.n}</strong> bet${hi.n === 1 ? '' : 's'} scored 60+ (need 30)`);
+  if (lo.n < 30) shortfall.push(`only <strong>${lo.n}</strong> scored under 40 (need 30)`);
+  const advice = hi.n < 30
+    ? 'A high score needs size AND longshot odds AND a news-sensitive market at once, which is rare in a random sample. Try 150–250 markets, set Min bet to $1k or $5k so tiny trades stop diluting it, and tick <em>news-sensitive only</em> — that is where high scores live.'
+    : 'Raise the market count for a cleaner read.';
   $('#btVerdict').innerHTML = `<div class="cluster ${works ? '' : 'calm'}" style="border-left-color:${works ? 'var(--status-good)' : nothing ? 'var(--ink-3)' : 'var(--status-warn)'}">
     <span class="big">${!enough ? '🔍 Not enough data yet' : works ? '✅ The score has measurable edge' : nothing ? '⚖️ No edge detected' : '⚠️ Mixed / inconclusive'}</span>
+    ${!enough ? `<span style="width:100%">${shortfall.join(' · ')}. ${advice}</span>` : ''}
     <span>High-scoring bets (60+) won <strong>${hi.n ? (hi.won / hi.n * 100).toFixed(1) : '—'}%</strong> of the time against implied odds of <strong>${hi.n ? (hi.implied / hi.n * 100).toFixed(1) : '—'}%</strong> — an edge of <strong style="color:${hiEdge > 0 ? 'var(--status-good)' : 'var(--status-critical)'}">${hiEdge >= 0 ? '+' : ''}${hiEdge.toFixed(1)} points</strong>. Routine bets (under 40) ran ${loEdge >= 0 ? '+' : ''}${loEdge.toFixed(1)}.</span>
     <span class="chip muted">${bets.length.toLocaleString()} bets across ${nMarkets} resolved markets</span>
     ${!enough ? '<span class="chip warn">● run a bigger sample before trusting this</span>' : ''}
@@ -3374,6 +3389,7 @@ segWire('#kThreshSeg','kThresh', loadKalshi);
 segWire('#speedSeg','radarSpeed', () => { state.radarCount = state.radarSpeed; });
 segWire('#alertThreshSeg','alertThresh', () => {});
 segWire('#btSizeSeg','btSize', () => {});
+segWire('#btMinSeg','btMin', () => {});
 segWire('#cvSrcSeg','cvSrc', () => loadConviction());
 $('#btRun').addEventListener('click', runBacktest);
 $('#oddsKey').value = state.oddsKey || '';
