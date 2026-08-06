@@ -214,7 +214,7 @@
 
 <header class="top">
   <div class="top-inner">
-    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v8.1</span></div>
+    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v8.2</span></div>
     <div class="top-meta">
       <span id="lastUpdated">loading…</span>
       <span id="countdown" title="Auto-refresh countdown"></span>
@@ -2551,7 +2551,7 @@ async function backtestOnce(run, RUNS) {
 
     // 1. pull each wallet's own history
     prog.textContent = tag + `pulling history for ${wallets.length} traders…`;
-    const candidates = [];
+    const fills = [];
     let skippedCertain = 0, walletsWithHistory = 0;
     for (let i = 0; i < wallets.length; i += 4) {
       await Promise.allSettled(wallets.slice(i, i + 4).map(async w => {
@@ -2571,16 +2571,42 @@ async function backtestOnce(run, RUNS) {
           const px = +t.price;
           if (!(px >= 0.05 && px <= 0.85)) { skippedCertain++; continue; }   // symmetric uncertainty window
           const usd = t.size * px;
-          if (usd < (state.btMin || 100)) continue;
           const cls = classifyTitle(t.title || '');
           if (newsOnly && cls !== 'news') continue;
           const ageDays = complete && Number.isFinite(firstTs) ? (t.timestamp - firstTs) / 86400 : null;
-          candidates.push({ t, px, usd, ageDays });
+          fills.push({ t, px, usd, ageDays });
         }
       }));
-      prog.textContent = tag + `pulling history… ${Math.min(i + 4, wallets.length)}/${wallets.length} traders · ${candidates.length} candidate bets`;
+      prog.textContent = tag + `pulling history… ${Math.min(i + 4, wallets.length)}/${wallets.length} traders · ${fills.length} fills`;
+    }
+    if (!fills.length) return null;
+
+    /* ---- FOLD FILLS INTO POSITIONS ----
+       A single position is usually built from many fills, and every fill on the same market shares
+       one outcome. Treating fills as independent bets counts that outcome over and over: a trader
+       who bought one winning market in 40 clips becomes 40 wins. That inflates the sample, breaks
+       every error bar (which assume independent observations), and — worst — manufactures the
+       persistence result outright, because the early and late fills of the SAME market land in
+       different halves carrying the same answer. One observation per wallet-market-side, entered at
+       the share-weighted average price, is the only honest unit. */
+    const posMap = new Map();
+    for (const f of fills) {
+      const k = f.t.proxyWallet + '|' + f.t.conditionId + '|' + (f.t.outcomeIndex ?? 0);
+      let p = posMap.get(k);
+      if (!p) { p = { t: { ...f.t }, shares: 0, cost: 0, nFills: 0, ageDays: f.ageDays, firstTs: f.t.timestamp }; posMap.set(k, p); }
+      p.shares += f.t.size; p.cost += f.usd; p.nFills++;
+      if (f.t.timestamp < p.firstTs) { p.firstTs = f.t.timestamp; p.ageDays = f.ageDays; }
+    }
+    const candidates = [];
+    for (const p of posMap.values()) {
+      const vwap = p.shares > 0 ? p.cost / p.shares : 0;
+      if (!(vwap >= 0.05 && vwap <= 0.85)) continue;      // the position, not the clip, must be uncertain
+      if (p.cost < (state.btMin || 100)) continue;
+      candidates.push({ t: { ...p.t, size: p.shares, price: vwap, timestamp: p.firstTs },
+        px: vwap, usd: p.cost, ageDays: p.ageDays, nFills: p.nFills });
     }
     if (!candidates.length) return null;
+    const foldStats = { fills: fills.length, positions: candidates.length };
 
     // 2. resolve the markets they bet on (cached across runs, so repeat runs are much faster)
     /* Cap the resolution work, but SHUFFLE first. Slicing in insertion order would take the
@@ -2589,7 +2615,9 @@ async function backtestOnce(run, RUNS) {
        is reported in the verdict rather than silently swallowed. */
     const allIds = [...new Set(candidates.map(c => c.t.conditionId))];
     for (let i = allIds.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [allIds[i], allIds[j]] = [allIds[j], allIds[i]]; }
-    const CAP = 400;
+    /* Raised now that a "bet" is a position rather than a fill: the same cap used to buy ~40x more
+       observations than it does today, and leaving it at 400 would starve every downstream test. */
+    const CAP = 900;
     const ids = allIds.slice(0, CAP);
     const droppedIds = allIds.length - ids.length;
     prog.textContent = tag + `resolving ${ids.length} markets…`;
@@ -2624,7 +2652,7 @@ async function backtestOnce(run, RUNS) {
     }
     if (!bets.length) return null;
     return { bets, nMarkets: gradedMarkets.size,
-      health: { withHistory: walletsWithHistory, skippedCertain, sampled: wallets.length, lbSeeded, droppedIds } };
+      health: { withHistory: walletsWithHistory, skippedCertain, sampled: wallets.length, lbSeeded, droppedIds, foldStats } };
   }
 }
 
@@ -2783,6 +2811,7 @@ function renderBacktest(bets, nMarkets, health, runGaps) {
     <span class="chip muted">${bets.length.toLocaleString()} graded bets across ${nMarkets} settled markets</span>
     <span class="chip muted">offline score range ${Math.min(...bets.map(b => b.score))}–${Math.max(...bets.map(b => b.score))} · live scores run higher because they add context this test cannot rebuild</span>
     ${health ? `<span class="chip muted">${health.sampled} traders sampled · ${health.skippedCertain.toLocaleString()} already-decided trades excluded</span>` : ''}
+    ${health && health.foldStats ? `<span class="chip muted">${health.foldStats.fills.toLocaleString()} raw fills folded into ${health.foldStats.positions.toLocaleString()} positions — one bet per trader per market, because repeat clips on one market all share a single outcome and counting them separately fakes both sample size and persistence</span>` : ''}
     ${health && health.droppedIds ? `<span class="chip muted">${health.droppedIds.toLocaleString()} further markets left ungraded to cap the run — the graded ones were drawn at random across all traders, not taken from the first few</span>` : ''}
     ${health && health.lbSeeded ? `<span class="chip warn">● ${health.lbSeeded} of ${health.sampled} traders came from the top-P&L leaderboard — that part of the sample is winner-biased, so read the gap between fifths rather than the absolute win rates</span>` : ''}
     ${degenerate ? '<span class="chip critical">▲ SAMPLE LOOKS BROKEN — a fifth is winning >95%, which does not happen in a real market. Treat this run as invalid.</span>' : ''}
@@ -2845,9 +2874,12 @@ function renderBacktest(bets, nMarkets, health, runGaps) {
     if (!byW.has(b.wallet)) byW.set(b.wallet, []);
     byW.get(b.wallet).push(b);
   }
+  // Same reason: 20 positions per wallet is now a very high bar. 10 is the floor at which a
+  // half-split still leaves 5 a side — noisy per trader, but the correlation is taken across traders.
+  const MIN_PER_WALLET = 10;
   const pers = [];
   for (const [w, arr] of byW) {
-    if (arr.length < 20) continue;
+    if (arr.length < MIN_PER_WALLET) continue;
     const sorted = arr.slice().sort((a, b) => (a.ts || 0) - (b.ts || 0));
     const cut = Math.floor(sorted.length / 2);
     const e1 = statsOf(sorted.slice(0, cut)), e2 = statsOf(sorted.slice(cut));
@@ -2857,8 +2889,10 @@ function renderBacktest(bets, nMarkets, health, runGaps) {
   const pEl2 = $('#btPersistTable');
   if (pEl2) {
     if (pers.length < 4) {
-      pEl2.querySelector('tbody').innerHTML = `<tr><td colspan="4" class="empty">Only ${pers.length} trader${pers.length === 1 ? '' : 's'} had 20+ graded bets — need at least 4 to say anything about persistence. Raise <strong>Traders</strong>.</td></tr>`;
-      const v = $('#btPersistVerdict'); if (v) v.innerHTML = '';
+      pEl2.querySelector('tbody').innerHTML = `<tr><td colspan="4" class="empty">Only ${pers.length} trader${pers.length === 1 ? '' : 's'} had ${MIN_PER_WALLET}+ graded positions — need at least 4 to say anything about persistence.</td></tr>`;
+      const v = $('#btPersistVerdict');
+      if (v) v.innerHTML = `<div class="cluster calm"><span class="big">🔍 Not enough per-trader history</span>
+        <span style="width:100%">Only ${pers.length} of ${byW.size} sampled traders had ${MIN_PER_WALLET}+ graded positions. Raise <strong>Traders</strong> to 90 and set <strong>Repeat</strong> to 1× — pooling runs does not help here, because persistence is measured per trader and each run draws different traders.</span></div>`;
     } else {
       pers.sort((a, b) => b.early - a.early);
       pEl2.querySelector('tbody').innerHTML = pers.slice(0, 14).map(r => {
@@ -2885,7 +2919,8 @@ function renderBacktest(bets, nMarkets, health, runGaps) {
       const v = $('#btPersistVerdict');
       if (v) v.innerHTML = `<div class="cluster ${real ? '' : 'calm'}" style="border-left-color:${real ? 'var(--status-good)' : 'var(--ink-3)'}">
         <span class="big">${real ? '✅ Past edge predicts future edge — following specific wallets has a basis' : '⚖️ Past edge does NOT predict future edge'}</span>
-        <span style="width:100%">Across ${n} traders with 20+ graded bets each, the correlation between a trader's early-half edge and their late-half edge is <strong>${rho.toFixed(2)}</strong> (needs to clear ${crit.toFixed(2)} to beat chance).${goodLate != null && badLate != null ? ` Traders who were ahead early went on to average <strong>${goodLate >= 0 ? '+' : ''}${goodLate.toFixed(1)}</strong> later; those behind early averaged <strong>${badLate >= 0 ? '+' : ''}${badLate.toFixed(1)}</strong>.` : ''}</span>
+        <span style="width:100%">Across ${n} traders with ${MIN_PER_WALLET}+ graded positions each, the correlation between a trader's early-half edge and their late-half edge is <strong>${rho.toFixed(2)}</strong> (needs to clear ${crit.toFixed(2)} to beat chance).${goodLate != null && badLate != null ? ` Traders who were ahead early went on to average <strong>${goodLate >= 0 ? '+' : ''}${goodLate.toFixed(1)}</strong> later; those behind early averaged <strong>${badLate >= 0 ? '+' : ''}${badLate.toFixed(1)}</strong>.` : ''}</span>
+        <span style="width:100%;color:var(--ink-2);font-size:12.5px">Note on direction: splitting one finite history in half gives this test a mild NEGATIVE bias, because a trader who ran hot early has, within a fixed set of markets, fewer wins left for the second half. On no-skill synthetic data it reads about −0.7 rather than 0. So a positive correlation here is conservative evidence and a negative one should not be over-read.</span>
         <span style="width:100%;color:var(--ink-2);font-size:12.5px">${real
           ? 'This is the result that justifies the copy bot: skill is sticky, so a wallet with a record is worth following.'
           : 'Read this plainly — it means the wallets this dashboard calls "proven winners" are mostly lucky, and copying them forward has no demonstrated edge. Keep the tool as a news sensor, not a signal to trade on, until this number turns.'}</span>
