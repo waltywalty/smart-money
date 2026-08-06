@@ -214,7 +214,7 @@
 
 <header class="top">
   <div class="top-inner">
-    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v7.3</span></div>
+    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v7.4</span></div>
     <div class="top-meta">
       <span id="lastUpdated">loading…</span>
       <span id="countdown" title="Auto-refresh countdown"></span>
@@ -601,7 +601,15 @@
         <label class="ck"><input type="checkbox" id="botExitCopy" checked> exit when the whale exits</label>
         <span id="botLiveNote" style="color:var(--ink-3);font-size:12px;margin-left:auto">simulation only — no wallet connected, no orders sent</span>
       </div>
+      <div class="controls" style="border-top:1px solid var(--grid)">
+        <strong style="font-size:13px">☁️ 24/7 cloud bot</strong>
+        <input class="addr" id="cloudUrl" placeholder="https://your-worker.workers.dev" spellcheck="false" style="min-width:230px">
+        <button class="ctrl" id="cloudSave">Connect</button>
+        <button class="ctrl" id="cloudRun">Run cycle now</button>
+        <span id="cloudState" style="font-size:12px;color:var(--ink-3)">not connected — this browser bot only runs while the page is open</span>
+      </div>
     </div>
+    <div id="cloudPanel"></div>
 
     <div class="tiles" id="botStats"></div>
     <div class="card"><div class="card-pad" style="border-bottom:1px solid var(--grid)"><strong>Equity curve</strong></div><div id="botCurve" style="padding:14px 16px"></div></div>
@@ -1034,7 +1042,7 @@ state.count = 60;
 function saveSettings() {
   store.settings = { minSize: state.minSize, radarFilter: state.radarFilter, lbWindow: state.lbWindow,
     pair: state.pair, cbThresh: state.cbThresh, kThresh: state.kThresh, kHideTicks: state.kHideTicks,
-    mHideSports: state.mHideSports, radarSpeed: state.radarSpeed, alertThresh: state.alertThresh, btSize: state.btSize, btMin: state.btMin, oddsKey: state.oddsKey || '', sport: state.sport, cvSrc: state.cvSrc, theme: state.theme || '', ntfyTopic: state.ntfyTopic || '', fmpKey: state.fmpKey || '', polWatch: state.polWatch || '', sound: state.sound, notify: state.notify };
+    mHideSports: state.mHideSports, radarSpeed: state.radarSpeed, alertThresh: state.alertThresh, cloudUrl: state.cloudUrl || '', btSize: state.btSize, btMin: state.btMin, oddsKey: state.oddsKey || '', sport: state.sport, cvSrc: state.cvSrc, theme: state.theme || '', ntfyTopic: state.ntfyTopic || '', fmpKey: state.fmpKey || '', polWatch: state.polWatch || '', sound: state.sound, notify: state.notify };
   return persist();
 }
 
@@ -2099,6 +2107,54 @@ function renderBot() {
 
   const exFee = takerFee(1000, 0.10), exCred = makerCredit(1000, 0.10);
   $('#botFeeNote').innerHTML = `<strong>Fee model is Polymarket's real one:</strong> taker fee = 0.06 × contracts × p × (1−p); maker rebate = 0.0125 × the same. On 1,000 contracts at 10¢ that is <strong>${fmtUSD(exFee)} paid</strong> as a taker (5.4% of a ${fmtUSD(100)} stake) versus <strong>${fmtUSD(exCred)} credited</strong> as a maker. Maker mode posts a limit at the whale's price and only fills if the book comes to you — you miss trades, but you avoid both the fee and the chase. Taker mode shows what chasing actually costs. Positions are marked at the <em>best bid</em>, i.e. what you could really exit at.`;
+}
+
+/* ============================== CLOUD BOT (24/7) ============================== */
+/* The browser bot stops when the page closes. The Cloudflare Worker runs every 5 minutes
+   regardless, keeps its portfolio in KV, and exposes it here read-only. */
+async function loadCloudBot() {
+  const url = (state.cloudUrl || '').trim().replace(/\/$/, '');
+  const panel = $('#cloudPanel');
+  if (!url) { panel.innerHTML = ''; return; }
+  try {
+    const d = await fetchJSON(url + '/');
+    if (!d || typeof d.equity !== 'number') throw new Error('unexpected response');
+    const ret = d.bank ? (d.equity - d.bank) / d.bank * 100 : 0;
+    const age = d.lastRun ? Math.round((Date.now() - d.lastRun) / 60000) : null;
+    const stale = age != null && age > 20;
+    $('#cloudState').innerHTML = `<span class="chip ${stale ? 'warn' : 'good'}">${stale ? '● last ran ' + age + 'm ago' : '✓ live'}</span> ${d.runs} cycles since ${new Date(d.startedAt).toLocaleDateString()}`;
+    const pts = d.equityLog || [];
+    let curve = '';
+    if (pts.length > 1) {
+      const w = 640, h = 70, min = Math.min(...pts.map(x => x.e), d.bank), max = Math.max(...pts.map(x => x.e), d.bank);
+      const rng = (max - min) || 1;
+      const path = pts.map((x, i) => `${(i / (pts.length - 1) * w).toFixed(1)},${(h - (x.e - min) / rng * h).toFixed(1)}`).join(' ');
+      const baseY = (h - (d.bank - min) / rng * h).toFixed(1);
+      curve = `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:${h}px" preserveAspectRatio="none"><line x1="0" y1="${baseY}" x2="${w}" y2="${baseY}" stroke="var(--baseline)" stroke-dasharray="4 4"/><polyline points="${path}" fill="none" stroke="${d.equity >= d.bank ? 'var(--status-good)' : 'var(--status-critical)'}" stroke-width="2"/></svg>`;
+    }
+    panel.innerHTML = `
+      <div class="tiles">
+        <div class="tile"><div class="v" style="color:${d.equity >= d.bank ? 'var(--status-good)' : 'var(--status-critical)'}">${fmtUSD(d.equity)}</div><div class="l">Cloud equity</div><div class="s">${ret >= 0 ? '+' : ''}${ret.toFixed(1)}% from ${fmtUSD(d.bank)}</div></div>
+        <div class="tile"><div class="v">${fmtUSD(d.realised)}</div><div class="l">Realised</div><div class="s">${d.closed} closed · ${d.closed ? Math.round(d.wins / d.closed * 100) : 0}% win rate</div></div>
+        <div class="tile"><div class="v">${d.open} / ${d.pending}</div><div class="l">Open / resting</div><div class="s">cash ${fmtUSD(d.cash)}</div></div>
+      </div>
+      <div class="card"><div class="card-pad" style="border-bottom:1px solid var(--grid)"><strong>Cloud equity curve</strong> <span class="note" style="display:inline">runs every 5 minutes whether or not this page is open</span></div><div style="padding:12px 16px">${curve || '<div class="empty">Curve draws after the first position.</div>'}</div></div>
+      ${(d.lastNotes || []).length ? `<div class="card"><div class="card-pad"><strong>Last cycle</strong><div style="margin-top:6px;font-size:13px;color:var(--ink-2)">${d.lastNotes.map(x => esc(x)).join('<br>')}</div></div></div>` : ''}
+      ${(d.positions || []).length ? `<div class="card"><div class="tscroll"><table>
+        <thead><tr><th>Status</th><th>Market</th><th>Position</th><th class="num">Entry</th><th class="num">Now</th><th class="num">Stake</th><th class="num">P&L</th></tr></thead>
+        <tbody>${d.positions.slice(0, 25).map(p => {
+          const pnl = p.status === 'closed' ? p.pnl : (p.status === 'open' ? p.shares * ((p.markPx != null ? p.markPx : p.entryPx) || 0) - p.cost : null);
+          const chip = p.status === 'open' ? '<span class="chip good">open</span>' : p.status === 'pending' ? '<span class="chip warn">● resting</span>' : (p.pnl > 0 ? '<span class="chip good">✓ won</span>' : '<span class="chip critical">✗ lost</span>');
+          return `<tr title="${esc(p.exitReason || '')}"><td>${chip}</td><td>${esc((p.title || '').slice(0, 46))}</td><td>${positionLabel('BUY', p.outcome)}</td>
+            <td class="num">${p.entryPx != null ? (p.entryPx * 100).toFixed(1) + '¢' : '@' + (p.limitPx * 100).toFixed(1) + '¢'}</td>
+            <td class="num">${p.status === 'closed' ? (p.exitPx * 100).toFixed(0) + '¢' : (p.markPx != null ? (p.markPx * 100).toFixed(1) + '¢' : '—')}</td>
+            <td class="num">${p.cost != null ? fmtUSD(p.cost) : '—'}</td>
+            <td class="num" style="color:${pnl == null ? 'var(--ink-3)' : pnl >= 0 ? 'var(--status-good)' : 'var(--status-critical)'}"><strong>${pnl == null ? '—' : fmtUSD(pnl)}</strong></td></tr>`;
+        }).join('')}</tbody></table></div></div>` : ''}`;
+  } catch (e) {
+    $('#cloudState').innerHTML = `<span class="chip critical">✗ unreachable</span> check the URL`;
+    panel.innerHTML = '';
+  }
 }
 
 /* ============================== SPORTS LINE MOVEMENT ============================== */
@@ -3430,6 +3486,15 @@ segWire('#sportSeg','sport', () => renderLines());
     store.botPos = []; store.botEq = []; persist(); renderBot();
   });
   renderBot();
+  $('#cloudUrl').value = state.cloudUrl || '';
+  $('#cloudSave').addEventListener('click', () => { state.cloudUrl = $('#cloudUrl').value.trim(); saveSettings(); loadCloudBot(); });
+  $('#cloudRun').addEventListener('click', async () => {
+    const u = (state.cloudUrl || '').trim().replace(/\/$/, '');
+    if (!u) return;
+    $('#cloudState').textContent = 'running a cycle…';
+    try { await fetchJSON(u + '/run'); } catch (e) {}
+    loadCloudBot();
+  });
 })();
 try { renderLeadLag(); } catch (e) {}
 
@@ -3610,7 +3675,7 @@ $('#refreshBtn').addEventListener('click', () => refreshAll());
 async function refreshAll() {
   state.count = 60;
   await Promise.allSettled([loadRadar(), loadMovers(), loadKalshi(), loadLeaderboard(), loadCrypto(), loadHyper(), loadSEC(), loadCT()]);
-  Promise.allSettled([updateSignals(), checkStarred(), checkOutcomes(), loadConviction(), checkOdds(false), botUpdate().then(() => { try { renderBot(); } catch (e) {} })]);
+  Promise.allSettled([loadCloudBot(), updateSignals(), checkStarred(), checkOutcomes(), loadConviction(), checkOdds(false), botUpdate().then(() => { try { renderBot(); } catch (e) {} })]);
   try { renderBriefing(); } catch (e) {}
   $('#lastUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString();
 }
