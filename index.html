@@ -214,7 +214,7 @@
 
 <header class="top">
   <div class="top-inner">
-    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v8.2</span></div>
+    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v8.3</span></div>
     <div class="top-meta">
       <span id="lastUpdated">loading…</span>
       <span id="countdown" title="Auto-refresh countdown"></span>
@@ -546,6 +546,17 @@
       <div class="tscroll">
         <table id="btPriceTable">
           <thead><tr><th>Entry price</th><th class="num">Bets</th><th class="num">Edge, lower-scoring half</th><th class="num">Edge, higher-scoring half</th><th class="num">Difference ±2 s.e.</th></tr></thead>
+          <tbody><tr><td colspan="5" class="empty">Runs with the backtest above.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-pad" style="border-bottom:1px solid var(--grid)"><strong>Is raw size the one thing that works?</strong> <span class="note" style="display:inline">every other component came back null, and one cell — very large size — came back positive on too few bets to trust. This tests stake directly rather than through the score, and controls for price the same way. Note honestly that this is a follow-up chosen after seeing the data, so it only counts if it clears the noise floor on its own.</span></div>
+      <div id="btSizeVerdict" style="padding:0 14px 10px"></div>
+      <div class="tscroll">
+        <table id="btSizeTable">
+          <thead><tr><th>Position size</th><th class="num">Positions</th><th class="num">Actually won</th><th class="num">Odds implied</th><th class="num">Edge ±2 s.e.</th></tr></thead>
           <tbody><tr><td colspan="5" class="empty">Runs with the backtest above.</td></tr></tbody>
         </table>
       </div>
@@ -2482,12 +2493,27 @@ async function runBacktest() {
   setFeed('#btState', 'link');
   $('#btState').textContent = 'running…';
   try {
+    /* Runs draw their traders from the same recent-activity pool, so the same wallet turns up in
+       several of them and brings its whole history each time. Pooling naively counts those
+       positions once per appearance: n inflates, every error bar shrinks by a factor it has not
+       earned, and a wallet that happens to be sampled three times gets triple weight in the
+       persistence correlation. Dedupe on wallet+market+side across the whole pooled set. */
+    const seenPos = new Set();
+    let dupes = 0;
     for (let run = 0; run < RUNS; run++) {
       const r = await backtestOnce(run, RUNS);
       if (!r) continue;
-      allBets.push(...r.bets);
+      const fresh = [];
+      for (const b of r.bets) {
+        const k = b.wallet + '|' + b.conditionId + '|' + b.outcomeIndex;
+        if (seenPos.has(k)) { dupes++; continue; }
+        seenPos.add(k); fresh.push(b);
+      }
+      allBets.push(...fresh);
       totalMarkets += r.nMarkets;
       lastHealth = r.health;
+      if (lastHealth) lastHealth.dupes = dupes;
+      // the run's own gap is still measured on its own full sample — that is what makes runs independent
       runGaps.push(gapOf(r.bets));
     }
     if (!allBets.length) {
@@ -2647,6 +2673,7 @@ async function backtestOnce(run, RUNS) {
       }
       bets.push({ score: sc.score, price: c.px, usd: c.usd,
         wallet: c.t.proxyWallet, ts: c.t.timestamp,
+        conditionId: c.t.conditionId, outcomeIndex: c.t.outcomeIndex ?? 0,
         won: (c.t.outcomeIndex ?? 0) === r.winnerIndex ? 1 : 0,
         reasons: sc.reasons, isNewsy: sc.isNewsy });
     }
@@ -2811,6 +2838,7 @@ function renderBacktest(bets, nMarkets, health, runGaps) {
     <span class="chip muted">${bets.length.toLocaleString()} graded bets across ${nMarkets} settled markets</span>
     <span class="chip muted">offline score range ${Math.min(...bets.map(b => b.score))}–${Math.max(...bets.map(b => b.score))} · live scores run higher because they add context this test cannot rebuild</span>
     ${health ? `<span class="chip muted">${health.sampled} traders sampled · ${health.skippedCertain.toLocaleString()} already-decided trades excluded</span>` : ''}
+    ${health && health.dupes ? `<span class="chip muted">${health.dupes.toLocaleString()} positions dropped as cross-run duplicates — runs draw from the same pool, so a wallet sampled twice would otherwise be counted twice and shrink every error bar</span>` : ''}
     ${health && health.foldStats ? `<span class="chip muted">${health.foldStats.fills.toLocaleString()} raw fills folded into ${health.foldStats.positions.toLocaleString()} positions — one bet per trader per market, because repeat clips on one market all share a single outcome and counting them separately fakes both sample size and persistence</span>` : ''}
     ${health && health.droppedIds ? `<span class="chip muted">${health.droppedIds.toLocaleString()} further markets left ungraded to cap the run — the graded ones were drawn at random across all traders, not taken from the first few</span>` : ''}
     ${health && health.lbSeeded ? `<span class="chip warn">● ${health.lbSeeded} of ${health.sampled} traders came from the top-P&L leaderboard — that part of the sample is winner-biased, so read the gap between fifths rather than the absolute win rates</span>` : ''}
@@ -2857,6 +2885,56 @@ function renderBacktest(bets, nMarkets, health, runGaps) {
     const pv = $('#btPriceVerdict');
     if (pv) pv.innerHTML = pooled == null ? '' :
       `<span class="chip ${Math.abs(pooled) < 1 ? 'muted' : pooled > 0 ? 'good' : 'critical'}">Pooled across price bands, higher-scoring bets beat lower-scoring ones by <strong>${pooled >= 0 ? '+' : ''}${pooled.toFixed(1)} points</strong> — this is the number the favourite-longshot bias cannot fake.</span>`;
+  }
+
+  /* ---- IS SIZE THE ONE THING THAT SURVIVES? ----
+     Across every test so far exactly one cell came back positive: "very large size", +6.2 on 28
+     bets — too thin to mean anything on its own, but the only lead left standing after the
+     composite score, each of its other components, and wallet-level persistence all came back
+     null. So test it directly instead of through the score, and control for price the same way,
+     because big bets cluster at particular odds. Stated plainly for the record: this is a
+     follow-up chosen AFTER seeing the data, which is the weakest form of evidence there is. It
+     earns nothing unless the top size band clears the noise floor in its own right. */
+  const SBANDS = [[0, 1000], [1000, 10000], [10000, 100000], [100000, Infinity]];
+  const srows = SBANDS.map(([lo, hi]) => {
+    const inb = bets.filter(b => b.usd >= lo && b.usd < hi);
+    const st = statsOf(inb);
+    return { lo, hi, st };
+  });
+  // and the price-controlled version: within each price band, big half vs small half by stake
+  let ssw = 0, sswx = 0;
+  for (const [lo, hi] of PBANDS) {
+    const inb = bets.filter(b => b.price >= lo && b.price < hi);
+    if (inb.length < 20) continue;
+    const sorted = inb.slice().sort((a, b) => a.usd - b.usd);
+    const cut = Math.floor(sorted.length / 2);
+    const small = statsOf(sorted.slice(0, cut)), big = statsOf(sorted.slice(cut));
+    ssw += inb.length; sswx += (big.edge - small.edge) * inb.length;
+  }
+  const sizePooled = ssw ? sswx / ssw : null;
+  const sEl = $('#btSizeTable');
+  if (sEl) {
+    sEl.querySelector('tbody').innerHTML = srows.map(r => {
+      const a = r.st;
+      if (!a.n) return `<tr><td>${fmtUSD(r.lo)}–${r.hi === Infinity ? '∞' : fmtUSD(r.hi)}</td><td class="num">0</td><td colspan="3" class="empty" style="text-align:left">no positions this size</td></tr>`;
+      const thin = a.n < 30;
+      const sig = Math.abs(a.edge) > 2 * a.se;
+      const col = sig && a.edge > 0 ? 'var(--status-good)' : sig && a.edge < 0 ? 'var(--status-critical)' : 'var(--ink-2)';
+      return `<tr>
+        <td><strong>${fmtUSD(r.lo)}–${r.hi === Infinity ? '∞' : fmtUSD(r.hi)}</strong></td>
+        <td class="num">${a.n.toLocaleString()}${thin ? '<div style="font-size:10.5px;color:var(--ink-3)">thin</div>' : ''}</td>
+        <td class="num"><strong>${a.actual.toFixed(1)}%</strong></td>
+        <td class="num" style="color:var(--ink-2)">${a.implied.toFixed(1)}%</td>
+        <td class="num" style="color:${col}"><strong>${a.edge >= 0 ? '+' : ''}${a.edge.toFixed(1)}</strong> <span style="font-size:10.5px;color:var(--ink-3)">±${(2 * a.se).toFixed(1)}</span></td>
+      </tr>`;
+    }).join('');
+    const sv = $('#btSizeVerdict');
+    const topBand = srows[srows.length - 1].st;
+    const topReal = topBand.n >= 30 && topBand.edge > 2 * topBand.se && (!nf || topBand.edge > nf.diff);
+    if (sv) sv.innerHTML = `<div class="cluster ${topReal ? '' : 'calm'}" style="border-left-color:${topReal ? 'var(--status-good)' : 'var(--ink-3)'}">
+      <span class="big">${topBand.n < 30 ? '🔍 Not enough six-figure positions yet' : topReal ? '✅ Very large positions do beat their odds' : '⚖️ Size does not predict outcome either'}</span>
+      <span style="width:100%">Positions over $100k: <strong>${topBand.n || 0}</strong> of them, edge <strong>${topBand.n ? (topBand.edge >= 0 ? '+' : '') + topBand.edge.toFixed(1) : '—'} ± ${topBand.n ? (2 * topBand.se).toFixed(1) : '—'} pts</strong>${nf ? `, against a noise floor of ${nf.diff.toFixed(1)}` : ''}.${sizePooled != null ? ` Controlling for price, the bigger half of each price band beat the smaller half by <strong>${sizePooled >= 0 ? '+' : ''}${sizePooled.toFixed(1)} pts</strong>.` : ''}</span>
+    </div>`;
   }
 
   /* ---- DOES SKILL PERSIST? ----
