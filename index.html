@@ -214,7 +214,7 @@
 
 <header class="top">
   <div class="top-inner">
-    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v9.6</span></div>
+    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v9.7</span></div>
     <div class="top-meta">
       <span id="lastUpdated">loading…</span>
       <span id="countdown" title="Auto-refresh countdown"></span>
@@ -538,6 +538,10 @@
       <h2>🔬 Does the score actually work?</h2>
       <span class="feedstate" id="btState">not run yet</span>
       <span class="desc">The honest test. Sample real traders, replay their own betting history through this dashboard's scoring algorithm, and check whether higher-scoring bets won more often than the odds they paid implied. Two deliberate choices: sampling by <em>trader</em> rather than by market, because a market's recent trades were all placed after the answer was obvious while a trader's history spans months of real uncertainty; and grading by <em>rank</em> — the sample's own top fifth against its bottom fifth — rather than against the live 60/80 thresholds, because a replayed trade cannot rebuild the live context bonuses and so never reaches them.</span>
+    </div>
+    <div class="card" style="margin-bottom:10px">
+      <div class="card-pad" style="border-bottom:1px solid var(--grid)"><strong>Everything measured so far, pooled</strong> <span class="note" style="display:inline">the verdict below is one run. This is every run ever taken, weighted by how much each one knew — correlations through Fisher's z, everything else by inverse variance. Read this one. A single run crossing a 2-sigma bar happens by luck about once in twenty attempts, and it has now happened to us three times; pooling is the only thing that stops the most flattering run from becoming the answer.</span></div>
+      <div id="histBody" style="padding:10px 12px"></div>
     </div>
     <div class="card">
       <div class="controls">
@@ -2645,7 +2649,8 @@ async function runBacktest() {
       return;
     }
     renderBacktest(allBets, totalMarkets, lastHealth, runGaps);
-    publishResult('score-validation', { verdict: panelText('#btVerdict'), bands: panelText('#btTable'), price: panelText('#btPriceVerdict'), size: panelText('#btSizeVerdict'), crowd: panelText('#btFLVerdict'), persistence: panelText('#btPersistVerdict'), signals: panelText('#btSigTable'), n: allBets.length });
+    renderHistory();
+    publishResult('score-validation', { pooled: panelText('#histBody'), verdict: panelText('#btVerdict'), bands: panelText('#btTable'), price: panelText('#btPriceVerdict'), size: panelText('#btSizeVerdict'), crowd: panelText('#btFLVerdict'), persistence: panelText('#btPersistVerdict'), signals: panelText('#btSigTable'), n: allBets.length });
     $('#btState').textContent = RUNS > 1 ? `complete · ${RUNS} runs pooled` : 'complete';
     $('#btState').className = 'feedstate live';
   } catch (e) {
@@ -2949,6 +2954,7 @@ function renderBacktest(bets, nMarkets, health, runGaps) {
     : '⚖️ No ranking power — the score is not separating winners from losers';
   const colr = degenerate || backwards ? 'var(--status-critical)' : works ? 'var(--status-good)' : nothing ? 'var(--ink-3)' : 'var(--status-warn)';
   const tied = qs.length < 3;
+  recordRun('score-gap', 'gap', estimate, bets.length, gapSEM);
   $('#btVerdict').innerHTML = `<div class="cluster ${works && !degenerate ? '' : 'calm'}" style="border-left-color:${colr}">
     <span class="big">${headline}</span>
     ${degenerate ? '<span style="width:100%">The numbers below are shown for diagnosis only — do not read a verdict from them.</span>' : ''}
@@ -3067,6 +3073,7 @@ function renderBacktest(bets, nMarkets, health, runGaps) {
     const tilt = slope;
     const tiltSE = slopeSE;
     const tv = tilt == null ? null : Study.verdict(tilt * 100, (tiltSE || 0) * 100, nf ? nf.diff : null);
+    if (slope != null) recordRun('crowd-bias', 'slope', slope, bets.length, slopeSE);
     const fv = $('#btFLVerdict');
     if (fv) fv.innerHTML = `<div class="cluster ${tv && tv.clears && tilt > 0 ? '' : 'calm'}" style="border-left-color:${tv && tv.clears ? (tilt > 0 ? 'var(--status-good)' : 'var(--status-critical)') : 'var(--ink-3)'}">
       <span class="big">${tilt == null ? '🔍 Not enough data' : tv.clears && tilt > 0 ? '✅ Favourite-longshot bias is real here — and it is mechanical' : tv.clears && tilt < 0 ? '🛑 The bias runs the OTHER way here' : '⚖️ No measurable favourite-longshot bias on Polymarket'}</span>
@@ -3180,6 +3187,7 @@ function renderBacktest(bets, nMarkets, health, runGaps) {
       let num = 0, dx = 0, dy = 0;
       for (const r of pers) { num += (r.early - mx) * (r.late - my); dx += (r.early - mx) ** 2; dy += (r.late - my) ** 2; }
       const rho = (dx && dy) ? num / Math.sqrt(dx * dy) : 0;
+      recordRun('persistence', 'correlation', rho, n, null);
       const good = pers.filter(r => r.early > 0), bad = pers.filter(r => r.early <= 0);
       const goodLate = good.length ? good.reduce((a, r) => a + r.late, 0) / good.length : null;
       const badLate = bad.length ? bad.reduce((a, r) => a + r.late, 0) / bad.length : null;
@@ -3280,6 +3288,82 @@ const Study = {
   },
 };
 
+/* ============================== RUN HISTORY / META-ANALYSIS ============================== */
+/* The recurring failure of this whole project, in one place.
+   Every study here has been read one run at a time, and a run that crosses its bar gets believed.
+   It has now happened three times: the score "worked" at 90 traders and not at 25 or 50; the
+   favourite-longshot bias "appeared" at the extremes and vanished under a slope; and persistence
+   came back +0.40 on 40 traders after reading -0.02 on 150 and -0.16 on 165. Each was a single
+   look at a 2-sigma bar, which crosses by luck about one time in twenty, and we kept taking the
+   crossing as the answer.
+   The fix is not more discipline, it is arithmetic. Every run is stored and every verdict is
+   computed over ALL of them, weighted by how much each one actually knew. Correlations pool
+   through Fisher's z, which is the transform that makes them averageable at all; everything else
+   pools by inverse variance. A new run can no longer overwrite the record — it can only move it. */
+function recordRun(study, metric, value, n, se) {
+  if (!Number.isFinite(value) || !Number.isFinite(n) || n < 3) return;
+  store.studyRuns = store.studyRuns || [];
+  store.studyRuns.unshift({ study, metric, value, n, se: Number.isFinite(se) ? se : null, ts: Date.now() });
+  if (store.studyRuns.length > 200) store.studyRuns.length = 200;
+  persist();
+}
+function poolRuns(study, metric) {
+  const rs = (store.studyRuns || []).filter(r => r.study === study && r.metric === metric);
+  if (!rs.length) return null;
+  if (metric === 'correlation') {
+    // Fisher z: correlations are not linear, so averaging them raw understates the extremes.
+    let num = 0, den = 0;
+    for (const r of rs) {
+      const v = Math.max(-0.999, Math.min(0.999, r.value));
+      const z = 0.5 * Math.log((1 + v) / (1 - v)), w = Math.max(1, r.n - 3);
+      num += w * z; den += w;
+    }
+    const zbar = num / den, se = 1 / Math.sqrt(den);
+    const back = x => (Math.exp(2 * x) - 1) / (Math.exp(2 * x) + 1);
+    return { runs: rs, pooled: back(zbar), lo: back(zbar - 1.96 * se), hi: back(zbar + 1.96 * se),
+      totalN: rs.reduce((a, r) => a + r.n, 0) };
+  }
+  // inverse-variance weighting: a run with a tight error bar counts for more, as it should
+  let num = 0, den = 0;
+  for (const r of rs) {
+    const w = r.se && r.se > 0 ? 1 / (r.se * r.se) : Math.max(1, r.n);
+    num += w * r.value; den += w;
+  }
+  const pooled = num / den, se = Math.sqrt(1 / den);
+  return { runs: rs, pooled, lo: pooled - 1.96 * se, hi: pooled + 1.96 * se, se,
+    totalN: rs.reduce((a, r) => a + r.n, 0) };
+}
+function renderHistory() {
+  const el = $('#histBody');
+  if (!el) return;
+  const specs = [
+    ['score-gap', 'gap', 'Score ranking — top fifth minus bottom fifth', 'pts', false],
+    ['persistence', 'correlation', 'Does a trader\'s edge persist?', '', true],
+    ['crowd-bias', 'slope', 'Favourite-longshot slope (edge per 1¢ of price)', '', false],
+  ];
+  const parts = specs.map(([study, metric, label, unit, isCorr]) => {
+    const p = poolRuns(study, metric);
+    if (!p) return `<div class="card" style="margin-bottom:8px"><div class="card-pad"><strong>${esc(label)}</strong><div class="empty" style="text-align:left;padding:6px 0">No runs recorded yet — run the backtest.</div></div></div>`;
+    const crosses = p.lo <= 0 && p.hi >= 0;
+    const col = crosses ? 'var(--ink-3)' : p.pooled > 0 ? 'var(--status-good)' : 'var(--status-critical)';
+    const dec = isCorr ? 3 : 2;
+    return `<div class="card" style="margin-bottom:8px"><div class="card-pad">
+      <strong>${esc(label)}</strong>
+      <div style="margin:8px 0;font-size:15px">Pooled over <strong>${p.runs.length}</strong> run${p.runs.length === 1 ? '' : 's'} (${p.totalN.toLocaleString()} observations):
+        <strong style="color:${col};font-size:18px">${p.pooled >= 0 ? '+' : ''}${p.pooled.toFixed(dec)}${unit ? ' ' + unit : ''}</strong>
+        <span style="color:var(--ink-2)"> · 95% interval ${p.lo >= 0 ? '+' : ''}${p.lo.toFixed(dec)} to ${p.hi >= 0 ? '+' : ''}${p.hi.toFixed(dec)}</span></div>
+      <div style="font-size:13px;color:${crosses ? 'var(--ink-2)' : col}">${crosses
+        ? 'The interval contains zero, so across everything measured so far there is no effect here.'
+        : 'The interval excludes zero — this survives pooling, which is a far higher bar than any single run.'}</div>
+      <div style="margin-top:8px;font-size:12px;color:var(--ink-3)">${p.runs.slice(0, 8).map(r =>
+        `<span class="chip muted">${new Date(r.ts).toLocaleDateString()} · n=${r.n} · ${r.value >= 0 ? '+' : ''}${r.value.toFixed(dec)}</span>`).join(' ')}</div>
+      ${p.runs.length >= 2 && p.runs.some(r => (r.value > 0) !== (p.runs[0].value > 0))
+        ? '<div style="margin-top:6px;font-size:12px;color:var(--status-warn)">● individual runs disagree on direction — the pooled figure is the one to read, not the most recent or the most flattering</div>' : ''}
+    </div></div>`;
+  });
+  el.innerHTML = parts.join('');
+}
+
 /* ============================== RESULTS PUBLISHING ============================== */
 /* Every study here runs in this browser against live APIs, so its output has been trapped on the
    screen it was rendered on. This lifts each verdict to the Cloudflare Worker, where anything that
@@ -3292,7 +3376,7 @@ async function publishResult(study, payload) {
   try {
     await fetch(`${url}/results?k=${encodeURIComponent(topic)}`, {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ study, version: 'v9.6', ...payload }),
+      body: JSON.stringify({ study, version: 'v9.7', ...payload }),
     });
     const el = $('#pubState');
     if (el) { el.textContent = `published ${study} · ${new Date().toLocaleTimeString()}`; el.className = 'feedstate live'; }
@@ -3665,7 +3749,7 @@ async function runArb() {
 
     const best = usable[0];
     $('#arbVerdict').innerHTML = `<div class="cluster ${live.length ? '' : 'calm'}" style="border-left-color:${live.length ? 'var(--status-good)' : makerOnly.length ? 'var(--status-warn)' : 'var(--ink-3)'}">
-      <span class="big">${live.length ? `💰 ${live.length} basket${live.length === 1 ? '' : 's'} mispriced even after crossing the spread` : makerOnly.length ? `⏳ ${makerOnly.length} basket${makerOnly.length === 1 ? '' : 's'} only work if you can rest limit orders` : '⚖️ No arbitrage right now — the sets all price coherently'}</span>
+      <span class="big">${live.length ? `💰 ${live.length} basket${live.length === 1 ? '' : 's'} mispriced even after crossing the spread` : makerOnly.length ? `⏳ ${makerOnly.length} basket${makerOnly.length === 1 ? '' : 's'} only work${makerOnly.length === 1 ? 's' : ''} if you can rest limit orders` : '⚖️ No arbitrage right now — the sets all price coherently'}</span>
       <span style="width:100%">${rows.length} mutually-exclusive sets checked across ${events.length} events${excluded ? `, of which <strong>${excluded}</strong> were set aside as unpriceable` : ''}. ${best ? `Best usable basket: ${best.buySide ? 'buy' : 'sell'} all ${best.n} outcomes for <strong>${((best.buySide ? best.cost : best.proceeds) * 100).toFixed(1)}¢</strong> against a <strong>100¢</strong> settlement — <strong style="color:${best.net > 0 ? 'var(--status-good)' : 'var(--status-critical)'}">${(best.net * 100) >= 0 ? '+' : ''}${(best.net * 100).toFixed(2)}¢ taking</strong>, <strong style="color:${best.netMaker > 0 ? 'var(--status-good)' : 'var(--status-critical)'}">${(best.netMaker * 100) >= 0 ? '+' : ''}${(best.netMaker * 100).toFixed(2)}¢ making</strong>.` : ''}</span>
       ${excluded ? `<span class="chip warn">● ${excluded} set${excluded === 1 ? '' : 's'} excluded for having no catch-all outcome. On those, a sum below $1 is not a discount — it is the crowd pricing the chance that the answer is something nobody listed, and buying the basket would lose the lot.</span>` : ''}
       <span class="chip muted">Both directions are checked: below $1 you buy the set, above $1 you sell it. The sell side is the commoner one — a set priced at 103¢ is an overround, exactly what a bookmaker builds in.</span>
@@ -4614,6 +4698,7 @@ segWire('#sportSeg','sport', () => renderLines());
   });
   renderBot();
   $('#cloudUrl').value = state.cloudUrl || '';
+  try { renderHistory(); } catch (e) {}
   if ($('#pubOn')) {
     $('#pubOn').checked = state.publish !== false;
     $('#pubOn').addEventListener('change', e => { state.publish = e.target.checked; persist(); });
