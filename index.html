@@ -214,7 +214,7 @@
 
 <header class="top">
   <div class="top-inner">
-    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v8.4</span></div>
+    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v9.0</span></div>
     <div class="top-meta">
       <span id="lastUpdated">loading…</span>
       <span id="countdown" title="Auto-refresh countdown"></span>
@@ -233,6 +233,7 @@
     <a href="#leaders">Leaderboard</a>
     <a href="#watchlist">Watchlist</a>
     <a href="#conviction">Conviction board</a>
+    <a href="#arb">Free-money scanner</a>
     <a href="#backtest">Score validation</a>
     <a href="#leadlag">Lead/lag study</a>
     <a href="#bot">Paper bot</a>
@@ -497,6 +498,39 @@
     <p class="note">Click any politician for their recent filings and a deep link to their full portfolio. Fed by your starred wallets and any wallet that earns a "proven" record (3+ graded wins on flagged bets). Entry → now shows whether the market has moved toward their bet since they placed it — green means the money is so far being proven right.</p>
   </section>
 
+  <!-- ======================= LOGICAL ARBITRAGE ======================= -->
+  <section class="block" id="arb">
+    <div class="block-head">
+      <h2>🧮 Free-money scanner — markets that contradict themselves</h2>
+      <span class="feedstate" id="arbState">not run yet</span>
+      <span class="desc">A different kind of edge entirely. Everything else in this dashboard tries to <em>forecast</em> — and we proved that doesn't work here. This doesn't forecast anything. When a set of outcomes is mutually exclusive and exhaustive, exactly one of them pays $1, so their prices must sum to $1. If you can buy every outcome for less than a dollar, you are guaranteed a profit no matter what happens, and no skill or information is involved. The only questions are whether the gap survives fees and whether the books are deep enough to fill.</span>
+    </div>
+    <div class="card">
+      <div class="controls">
+        <span>Scan:</span>
+        <div class="seg" id="arbDepthSeg">
+          <button data-v="40" aria-pressed="true">top 40</button>
+          <button data-v="100">100</button>
+          <button data-v="200">200 events</button>
+        </div>
+        <label class="ck"><input type="checkbox" id="arbNet" checked> after fees only</label>
+        <button class="ctrl" id="arbRun">▶ Scan for arbitrage</button>
+        <span id="arbProgress" style="color:var(--ink-3)"></span>
+      </div>
+      <div id="arbVerdict"></div>
+      <div class="tscroll">
+        <table id="arbTable">
+          <thead><tr>
+            <th>Event</th><th class="num">Outcomes</th><th class="num">Cost to own all</th>
+            <th class="num">Gross edge</th><th class="num">Fees</th><th class="num">Net edge</th><th class="num">Max size</th>
+          </tr></thead>
+          <tbody><tr><td colspan="7" class="empty">Hit <strong>Scan for arbitrage</strong>. It reads every mutually-exclusive market set on Polymarket and checks whether the outcome prices add up.</td></tr></tbody>
+        </table>
+      </div>
+      <p class="note">Cost to own all = the sum of the best <em>ask</em> across every outcome — what you would actually pay right now, not the mid. Fees use Polymarket's real taker formula, 0.06 × shares × p × (1−p) per leg, which is brutal on baskets containing cheap legs. Max size is set by the thinnest leg in the basket, because a basket you can only half-fill is not an arbitrage — it is a directional bet you did not intend to make. A negative net edge means the market is behaving properly.</p>
+    </div>
+  </section>
+
   <!-- ======================= BACKTEST ======================= -->
   <section class="block" id="backtest">
     <div class="block-head">
@@ -546,6 +580,17 @@
       <div class="tscroll">
         <table id="btPriceTable">
           <thead><tr><th>Entry price</th><th class="num">Bets</th><th class="num">Edge, lower-scoring half</th><th class="num">Edge, higher-scoring half</th><th class="num">Difference ±2 s.e.</th></tr></thead>
+          <tbody><tr><td colspan="5" class="empty">Runs with the backtest above.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-pad" style="border-bottom:1px solid var(--grid)"><strong>Is the crowd itself biased?</strong> <span class="note" style="display:inline">a completely different claim from the rest of this page. Everything else asks whether some <em>person</em> knows something; this asks whether the <em>crowd</em> is wrong in a fixed direction — overpaying for longshots and underpaying for favourites, as betting markets have done for decades. It needs nobody to be skilled and nothing to persist, so the null results elsewhere say nothing about it either way.</span></div>
+      <div id="btFLVerdict" style="padding:0 14px 10px"></div>
+      <div class="tscroll">
+        <table id="btFLTable">
+          <thead><tr><th>Entry price</th><th class="num">Positions</th><th class="num">Actually won</th><th class="num">Odds implied</th><th class="num">Edge ±2 s.e.</th></tr></thead>
           <tbody><tr><td colspan="5" class="empty">Runs with the backtest above.</td></tr></tbody>
         </table>
       </div>
@@ -1066,7 +1111,7 @@ const state = Object.assign({
   kThresh: 10000,
   radarSpeed: 15,
   alertThresh: 70,
-  btSize: 25, btRuns: 1,
+  btSize: 25, btRuns: 1, arbDepth: 40,
   btMin: 100,
   cvSrc: 'proven',
   sport: 'basketball_nba',
@@ -2893,6 +2938,47 @@ function renderBacktest(bets, nMarkets, health, runGaps) {
       `<span class="chip ${Math.abs(pooled) < 1 ? 'muted' : pooled > 0 ? 'good' : 'critical'}">Pooled across price bands, higher-scoring bets beat lower-scoring ones by <strong>${pooled >= 0 ? '+' : ''}${pooled.toFixed(1)} points</strong> — this is the number the favourite-longshot bias cannot fake.</span>`;
   }
 
+  /* ---- STRUCTURAL CROWD BIAS ----
+     This is a different claim from everything else on the page and it is worth being precise about
+     why it might survive when the others didn't. Every test above asked whether some PERSON knows
+     something. This asks whether the CROWD is systematically wrong in a fixed direction — the
+     favourite-longshot bias, documented in racetrack and prediction markets for decades: bettors
+     overpay for cheap outcomes and underpay for likely ones. It requires no one to be skilled and
+     nothing to persist, so the null results above have no bearing on it. If it exists here, the
+     strategy is simply to take the favourite side and never the longshot side, mechanically. */
+  const FLBANDS = [[0.05, 0.15], [0.15, 0.30], [0.30, 0.50], [0.50, 0.70], [0.70, 0.85]];
+  const flRows = FLBANDS.map(([lo, hi]) => ({ lo, hi, st: Study.stats(bets.filter(b => b.price >= lo && b.price < hi)) }));
+  const flEl = $('#btFLTable');
+  if (flEl) {
+    flEl.querySelector('tbody').innerHTML = flRows.map(r => {
+      const a = r.st;
+      if (!a.n) return `<tr><td>${(r.lo * 100).toFixed(0)}–${(r.hi * 100).toFixed(0)}¢</td><td class="num">0</td><td colspan="3" class="empty" style="text-align:left">no positions at these odds</td></tr>`;
+      const v = Study.verdict(a.edge, a.se, nf ? nf.diff : null);
+      const col = v.clears && a.edge > 0 ? 'var(--status-good)' : v.clears ? 'var(--status-critical)' : 'var(--ink-2)';
+      return `<tr>
+        <td><strong>${(r.lo * 100).toFixed(0)}–${(r.hi * 100).toFixed(0)}¢</strong></td>
+        <td class="num">${a.n.toLocaleString()}</td>
+        <td class="num"><strong>${a.actual.toFixed(1)}%</strong></td>
+        <td class="num" style="color:var(--ink-2)">${a.implied.toFixed(1)}%</td>
+        <td class="num" style="color:${col}"><strong>${a.edge >= 0 ? '+' : ''}${a.edge.toFixed(1)}</strong> <span style="font-size:10.5px;color:var(--ink-3)">±${(2 * a.se).toFixed(1)}</span></td>
+      </tr>`;
+    }).join('');
+    // the bias, if real, is a monotone tilt: cheap bands negative, dear bands positive
+    const cheap = Study.stats(bets.filter(b => b.price < 0.30));
+    const dear = Study.stats(bets.filter(b => b.price >= 0.70));
+    const tilt = (dear.n && cheap.n) ? dear.edge - cheap.edge : null;
+    const tiltSE = Math.sqrt((dear.se || 0) ** 2 + (cheap.se || 0) ** 2);
+    const tv = tilt == null ? null : Study.verdict(tilt, tiltSE, nf ? nf.diff : null);
+    const fv = $('#btFLVerdict');
+    if (fv) fv.innerHTML = `<div class="cluster ${tv && tv.clears && tilt > 0 ? '' : 'calm'}" style="border-left-color:${tv && tv.clears ? (tilt > 0 ? 'var(--status-good)' : 'var(--status-critical)') : 'var(--ink-3)'}">
+      <span class="big">${tilt == null ? '🔍 Not enough at the extremes' : tv.clears && tilt > 0 ? '✅ Favourite-longshot bias is present and exploitable' : tv.clears && tilt < 0 ? '🛑 The bias runs the OTHER way here' : '⚖️ No measurable favourite-longshot bias on Polymarket'}</span>
+      <span style="width:100%">Bets under 30¢ ran <strong>${cheap.n ? (cheap.edge >= 0 ? '+' : '') + cheap.edge.toFixed(1) : '—'}</strong> against their odds (${cheap.n.toLocaleString()} of them); bets over 70¢ ran <strong>${dear.n ? (dear.edge >= 0 ? '+' : '') + dear.edge.toFixed(1) : '—'}</strong> (${dear.n.toLocaleString()}). The tilt is <strong>${tilt == null ? '—' : (tilt >= 0 ? '+' : '') + tilt.toFixed(1)} ± ${(2 * tiltSE).toFixed(1)} pts</strong>${nf ? ` against a noise floor of ${nf.diff.toFixed(1)}` : ''}.</span>
+      <span style="width:100%;color:var(--ink-2);font-size:12.5px">${tv && tv.clears && tilt > 0
+        ? 'This one does not depend on anybody being skilled, so it is not touched by the null results above. The mechanical version is: buy favourites, never longshots — but check it against fees, which are worst in the middle of the price range, before believing it is money.'
+        : 'Worth knowing rather than disappointing: it means Polymarket prices the tails about as well as the middle, which is not true of most betting markets and says the crowd here is sharper than a racetrack one.'}</span>
+    </div>`;
+  }
+
   /* ---- IS SIZE THE ONE THING THAT SURVIVES? ----
      Across every test so far exactly one cell came back positive: "very large size", +6.2 on 28
      bets — too thin to mean anything on its own, but the only lead left standing after the
@@ -3042,6 +3128,144 @@ function renderBacktest(bets, nMarkets, health, runGaps) {
       <td>${thin ? '<span class="chip muted">too few</span>' : good ? '<span class="chip good">✓ earns its weight</span>' : '<span class="chip warn">● no better than without</span>'}</td>
     </tr>`;
   }).join('');
+}
+
+/* ============================== STUDY HARNESS ============================== */
+/* One statistics core, used by every test in this dashboard.
+   This exists because the same three mistakes kept recurring in different panels: judging by a
+   bare threshold with no error bar, reading a single sample and stopping when it agreed, and
+   comparing groups that were not actually independent. Each panel had its own copy of the maths
+   and each copy drifted. From here, any new hypothesis gets the same four instruments or it does
+   not get a verdict:
+     1. an error bar        — binomial s.e., so "how big" is always paired with "how sure"
+     2. a placebo floor     — split a group that CANNOT differ, see how much it differs anyway
+     3. repeat runs         — independent re-draws; the spread across them is the honest bar
+     4. an explicit null    — the test must be able to come back negative, and say so plainly */
+const Study = {
+  stats(arr, predKey = 'price', wonKey = 'won') {
+    const n = arr.length;
+    if (!n) return { n: 0, actual: 0, implied: 0, edge: 0, se: 0 };
+    const won = arr.reduce((a, b) => a + (b[wonKey] ? 1 : 0), 0);
+    const actual = won / n * 100;
+    const implied = arr.reduce((a, b) => a + (+b[predKey] || 0), 0) / n * 100;
+    const se = Math.sqrt(Math.max(actual, 1) * (100 - Math.max(actual, 1)) / n);
+    return { n, won, actual, implied, edge: actual - implied, se };
+  },
+  // Split a set that is homogeneous by construction; whatever difference appears is pure noise.
+  placebo(arr, keyFn) {
+    const groups = new Map();
+    for (const b of arr) { const k = keyFn(b); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(b); }
+    let big = null;
+    for (const [, g] of groups) if (!big || g.length > big.length) big = g;
+    if (!big || big.length < 60) return null;
+    const sh = big.slice();
+    for (let i = sh.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [sh[i], sh[j]] = [sh[j], sh[i]]; }
+    const h = Math.floor(sh.length / 2);
+    const a = this.stats(sh.slice(0, h)), b = this.stats(sh.slice(h));
+    return { n: big.length, diff: Math.abs(a.edge - b.edge) };
+  },
+  // A difference counts only if it clears BOTH its own error bar and the placebo floor.
+  verdict(estimate, se, floor) {
+    const bar = 2 * se;
+    const clears = Math.abs(estimate) > bar && (floor == null || Math.abs(estimate) > floor);
+    return { estimate, bar, floor, clears, direction: estimate > 0 ? 1 : -1 };
+  },
+  spread(values) {
+    const v = values.filter(x => x != null);
+    if (v.length < 2) return null;
+    const mean = v.reduce((a, b) => a + b, 0) / v.length;
+    const sd = Math.sqrt(v.reduce((a, b) => a + (b - mean) ** 2, 0) / (v.length - 1));
+    return { mean, sd, sem: sd / Math.sqrt(v.length), n: v.length,
+      positive: v.filter(x => x > 0).length, agreed: v.every(x => x > 0) || v.every(x => x <= 0) };
+  },
+};
+
+/* ============================== LOGICAL ARBITRAGE ============================== */
+/* The one edge that does not require being right about anything.
+   Polymarket groups mutually exclusive outcomes under a single event with negRisk = true: exactly
+   one of "Spain wins", "France wins", ... pays $1. So the outcome prices must sum to $1. When the
+   sum of the ASKS is below $1 you can buy the entire set and be paid $1 whatever happens.
+   Three things kill most apparent arbitrage here and all three are modelled explicitly:
+     - the ask, not the mid. Mid-price sums "find" arbitrage that cannot be filled.
+     - the fee. 0.06·p·(1−p) per leg is worst near 50c and a basket pays it on every leg.
+     - the thinnest leg. A basket you can only partly fill is a directional bet you did not want. */
+let arbBusy = false;
+const arbTakerFee = (shares, px) => 0.06 * shares * px * (1 - px);
+
+async function runArb() {
+  if (arbBusy) return;
+  arbBusy = true;
+  const N = state.arbDepth || 40;
+  const netOnly = $('#arbNet').checked;
+  const prog = $('#arbProgress'), tbody = $('#arbTable tbody');
+  $('#arbVerdict').innerHTML = '';
+  setFeed('#arbState', 'link'); $('#arbState').textContent = 'scanning…';
+  try {
+    prog.textContent = 'loading events…';
+    let events = [];
+    for (let off = 0; off < N; off += 100) {
+      const lim = Math.min(100, N - off);
+      const a = await fetchJSON(`https://gamma-api.polymarket.com/events?closed=false&active=true&limit=${lim}&offset=${off}&order=volume24hr&ascending=false`);
+      if (!Array.isArray(a) || !a.length) break;
+      events = events.concat(a);
+    }
+    if (!events.length) throw new Error('no events returned');
+
+    const sets = events.filter(e => e.negRisk && Array.isArray(e.markets) && e.markets.length >= 3);
+    prog.textContent = `${sets.length} mutually-exclusive sets found…`;
+    const rows = [];
+    for (const e of sets) {
+      const legs = [];
+      let bad = false;
+      for (const m of e.markets) {
+        if (m.closed || m.active === false) { bad = true; break; }
+        // bestAsk on a Polymarket market is the ask for its YES token
+        const ask = +m.bestAsk, bid = +m.bestBid;
+        if (!Number.isFinite(ask) || ask <= 0 || ask >= 1) { bad = true; break; }
+        legs.push({ title: m.groupItemTitle || m.question || '', ask, bid: Number.isFinite(bid) ? bid : 0,
+          liq: +m.liquidity || 0 });
+      }
+      if (bad || legs.length < 3) continue;
+      const cost = legs.reduce((a, l) => a + l.ask, 0);
+      const gross = 1 - cost;                       // $1 payout minus what the basket costs
+      const fee = legs.reduce((a, l) => a + arbTakerFee(1, l.ask), 0);   // per single basket
+      const net = gross - fee;
+      // the thinnest leg caps the basket; liquidity is a dollar figure, shares ≈ liq / price
+      const maxShares = Math.min(...legs.map(l => (l.liq > 0 ? l.liq / Math.max(l.ask, 0.01) : 0)));
+      rows.push({ title: e.title || e.slug || '—', n: legs.length, cost, gross, fee, net,
+        maxShares, slug: e.slug, legs });
+    }
+    rows.sort((a, b) => b.net - a.net);
+    const live = rows.filter(r => r.net > 0);
+    const shown = netOnly ? (live.length ? live : rows.slice(0, 12)) : rows.slice(0, 40);
+
+    tbody.innerHTML = shown.length ? shown.map(r => {
+      const good = r.net > 0;
+      const size = r.maxShares > 0 && Number.isFinite(r.maxShares) ? fmtUSD(r.maxShares * r.cost) : '—';
+      return `<tr>
+        <td><a href="https://polymarket.com/event/${encodeURIComponent(r.slug || '')}" target="_blank" rel="noopener">${esc(r.title.slice(0, 64))}</a></td>
+        <td class="num">${r.n}</td>
+        <td class="num">${(r.cost * 100).toFixed(1)}¢</td>
+        <td class="num" style="color:${r.gross > 0 ? 'var(--status-good)' : 'var(--ink-2)'}">${(r.gross * 100) >= 0 ? '+' : ''}${(r.gross * 100).toFixed(2)}¢</td>
+        <td class="num" style="color:var(--ink-2)">−${(r.fee * 100).toFixed(2)}¢</td>
+        <td class="num" style="color:${good ? 'var(--status-good)' : 'var(--status-critical)'}"><strong>${(r.net * 100) >= 0 ? '+' : ''}${(r.net * 100).toFixed(2)}¢</strong></td>
+        <td class="num" style="color:var(--ink-2)">${size}</td>
+      </tr>`;
+    }).join('') : `<tr><td colspan="7" class="empty">No mutually-exclusive sets could be priced right now.</td></tr>`;
+
+    const best = rows[0];
+    $('#arbVerdict').innerHTML = `<div class="cluster ${live.length ? '' : 'calm'}" style="border-left-color:${live.length ? 'var(--status-good)' : 'var(--ink-3)'}">
+      <span class="big">${live.length ? `💰 ${live.length} basket${live.length === 1 ? '' : 's'} priced below $1 after fees` : '⚖️ No arbitrage right now — the sets all price coherently'}</span>
+      <span style="width:100%">${rows.length} mutually-exclusive sets checked across ${events.length} events. ${best ? `Best basket costs <strong>${(best.cost * 100).toFixed(1)}¢</strong> to own outright, against a guaranteed <strong>100¢</strong> payout — <strong style="color:${best.net > 0 ? 'var(--status-good)' : 'var(--status-critical)'}">${(best.net * 100) >= 0 ? '+' : ''}${(best.net * 100).toFixed(2)}¢ per basket</strong> after fees.` : ''}</span>
+      <span style="width:100%;color:var(--ink-2);font-size:12.5px">A negative number here is the honest and expected result: it means the crowd is pricing coherently and the fee is doing its job. This scanner earns its place by being <em>checkable</em> — when it does fire, the profit follows from arithmetic rather than from anyone being right.</span>
+      ${live.length ? '<span class="chip warn">● verify the book depth on the actual event page before sizing — gamma liquidity is a rough figure and every leg must fill or it is not an arbitrage</span>' : ''}
+    </div>`;
+    $('#arbState').textContent = `${rows.length} sets checked`;
+    $('#arbState').className = 'feedstate live';
+  } catch (e) {
+    setFeed('#arbState', false);
+    tbody.innerHTML = `<tr><td colspan="7" class="empty">Scan failed: ${esc(e.message || 'unknown error')}.</td></tr>`;
+  } finally { arbBusy = false; prog.textContent = ''; }
 }
 
 /* ============================== INVESTIGATE: EARLY BUYERS ============================== */
@@ -3931,6 +4155,8 @@ segWire('#alertThreshSeg','alertThresh', () => {});
 segWire('#btSizeSeg','btSize', () => {});
 segWire('#btMinSeg','btMin', () => {});
 segWire('#btRunsSeg','btRuns', () => {});
+segWire('#arbDepthSeg','arbDepth', () => {});
+$('#arbRun').addEventListener('click', runArb);
 segWire('#cvSrcSeg','cvSrc', () => loadConviction());
 $('#btRun').addEventListener('click', runBacktest);
 $('#oddsKey').value = state.oddsKey || '';
