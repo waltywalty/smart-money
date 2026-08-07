@@ -214,7 +214,7 @@
 
 <header class="top">
   <div class="top-inner">
-    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v10.0</span></div>
+    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v10.1</span></div>
     <div class="top-meta">
       <span id="lastUpdated">loading…</span>
       <span id="countdown" title="Auto-refresh countdown"></span>
@@ -3358,7 +3358,7 @@ function renderHistory() {
         ? 'The interval contains zero, so across everything measured so far there is no effect here.'
         : 'The interval excludes zero — this survives pooling, which is a far higher bar than any single run.'}</div>
       <div style="margin-top:8px;font-size:12px;color:var(--ink-3)">${p.runs.slice(0, 8).map(r =>
-        `<span class="chip muted">${new Date(r.ts).toLocaleDateString()} · n=${r.n} · ${r.value >= 0 ? '+' : ''}${r.value.toFixed(dec)}</span>`).join(' ')}</div>
+        `<span class="chip muted">${new Date(r.ts).toLocaleDateString()} · n=${r.n} · ${r.value >= 0 ? '+' : ''}${r.value.toFixed(dec)}${r.backfilled ? ' · restored from the pre-v9.7 record' : ''}</span>`).join(' ')}</div>
       ${p.runs.length >= 2 && p.runs.some(r => (r.value > 0) !== (p.runs[0].value > 0))
         ? '<div style="margin-top:6px;font-size:12px;color:var(--status-warn)">● individual runs disagree on direction — the pooled figure is the one to read, not the most recent or the most flattering</div>' : ''}
     </div></div>`;
@@ -3378,7 +3378,7 @@ async function publishResult(study, payload) {
   try {
     await fetch(`${url}/results?k=${encodeURIComponent(topic)}`, {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ study, version: 'v10.0', ...payload }),
+      body: JSON.stringify({ study, version: 'v10.1', ...payload }),
     });
     const el = $('#pubState');
     if (el) { el.textContent = `published ${study} · ${new Date().toLocaleTimeString()}`; el.className = 'feedstate live'; }
@@ -4820,6 +4820,30 @@ segWire('#sportSeg','sport', () => renderLines());
   });
   renderBot();
   $('#cloudUrl').value = state.cloudUrl || '';
+  /* ---- ONE-TIME BACKFILL OF THE POOLED RECORD ----
+     The pooling feature shipped in v9.7, so it only remembers runs made after it existed — and
+     that amputation produced exactly the failure it was built to prevent. The three strongest
+     results this project has (the 5x90-trader runs, ~15,000 positions between them, all null)
+     predate the record, while the +0.40 persistence fluke on 40 traders is IN it. Within a day
+     the panel was announcing a significant score gap (+5.24, CI excluding zero) off three small
+     runs, against forgotten evidence that says null at five times the weight. A memory that
+     keeps the fluke and forgets the evidence is worse than no memory at all. These entries are
+     the documented figures from those runs, restored and labelled — not invented, and not
+     silently merged. */
+  if (!store.backfill101) {
+    store.studyRuns = store.studyRuns || [];
+    const seed = [
+      { study: 'score-gap', metric: 'gap', value: 0.0, n: 6176, se: 1.9, ts: Date.parse('2026-08-06T16:47:00Z'), backfilled: true },
+      { study: 'score-gap', metric: 'gap', value: -0.8, n: 5378, se: 1.5, ts: Date.parse('2026-08-07T04:06:00Z'), backfilled: true },
+      { study: 'persistence', metric: 'correlation', value: -0.02, n: 150, se: null, ts: Date.parse('2026-08-06T16:47:00Z'), backfilled: true },
+      { study: 'persistence', metric: 'correlation', value: -0.16, n: 165, se: null, ts: Date.parse('2026-08-07T04:06:00Z'), backfilled: true },
+    ];
+    for (const r of seed)
+      if (!store.studyRuns.some(x => x.study === r.study && x.n === r.n && Math.abs(x.value - r.value) < 1e-9))
+        store.studyRuns.push(r);
+    store.backfill101 = true;
+    persist();
+  }
   try { renderHistory(); } catch (e) {}
   if ($('#pubOn')) {
     $('#pubOn').checked = state.publish !== false;
