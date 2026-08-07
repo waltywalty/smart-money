@@ -214,7 +214,7 @@
 
 <header class="top">
   <div class="top-inner">
-    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v9.4</span></div>
+    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v9.6</span></div>
     <div class="top-meta">
       <span id="lastUpdated">loading…</span>
       <span id="countdown" title="Auto-refresh countdown"></span>
@@ -740,6 +740,8 @@
         <input class="addr" id="cloudUrl" placeholder="https://your-worker.workers.dev" spellcheck="false" style="min-width:230px">
         <button class="ctrl" id="cloudSave">Connect</button>
         <button class="ctrl" id="cloudRun">Run cycle now</button>
+        <label class="ck"><input type="checkbox" id="pubOn" checked> publish study results</label>
+        <span class="feedstate" id="pubState">not published yet</span>
         <span id="cloudState" style="font-size:12px;color:var(--ink-3)">not connected — this browser bot only runs while the page is open</span>
       </div>
     </div>
@@ -1176,7 +1178,7 @@ state.count = 60;
 function saveSettings() {
   store.settings = { minSize: state.minSize, radarFilter: state.radarFilter, lbWindow: state.lbWindow,
     pair: state.pair, cbThresh: state.cbThresh, kThresh: state.kThresh, kHideTicks: state.kHideTicks,
-    mHideSports: state.mHideSports, radarSpeed: state.radarSpeed, alertThresh: state.alertThresh, cloudUrl: state.cloudUrl || '', btSize: state.btSize, btMin: state.btMin, oddsKey: state.oddsKey || '', sport: state.sport, cvSrc: state.cvSrc, theme: state.theme || '', ntfyTopic: state.ntfyTopic || '', fmpKey: state.fmpKey || '', polWatch: state.polWatch || '', sound: state.sound, notify: state.notify };
+    mHideSports: state.mHideSports, radarSpeed: state.radarSpeed, alertThresh: state.alertThresh, cloudUrl: state.cloudUrl || '', publish: state.publish !== false, btSize: state.btSize, btMin: state.btMin, oddsKey: state.oddsKey || '', sport: state.sport, cvSrc: state.cvSrc, theme: state.theme || '', ntfyTopic: state.ntfyTopic || '', fmpKey: state.fmpKey || '', polWatch: state.polWatch || '', sound: state.sound, notify: state.notify };
   return persist();
 }
 
@@ -2643,6 +2645,7 @@ async function runBacktest() {
       return;
     }
     renderBacktest(allBets, totalMarkets, lastHealth, runGaps);
+    publishResult('score-validation', { verdict: panelText('#btVerdict'), bands: panelText('#btTable'), price: panelText('#btPriceVerdict'), size: panelText('#btSizeVerdict'), crowd: panelText('#btFLVerdict'), persistence: panelText('#btPersistVerdict'), signals: panelText('#btSigTable'), n: allBets.length });
     $('#btState').textContent = RUNS > 1 ? `complete · ${RUNS} runs pooled` : 'complete';
     $('#btState').className = 'feedstate live';
   } catch (e) {
@@ -3277,6 +3280,30 @@ const Study = {
   },
 };
 
+/* ============================== RESULTS PUBLISHING ============================== */
+/* Every study here runs in this browser against live APIs, so its output has been trapped on the
+   screen it was rendered on. This lifts each verdict to the Cloudflare Worker, where anything that
+   can fetch a URL can read the actual numbers. It sends the verdict text and the headline figures
+   only — no wallet addresses, no keys, nothing that is not already public market data. */
+async function publishResult(study, payload) {
+  const url = (state.cloudUrl || '').trim().replace(/\/$/, '');
+  const topic = (state.ntfyTopic || '').trim();
+  if (!url || !topic || state.publish === false) return;
+  try {
+    await fetch(`${url}/results?k=${encodeURIComponent(topic)}`, {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ study, version: 'v9.6', ...payload }),
+    });
+    const el = $('#pubState');
+    if (el) { el.textContent = `published ${study} · ${new Date().toLocaleTimeString()}`; el.className = 'feedstate live'; }
+  } catch (e) {
+    const el = $('#pubState');
+    if (el) { el.textContent = 'publish failed — check the Worker URL and phone-alert topic'; el.className = 'feedstate'; }
+  }
+}
+// Strip a rendered panel down to plain text so the numbers survive the trip.
+const panelText = sel => { const el = $(sel); return el ? el.innerText.replace(/\s+/g, ' ').trim().slice(0, 1800) : ''; };
+
 /* ============================== INSIDER-BUY STUDY ============================== */
 /* Why this one is worth building after everything else came back null.
    The Polymarket nulls were not a statement about markets in general — they were a statement
@@ -3455,6 +3482,7 @@ async function runInsider() {
     }
     if (!events.length) throw new Error('found purchases but no price history could be matched to them');
     renderInsider(events, hold, { fetched, failed, notPurchase, filings: filings.length });
+    publishResult('insider-study', { verdict: panelText('#insVerdict'), groups: panelText('#insTable'), events: events.length });
     $('#insState').textContent = `${events.length} events`;
     $('#insState').className = 'feedstate live';
   } catch (e) {
@@ -3643,6 +3671,7 @@ async function runArb() {
       <span class="chip muted">Both directions are checked: below $1 you buy the set, above $1 you sell it. The sell side is the commoner one — a set priced at 103¢ is an overround, exactly what a bookmaker builds in.</span>
       <span style="width:100%;color:var(--ink-2);font-size:12.5px">The "as maker" figure is the same basket filled by resting limit orders instead of crossing: the taker fee becomes a rebate, which is often the whole difference between −1¢ and +4¢. It is not free — every leg must fill, and a partly-filled basket is a directional bet you did not choose to make. Treat it as the ceiling, not the expectation.</span>
     </div>`;
+    publishResult('free-money-scanner', { verdict: panelText('#arbVerdict'), table: panelText('#arbTable'), sets: rows.length });
     $('#arbState').textContent = `${rows.length} sets checked`;
     $('#arbState').className = 'feedstate live';
   } catch (e) {
@@ -4585,6 +4614,10 @@ segWire('#sportSeg','sport', () => renderLines());
   });
   renderBot();
   $('#cloudUrl').value = state.cloudUrl || '';
+  if ($('#pubOn')) {
+    $('#pubOn').checked = state.publish !== false;
+    $('#pubOn').addEventListener('change', e => { state.publish = e.target.checked; persist(); });
+  }
   $('#cloudSave').addEventListener('click', () => { state.cloudUrl = $('#cloudUrl').value.trim(); saveSettings(); loadCloudBot(); });
   $('#cloudRun').addEventListener('click', async () => {
     const u = (state.cloudUrl || '').trim().replace(/\/$/, '');
