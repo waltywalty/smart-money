@@ -214,7 +214,7 @@
 
 <header class="top">
   <div class="top-inner">
-    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v10.2</span></div>
+    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v10.3</span></div>
     <div class="top-meta">
       <span id="lastUpdated">loading…</span>
       <span id="countdown" title="Auto-refresh countdown"></span>
@@ -2675,7 +2675,7 @@ async function runBacktest() {
     renderBacktest(allBets, totalMarkets, lastHealth, runGaps);
     try { renderPennies(allPennies); } catch (e) {}
     renderHistory();
-    publishResult('score-validation', { pooled: panelText('#histBody'), verdict: panelText('#btVerdict'), bands: panelText('#btTable'), price: panelText('#btPriceVerdict'), size: panelText('#btSizeVerdict'), crowd: panelText('#btFLVerdict'), persistence: panelText('#btPersistVerdict'), signals: panelText('#btSigTable'), n: allBets.length });
+    publishResult('score-validation', { pooled: panelText('#histBody', 5000), pennies: panelText('#btPennyVerdict'), verdict: panelText('#btVerdict'), bands: panelText('#btTable'), price: panelText('#btPriceVerdict'), size: panelText('#btSizeVerdict'), crowd: panelText('#btFLVerdict'), persistence: panelText('#btPersistVerdict'), signals: panelText('#btSigTable'), n: allBets.length });
     $('#btState').textContent = RUNS > 1 ? `complete · ${RUNS} runs pooled` : 'complete';
     $('#btState').className = 'feedstate live';
   } catch (e) {
@@ -3487,7 +3487,7 @@ async function publishResult(study, payload) {
   try {
     await fetch(`${url}/results?k=${encodeURIComponent(topic)}`, {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ study, version: 'v10.2', ...payload }),
+      body: JSON.stringify({ study, version: 'v10.3', ...payload }),
     });
     const el = $('#pubState');
     if (el) { el.textContent = `published ${study} · ${new Date().toLocaleTimeString()}`; el.className = 'feedstate live'; }
@@ -3497,7 +3497,7 @@ async function publishResult(study, payload) {
   }
 }
 // Strip a rendered panel down to plain text so the numbers survive the trip.
-const panelText = sel => { const el = $(sel); return el ? el.innerText.replace(/\s+/g, ' ').trim().slice(0, 1800) : ''; };
+const panelText = (sel, cap = 1800) => { const el = $(sel); return el ? el.innerText.replace(/\s+/g, ' ').trim().slice(0, cap) : ''; };
 
 /* ============================== INSIDER-BUY STUDY ============================== */
 /* Why this one is worth building after everything else came back null.
