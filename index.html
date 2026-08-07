@@ -214,7 +214,7 @@
 
 <header class="top">
   <div class="top-inner">
-    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v9.7</span></div>
+    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v9.8</span></div>
     <div class="top-meta">
       <span id="lastUpdated">loading…</span>
       <span id="countdown" title="Auto-refresh countdown"></span>
@@ -662,6 +662,7 @@
           <button data-v="60" aria-pressed="true">60d</button>
         </div>
         <button class="ctrl" id="insRun">▶ Run the study</button>
+        <button class="ctrl" id="insDiag">🔧 Diagnose</button>
         <span id="insProgress" style="color:var(--ink-3)"></span>
       </div>
       <div id="insVerdict"></div>
@@ -3376,7 +3377,7 @@ async function publishResult(study, payload) {
   try {
     await fetch(`${url}/results?k=${encodeURIComponent(topic)}`, {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ study, version: 'v9.7', ...payload }),
+      body: JSON.stringify({ study, version: 'v9.8', ...payload }),
     });
     const el = $('#pubState');
     if (el) { el.textContent = `published ${study} · ${new Date().toLocaleTimeString()}`; el.className = 'feedstate live'; }
@@ -3403,12 +3404,19 @@ const panelText = sel => { const el = $(sel); return el ? el.innerText.replace(/
 
 let insBusy = false;
 
+/* SEC refuses any request that does not declare a User-Agent — it is in their published access
+   policy — and a browser cannot set that header cross-origin, so the direct attempt is hopeless
+   for sec.gov and only the relays that supply their own UA will work. More routes than the JSON
+   fetcher uses, deliberately: this is the single point of failure for the whole insider study. */
 async function fetchText(url) {
   const attempts = [
     u => u,
     u => 'https://corsproxy.io/?url=' + encodeURIComponent(u),
-    u => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u),
     u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u),
+    u => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u),
+    u => 'https://r.jina.ai/' + u,
+    u => 'https://api.cors.lol/?url=' + encodeURIComponent(u),
+    u => 'https://proxy.cors.sh/' + u,
   ];
   let lastErr;
   for (const wrap of attempts) {
@@ -3427,25 +3435,108 @@ async function fetchText(url) {
 
 // Stooq serves free daily bars as CSV with no key and no quota. Date,Open,High,Low,Close,Volume.
 const barsCache = new Map();
+/* Two independent price sources, because a study that dies when one CDN is unfriendly is not a
+   study. Stooq is a plain CSV and pleasant to parse but sends no CORS headers, so from a browser
+   it only works through a relay. Yahoo's chart endpoint returns JSON and is usually reachable
+   directly. Whichever answers first wins; if neither does, the study says so by name rather than
+   failing with a generic error. */
 async function dailyBars(sym) {
   const k = sym.toLowerCase();
   if (barsCache.has(k)) return barsCache.get(k);
-  let out = null;
+  let out = null, why = '';
   try {
     const csv = await fetchText(`https://stooq.com/q/d/l/?s=${encodeURIComponent(k)}.us&i=d`);
     const lines = csv.trim().split('\n');
     if (lines.length > 30 && /date/i.test(lines[0])) {
-      out = [];
+      const rows = [];
       for (let i = 1; i < lines.length; i++) {
         const c = lines[i].split(',');
         const px = +c[4];
-        if (c[0] && Number.isFinite(px) && px > 0) out.push({ d: c[0], c: px });
+        if (c[0] && Number.isFinite(px) && px > 0) rows.push({ d: c[0], c: px });
       }
-      if (out.length < 30) out = null;
+      if (rows.length >= 30) out = rows;
     }
-  } catch (e) {}
+    if (!out) why = 'stooq returned no usable rows';
+  } catch (e) { why = 'stooq unreachable'; }
+  if (!out) {
+    try {
+      const j = await fetchJSON(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=2y&interval=1d`);
+      const r = j && j.chart && j.chart.result && j.chart.result[0];
+      const ts = r && r.timestamp, cl = r && r.indicators && r.indicators.quote && r.indicators.quote[0].close;
+      if (Array.isArray(ts) && Array.isArray(cl)) {
+        const rows = [];
+        for (let i = 0; i < ts.length; i++) {
+          const px = cl[i];
+          if (Number.isFinite(px) && px > 0) rows.push({ d: new Date(ts[i] * 1000).toISOString().slice(0, 10), c: px });
+        }
+        if (rows.length >= 30) out = rows;
+      }
+    } catch (e) { why += (why ? '; ' : '') + 'yahoo unreachable'; }
+  }
   barsCache.set(k, out);
+  barsCache.set(k + '__why', why);
   return out;
+}
+
+/* ---- DEPENDENCY SELF-TEST ----
+   The study has four moving parts and a single "feed error" tells you nothing about which one
+   broke. This checks each in isolation and reports it, so one run produces a diagnosis instead of
+   a guess — and it publishes, so the diagnosis is readable from outside this browser. */
+async function insiderSelfTest() {
+  const el = $('#insVerdict');
+  const rows = [];
+  const step = async (name, fn) => {
+    try { const r = await fn(); rows.push({ name, ok: true, detail: r }); }
+    catch (e) { rows.push({ name, ok: false, detail: (e && e.message) || 'failed' }); }
+    if (el) el.innerHTML = `<div class="cluster calm"><span class="big">🔧 Checking each dependency…</span>${rows.map(r =>
+      `<span class="chip ${r.ok ? 'good' : 'critical'}">${r.ok ? '✓' : '✗'} ${esc(r.name)} — ${esc(String(r.detail).slice(0, 120))}</span>`).join('')}</div>`;
+  };
+  const day = n => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+  let firstHit = null;
+
+  await step('EDGAR full-text search', async () => {
+    const d = await fetchJSON(`https://efts.sec.gov/LATEST/search-index?q=%22Form+4%22&forms=4&dateRange=custom&startdt=${day(124)}&enddt=${day(120)}&from=0`);
+    const h = ((d.hits && d.hits.hits) || []);
+    if (!h.length) throw new Error('reachable but returned 0 filings');
+    firstHit = h[0];
+    return `${h.length} filings returned`;
+  });
+
+  await step('SEC filing archive', async () => {
+    if (!firstHit) throw new Error('skipped — no filing to try');
+    const src = firstHit._source || {};
+    const acc = String(firstHit._id || '').split(':')[0].replace(/-/g, '');
+    const doc = String(firstHit._id || '').split(':')[1] || '';
+    const ciks = (src.ciks || []).map(c => String(parseInt(c, 10)));
+    for (const cik of ciks) {
+      try {
+        const xml = await fetchText(`https://www.sec.gov/Archives/edgar/data/${cik}/${acc}/${doc}`);
+        if (!/ownershipDocument|issuerTradingSymbol/i.test(xml)) throw new Error('fetched but not a Form 4');
+        return `fetched ${xml.length.toLocaleString()} bytes under CIK ${cik}`;
+      } catch (e) {}
+    }
+    throw new Error(`all ${ciks.length || 0} CIK paths blocked — SEC rejects requests without a declared User-Agent, which relays do not always send`);
+  });
+
+  await step('Index prices (SPY)', async () => {
+    const b = await dailyBars('spy');
+    if (!b) throw new Error(barsCache.get('spy__why') || 'no source answered');
+    return `${b.length} daily bars, latest ${b[b.length - 1].d}`;
+  });
+
+  await step('Single-stock prices (AAPL)', async () => {
+    const b = await dailyBars('aapl');
+    if (!b) throw new Error(barsCache.get('aapl__why') || 'no source answered');
+    return `${b.length} daily bars`;
+  });
+
+  const broken = rows.filter(r => !r.ok);
+  if (el) el.innerHTML = `<div class="cluster ${broken.length ? '' : 'calm'}" style="border-left-color:${broken.length ? 'var(--status-critical)' : 'var(--status-good)'}">
+    <span class="big">${broken.length ? `🔧 ${broken.length} of ${rows.length} dependencies are failing` : '✅ All four dependencies reachable — the study should run'}</span>
+    ${rows.map(r => `<span class="chip ${r.ok ? 'good' : 'critical'}">${r.ok ? '✓' : '✗'} ${esc(r.name)} — ${esc(String(r.detail).slice(0, 160))}</span>`).join('')}
+    ${broken.length ? '<span style="width:100%;color:var(--ink-2);font-size:12.5px">The failing step is the whole problem — everything downstream of it produces the generic error you have been seeing. This panel publishes, so the diagnosis travels off this device.</span>' : ''}
+  </div>`;
+  publishResult('insider-selftest', { rows: rows.map(r => `${r.ok ? 'OK' : 'FAIL'} ${r.name}: ${r.detail}`).join(' | ') });
 }
 // Return over `hold` TRADING days starting at the first bar on or after `date`.
 function fwdReturn(bars, date, hold) {
@@ -3502,8 +3593,9 @@ async function runInsider() {
 
     const filings = [];
     let fetched = 0, failed = 0, notPurchase = 0;
-    for (let i = 0; i < hits.length && filings.length < want; i += 5) {
-      await Promise.allSettled(hits.slice(i, i + 5).map(async h => {
+    for (let i = 0; i < hits.length && filings.length < want; i += 3) {
+      if (i) await new Promise(r => setTimeout(r, 400));   // stay well inside SEC's 10 req/s ceiling
+      await Promise.allSettled(hits.slice(i, i + 3).map(async h => {
         if (filings.length >= want) return;
         const src = h._source || {};
         const acc = String(h._id || '').split(':')[0].replace(/-/g, '');
@@ -3525,7 +3617,7 @@ async function runInsider() {
         }
         failed++;
       }));
-      prog.textContent = `reading filings… ${fetched} read · ${filings.length} purchases found`;
+      prog.textContent = `reading filings… ${fetched} read · ${failed} blocked · ${filings.length} purchases found`;
     }
     if (!filings.length) {
       throw new Error(`read ${fetched} filings but none were open-market purchases${failed ? ` (${failed} could not be fetched)` : ''}`);
@@ -3571,7 +3663,10 @@ async function runInsider() {
     $('#insState').className = 'feedstate live';
   } catch (e) {
     setFeed('#insState', false);
-    tbody.innerHTML = `<tr><td colspan="6" class="empty">Study failed: ${esc(e.message || 'unknown error')}.</td></tr>`;
+    const msg = (e && e.message) || 'unknown error';
+    tbody.innerHTML = `<tr><td colspan="6" class="empty">Study failed: ${esc(msg)}. Hit <strong>Diagnose</strong> to find out which dependency is at fault.</td></tr>`;
+    // publish the failure as well as the success — a silent failure is the one you cannot fix
+    publishResult('insider-study', { failed: true, error: msg });
   } finally { insBusy = false; prog.textContent = ''; }
 }
 
@@ -4656,6 +4751,7 @@ segWire('#insBackSeg','insBack', () => {});
 segWire('#insSizeSeg','insSize', () => {});
 segWire('#insHoldSeg','insHold', () => {});
 $('#insRun').addEventListener('click', runInsider);
+$('#insDiag').addEventListener('click', insiderSelfTest);
 $('#arbRun').addEventListener('click', runArb);
 segWire('#cvSrcSeg','cvSrc', () => loadConviction());
 $('#btRun').addEventListener('click', runBacktest);
