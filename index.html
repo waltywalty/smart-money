@@ -214,7 +214,7 @@
 
 <header class="top">
   <div class="top-inner">
-    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v9.8</span></div>
+    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v9.9</span></div>
     <div class="top-meta">
       <span id="lastUpdated">loading…</span>
       <span id="countdown" title="Auto-refresh countdown"></span>
@@ -652,9 +652,9 @@
         </div>
         <span>Filings</span>
         <div class="seg" id="insSizeSeg">
-          <button data-v="40" aria-pressed="true">40</button>
-          <button data-v="80">80</button>
           <button data-v="150">150</button>
+          <button data-v="400" aria-pressed="true">400</button>
+          <button data-v="900">900</button>
         </div>
         <span>Hold</span>
         <div class="seg" id="insHoldSeg">
@@ -1168,7 +1168,7 @@ const state = Object.assign({
   kThresh: 10000,
   radarSpeed: 15,
   alertThresh: 70,
-  btSize: 25, btRuns: 1, arbDepth: 40, insBack: 120, insSize: 40, insHold: 60,
+  btSize: 25, btRuns: 1, arbDepth: 40, insBack: 120, insSize: 400, insHold: 60,
   btMin: 100,
   cvSrc: 'proven',
   sport: 'basketball_nba',
@@ -3377,7 +3377,7 @@ async function publishResult(study, payload) {
   try {
     await fetch(`${url}/results?k=${encodeURIComponent(topic)}`, {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ study, version: 'v9.8', ...payload }),
+      body: JSON.stringify({ study, version: 'v9.9', ...payload }),
     });
     const el = $('#pubState');
     if (el) { el.textContent = `published ${study} · ${new Date().toLocaleTimeString()}`; el.className = 'feedstate live'; }
@@ -3583,9 +3583,23 @@ async function runInsider() {
   try {
     const day = n => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
     prog.textContent = 'searching EDGAR…';
-    const q = `https://efts.sec.gov/LATEST/search-index?q=%22Form+4%22&forms=4&dateRange=custom&startdt=${day(back + 4)}&enddt=${day(back)}&from=0`;
-    const idx = await fetchJSON(q);
-    const hits = ((idx.hits && idx.hits.hits) || []);
+    /* PAGE THROUGH THE SEARCH.
+       This was the bug that made the study look broken. EDGAR returns 100 hits per request and
+       the code only ever asked for the first page, so "150 filings" silently meant 100 — and of
+       any 100 Form 4s only a handful are open-market purchases. Most are awards, option exercises,
+       and tax withholding: codes A, M and F. Executives receive stock constantly and buy it rarely,
+       which is exactly why the buying carries signal and exactly why you must read a great many
+       filings to collect any. One unread page was the difference between two events and forty. */
+    let hits = [];
+    for (let page = 0; page < 12 && hits.length < want * 12; page++) {
+      let batch = [];
+      try {
+        batch = ((await fetchJSON(`https://efts.sec.gov/LATEST/search-index?q=%22Form+4%22&forms=4&dateRange=custom&startdt=${day(back + 6)}&enddt=${day(back)}&from=${page * 100}`)).hits || {}).hits || [];
+      } catch (e) { break; }
+      if (!batch.length) break;
+      hits = hits.concat(batch);
+      prog.textContent = `searching EDGAR… ${hits.length} filings indexed`;
+    }
     if (!hits.length) throw new Error('EDGAR returned no Form 4 filings for that window');
 
     // shuffle so a sample is not just the alphabetically-first filers
@@ -3593,10 +3607,12 @@ async function runInsider() {
 
     const filings = [];
     let fetched = 0, failed = 0, notPurchase = 0;
-    for (let i = 0; i < hits.length && filings.length < want; i += 3) {
+    // `want` is a budget of filings to READ, not of purchases to find — roughly one in fifteen
+    // Form 4s is an open-market buy, so the read budget is what actually sets the sample size.
+    for (let i = 0; i < hits.length && fetched < want; i += 3) {
       if (i) await new Promise(r => setTimeout(r, 400));   // stay well inside SEC's 10 req/s ceiling
       await Promise.allSettled(hits.slice(i, i + 3).map(async h => {
-        if (filings.length >= want) return;
+        if (fetched >= want) return;
         const src = h._source || {};
         const acc = String(h._id || '').split(':')[0].replace(/-/g, '');
         const doc = String(h._id || '').split(':')[1] || '';
@@ -3617,7 +3633,7 @@ async function runInsider() {
         }
         failed++;
       }));
-      prog.textContent = `reading filings… ${fetched} read · ${failed} blocked · ${filings.length} purchases found`;
+      prog.textContent = `reading filings… ${fetched}/${want} read · ${failed} blocked · ${filings.length} purchases found`;
     }
     if (!filings.length) {
       throw new Error(`read ${fetched} filings but none were open-market purchases${failed ? ` (${failed} could not be fetched)` : ''}`);
@@ -3636,17 +3652,18 @@ async function runInsider() {
     if (!spy) throw new Error('could not load S&P daily bars to benchmark against');
 
     const events = [];
+    let noBars = 0, noWindow = 0;
     const syms = [...byTicker.keys()];
     for (let i = 0; i < syms.length; i += 4) {
       await Promise.allSettled(syms.slice(i, i + 4).map(async sym => {
         const bars = await dailyBars(sym);
-        if (!bars) return;
+        if (!bars) { noBars++; return; }
         const group = byTicker.get(sym);
         const filed = group.map(f => f.filed).sort()[0];
         const owners = new Set(group.map(f => f.owner)).size;
         const usd = group.reduce((a, f) => a + f.usd, 0);
         const r = fwdReturn(bars, filed, hold), m = fwdReturn(spy, filed, hold);
-        if (r == null || m == null) return;
+        if (r == null || m == null) { noWindow++; return; }
         // PLACEBO: the identical measurement on the same stock at an unrelated date.
         const pi = Math.floor(Math.random() * Math.max(1, bars.length - hold - 5));
         const pd = bars[pi] ? bars[pi].d : null;
@@ -3657,7 +3674,8 @@ async function runInsider() {
       prog.textContent = `pricing… ${Math.min(i + 4, syms.length)}/${syms.length}`;
     }
     if (!events.length) throw new Error('found purchases but no price history could be matched to them');
-    renderInsider(events, hold, { fetched, failed, notPurchase, filings: filings.length });
+    renderInsider(events, hold, { fetched, failed, notPurchase, filings: filings.length,
+      indexed: hits.length, tickers: byTicker.size, noBars, noWindow });
     publishResult('insider-study', { verdict: panelText('#insVerdict'), groups: panelText('#insTable'), events: events.length });
     $('#insState').textContent = `${events.length} events`;
     $('#insState').className = 'feedstate live';
@@ -3718,8 +3736,9 @@ function renderInsider(events, hold, health) {
   $('#insVerdict').innerHTML = `<div class="cluster ${real ? '' : 'calm'}" style="border-left-color:${real ? 'var(--status-good)' : 'var(--ink-3)'}">
     <span class="big">${!enough ? '🔍 Not enough events yet' : real ? '✅ Insider buying beat the index — and beat its own placebo' : '⚖️ No abnormal return detected'}</span>
     <span style="width:100%">${useLabel} (${use.n}) returned <strong>${use.n ? (use.mean >= 0 ? '+' : '') + use.mean.toFixed(2) + '%' : '—'}</strong> against the S&P over ${hold} trading days. The same stocks measured from random unrelated dates returned <strong>${pl.n ? (pl.mean >= 0 ? '+' : '') + pl.mean.toFixed(2) + '%' : '—'}</strong>. The difference — which is the part the filings can actually claim — is <strong style="color:${vsPlacebo > 0 ? 'var(--status-good)' : 'var(--status-critical)'}">${vsPlacebo == null ? '—' : (vsPlacebo >= 0 ? '+' : '') + vsPlacebo.toFixed(2) + '% ± ' + (2 * vpSE).toFixed(2)}</strong>.</span>
-    ${!enough ? '<span class="chip warn">● raise <strong>Filings</strong> to 150 — clusters are rare, and a handful of events cannot separate a real effect from a lucky quarter</span>' : ''}
-    <span class="chip muted">${health.filings} purchases parsed from ${health.fetched} filings read${health.notPurchase ? ` · ${health.notPurchase} had no open-market buy` : ''}${health.failed ? ` · ${health.failed} unreachable` : ''}</span>
+    ${!enough ? '<span class="chip warn">● raise <strong>Filings</strong> to 900 and vary <strong>Look back</strong> — roughly one Form 4 in fifteen is an open-market purchase, so the read budget is what sets the sample size, and clusters are rarer still</span>' : ''}
+    <span style="width:100%;font-size:12.5px;color:var(--ink-2)"><strong>Where the events came from:</strong> ${(health.indexed || 0).toLocaleString()} filings indexed → <strong>${health.fetched}</strong> read${health.failed ? ` (${health.failed} blocked)` : ''} → <strong>${health.filings}</strong> contained an open-market purchase${health.notPurchase ? ` (${health.notPurchase} were awards, exercises or sales)` : ''} → <strong>${health.tickers || 0}</strong> distinct companies → <strong>${events.length}</strong> priceable events${health.noBars ? ` (${health.noBars} had no price history` : ''}${health.noWindow ? `${health.noBars ? ', ' : ' ('}${health.noWindow} fell outside the ${hold}-day window` : ''}${health.noBars || health.noWindow ? ')' : ''}.</span>
+    ${health.fetched && health.filings / health.fetched < 0.03 ? '<span class="chip warn">● fewer than 3% of filings were purchases, which is low even for Form 4 — raise <strong>Filings</strong> and check the Diagnose panel</span>' : ''}
     <span style="width:100%;color:var(--ink-2);font-size:12.5px">One window is one quarter of market history and a single quarter can flatter or bury a real effect, so vary <strong>Look back</strong> and run it several times before believing either answer. The placebo row is the one that matters most: if it is also positive, we are measuring stocks that were going up anyway rather than anything the insiders knew.</span>
   </div>`;
 
