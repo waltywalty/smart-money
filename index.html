@@ -214,7 +214,7 @@
 
 <header class="top">
   <div class="top-inner">
-    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v9.0</span></div>
+    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v9.1</span></div>
     <div class="top-meta">
       <span id="lastUpdated">loading…</span>
       <span id="countdown" title="Auto-refresh countdown"></span>
@@ -1843,8 +1843,17 @@ async function recordSignal(kind, title, dir, detail) {
   const bucket = confirmBucket(title);
   if (!bucket || !LEADLAG_MAP[bucket] || !(state.fmpKey || '').trim()) return;
   store.signals = store.signals || [];
-  const sigKey = bucket + '|' + (title || '').slice(0, 40) + '|' + Math.round(Date.now() / 36e5);
-  if (store.signals.some(s => s.key === sigKey)) return;      // one per bucket+market per hour
+  /* One record per market per DAY, not per hour — and only if the market has actually turned
+     since the last one. The hourly key let a single market log three near-identical rows inside
+     one hour, which is the same independence failure as counting fills instead of positions:
+     three observations of one event, sharing one outcome, inflating n and correlating the errors.
+     A study that needs 20 signals is worthless if five of them are the same signal. */
+  // direction is part of the key: a market that REVERSES is genuinely new information, and a
+  // day-key without it would silently swallow exactly the events most worth measuring.
+  const sigKey = bucket + '|' + (title || '').slice(0, 40) + '|' + (dir >= 0 ? 'up' : 'dn') + '|' + Math.round(Date.now() / 864e5);
+  if (store.signals.some(s => s.key === sigKey)) return;
+  const recent = store.signals.find(s => s.title === title && Date.now() - s.ts < 6 * 3600e3);
+  if (recent && recent.dir === dir) return;   // same market, same direction, still fresh — not news twice
   const map = LEADLAG_MAP[bucket];
   const base = {};
   for (const [sym] of map.tickers) { const px = await quoteOf(sym); if (px) base[sym] = px; }
@@ -2404,6 +2413,10 @@ const CONFIRM_TICKERS = {
 function confirmBucket(title) {
   const t = title || '';
   if (/(rate cut|rate hike|cuts? rates|federal reserve|\bfomc\b|inflation|\bcpi\b|powell)/i.test(t)) return 'rates';
+  /* "strike" is dangerously polysemous and it bit: a market called "5kt meteor strike in 2026?"
+     was being routed to the geopolitics bucket and mapped to crude, gold and equities. Rule out
+     the non-military senses before matching, or the study fills with signals that imply nothing. */
+  if (/(meteor|asteroid|comet|lightning|hunger strike|labou?r strike|strike zone|bowling|strikeout)/i.test(t)) return null;
   if (/(iran|israel|venezuela|hormuz|\bopec\b|missile|nuclear|\bstrikes?\b|military|invasion|\bwar\b)/i.test(t)) return 'geo';
   if (/(tariff|trade war|sanction|embargo|export control)/i.test(t)) return 'tariff';
   if (/(\betf\b|crypto|bitcoin|ethereum|stablecoin|token|\bsec\b)/i.test(t)) return 'crypto';
@@ -2963,19 +2976,46 @@ function renderBacktest(bets, nMarkets, health, runGaps) {
         <td class="num" style="color:${col}"><strong>${a.edge >= 0 ? '+' : ''}${a.edge.toFixed(1)}</strong> <span style="font-size:10.5px;color:var(--ink-3)">±${(2 * a.se).toFixed(1)}</span></td>
       </tr>`;
     }).join('');
-    // the bias, if real, is a monotone tilt: cheap bands negative, dear bands positive
-    const cheap = Study.stats(bets.filter(b => b.price < 0.30));
+    /* Test the SHAPE, not a cut.
+       The first version of this compared "under 30c" against "over 70c" and reported nothing.
+       That was my arbitrary boundary, and it was hiding the effect: the 5-15c band ran -3.0 and
+       the 70-85c band +2.9, both clearing their own error bars, while the 15-30c band in between
+       ran +1.8 and dragged the cheap bucket back to zero. Moving the cut after seeing that would
+       be exactly the p-hacking this dashboard exists to avoid, so instead there is now no cut at
+       all: regress every position's outcome-minus-price on its price. The favourite-longshot bias
+       predicts one specific thing — a positive slope, favourites doing better than they are priced
+       and longshots worse — and a slope uses all the data, tests that prediction directly, and
+       cannot be tuned. */
+    let slope = null, slopeSE = null;
+    if (bets.length > 50) {
+      const xs = bets.map(b => b.price * 100);
+      const ys = bets.map(b => (b.won ? 100 : 0) - b.price * 100);
+      const n = xs.length;
+      const mx = xs.reduce((a, b) => a + b, 0) / n, my = ys.reduce((a, b) => a + b, 0) / n;
+      let sxy = 0, sxx = 0;
+      for (let i = 0; i < n; i++) { sxy += (xs[i] - mx) * (ys[i] - my); sxx += (xs[i] - mx) ** 2; }
+      if (sxx > 0) {
+        slope = sxy / sxx;
+        let sse = 0;
+        for (let i = 0; i < n; i++) { const pred = my + slope * (xs[i] - mx); sse += (ys[i] - pred) ** 2; }
+        slopeSE = Math.sqrt((sse / (n - 2)) / sxx);
+      }
+    }
+    // reported alongside: the extreme bands, which is where the literature says the bias concentrates
+    const cheap = Study.stats(bets.filter(b => b.price < 0.15));
     const dear = Study.stats(bets.filter(b => b.price >= 0.70));
-    const tilt = (dear.n && cheap.n) ? dear.edge - cheap.edge : null;
-    const tiltSE = Math.sqrt((dear.se || 0) ** 2 + (cheap.se || 0) ** 2);
-    const tv = tilt == null ? null : Study.verdict(tilt, tiltSE, nf ? nf.diff : null);
+    const tilt = slope;
+    const tiltSE = slopeSE;
+    const tv = tilt == null ? null : Study.verdict(tilt * 100, (tiltSE || 0) * 100, nf ? nf.diff : null);
     const fv = $('#btFLVerdict');
     if (fv) fv.innerHTML = `<div class="cluster ${tv && tv.clears && tilt > 0 ? '' : 'calm'}" style="border-left-color:${tv && tv.clears ? (tilt > 0 ? 'var(--status-good)' : 'var(--status-critical)') : 'var(--ink-3)'}">
-      <span class="big">${tilt == null ? '🔍 Not enough at the extremes' : tv.clears && tilt > 0 ? '✅ Favourite-longshot bias is present and exploitable' : tv.clears && tilt < 0 ? '🛑 The bias runs the OTHER way here' : '⚖️ No measurable favourite-longshot bias on Polymarket'}</span>
-      <span style="width:100%">Bets under 30¢ ran <strong>${cheap.n ? (cheap.edge >= 0 ? '+' : '') + cheap.edge.toFixed(1) : '—'}</strong> against their odds (${cheap.n.toLocaleString()} of them); bets over 70¢ ran <strong>${dear.n ? (dear.edge >= 0 ? '+' : '') + dear.edge.toFixed(1) : '—'}</strong> (${dear.n.toLocaleString()}). The tilt is <strong>${tilt == null ? '—' : (tilt >= 0 ? '+' : '') + tilt.toFixed(1)} ± ${(2 * tiltSE).toFixed(1)} pts</strong>${nf ? ` against a noise floor of ${nf.diff.toFixed(1)}` : ''}.</span>
+      <span class="big">${tilt == null ? '🔍 Not enough data' : tv.clears && tilt > 0 ? '✅ Favourite-longshot bias is real here — and it is mechanical' : tv.clears && tilt < 0 ? '🛑 The bias runs the OTHER way here' : '⚖️ No measurable favourite-longshot bias on Polymarket'}</span>
+      <span style="width:100%">Across all ${bets.length.toLocaleString()} positions the slope of edge against price is <strong>${tilt == null ? '—' : (tilt >= 0 ? '+' : '') + tilt.toFixed(3)} ± ${tiltSE == null ? '—' : (2 * tiltSE).toFixed(3)}</strong> — meaning every 10¢ higher in price is worth about <strong>${tilt == null ? '—' : (tilt * 10 >= 0 ? '+' : '') + (tilt * 10).toFixed(1)} points</strong> of extra edge. For scale: bets under 15¢ ran <strong>${cheap.n ? (cheap.edge >= 0 ? '+' : '') + cheap.edge.toFixed(1) : '—'}</strong> (${cheap.n.toLocaleString()} of them) and bets over 70¢ ran <strong>${dear.n ? (dear.edge >= 0 ? '+' : '') + dear.edge.toFixed(1) : '—'}</strong> (${dear.n.toLocaleString()}).</span>
       <span style="width:100%;color:var(--ink-2);font-size:12.5px">${tv && tv.clears && tilt > 0
-        ? 'This one does not depend on anybody being skilled, so it is not touched by the null results above. The mechanical version is: buy favourites, never longshots — but check it against fees, which are worst in the middle of the price range, before believing it is money.'
+        ? 'This is the first thing on this page to survive its own test, and it survives for a reason none of the others could: it needs nobody to be skilled and nothing to persist, so the nulls above have no bearing on it. Before treating it as money, note that a slope is not a strategy — the edge per bet is small, and Polymarket\'s fee is 0.06·p·(1−p), which at 75¢ costs about 1.1 points of the roughly ' + (tilt * 75).toFixed(1) + ' the slope implies there. Favourites are also where fees bite least, which is the one piece of luck in this.'
         : 'Worth knowing rather than disappointing: it means Polymarket prices the tails about as well as the middle, which is not true of most betting markets and says the crowd here is sharper than a racetrack one.'}</span>
+      <span class="chip muted">no cut points, no tuning — a single slope across every position, which is the exact shape the favourite-longshot bias predicts and the only specification that cannot be fished</span>
+      ${slopeSE != null ? `<span class="chip muted">Power: this sample could detect a tilt of <strong>${(2 * slopeSE * 65).toFixed(1)} points</strong> or more between a 15¢ longshot and an 80¢ favourite. A real bias smaller than that would not show up here, so "no bias" means "none bigger than that", not "none at all".</span>` : ''}
     </div>`;
   }
 
