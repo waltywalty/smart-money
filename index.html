@@ -214,7 +214,7 @@
 
 <header class="top">
   <div class="top-inner">
-    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v10.1</span></div>
+    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v10.2</span></div>
     <div class="top-meta">
       <span id="lastUpdated">loading…</span>
       <span id="countdown" title="Auto-refresh countdown"></span>
@@ -597,6 +597,17 @@
         <table id="btFLTable">
           <thead><tr><th>Entry price</th><th class="num">Positions</th><th class="num">Actually won</th><th class="num">Odds implied</th><th class="num">Edge ±2 s.e.</th></tr></thead>
           <tbody><tr><td colspan="5" class="empty">Runs with the backtest above.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-pad" style="border-bottom:1px solid var(--grid)"><strong>Settlement pennies — the discard pile as a strategy</strong> <span class="note" style="display:inline">every backtest run throws away trades above 85¢ as "already decided." This grades that discard pile instead: markets bought at 95¢+ are decided-in-reality but not yet settled, and buying them collects the last pennies with almost no fee — 0.06·p·(1−p) is nearly zero at 98¢. The entire question is the reversal rate, because at 98¢ one loss erases ~49 wins.</span></div>
+      <div id="btPennyVerdict" style="padding:0 14px 10px"></div>
+      <div class="tscroll">
+        <table id="btPennyTable">
+          <thead><tr><th>Entry price</th><th class="num">Positions</th><th class="num">Resolved their way</th><th class="num">Reversal rate</th><th class="num">Breakeven reversal</th><th class="num">EV per $1</th></tr></thead>
+          <tbody><tr><td colspan="6" class="empty">Runs with the backtest above.</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -2313,6 +2324,13 @@ async function loadCloudBot() {
           ${d.bestNearMiss ? `<div style="margin-top:6px">Closest it came last cycle: <strong>${esc(d.bestNearMiss.title)}</strong> — ${fmtUSD(d.bestNearMiss.usd)} at ${(d.bestNearMiss.px * 100).toFixed(0)}¢, ${esc(d.bestNearMiss.why)}${d.bestNearMiss.shape != null && d.bestNearMiss.shape !== d.bestNearMiss.score ? ` (trade shape ${d.bestNearMiss.shape}, live context added ${d.bestNearMiss.score - d.bestNearMiss.shape})` : ''}.</div>` : ''}
           <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--grid)">The backtest disproved the <em>trade-shape</em> half of the score. The <em>live context</em> half — volume share, repricing, clusters — cannot be tested on history at all, because it is contemporaneous. Every fill below records both, so once enough close, this is the only place that answer can come from.</div>
         </div></div></div>` : ''}
+      ${d.house ? `<div class="card"><div class="card-pad"><strong>House mode — being the maker instead of chasing the taker</strong>
+        <div style="margin-top:6px;font-size:13px;color:var(--ink-2)">
+          The inversion of this project's main null: we proved the aggressive flow here is uninformed, which is precisely the flow a market-maker wants on the other side. The cloud bot quotes both sides of ${d.house.markets || 0} liquid mid-range markets and simulates fills from the tape.
+          <div style="margin-top:6px"><strong style="color:${(d.house.equity || 0) >= 0 ? 'var(--status-good)' : 'var(--status-critical)'}">${fmtUSD(d.house.equity || 0)}</strong> simulated P&L · <strong>${d.house.fills || 0}</strong> fills · <strong>${fmtUSD(d.house.rebates || 0)}</strong> of that is maker rebates</div>
+          ${(d.house.inventory || []).length ? `<div style="margin-top:4px;color:var(--ink-3);font-size:12px">Inventory: ${d.house.inventory.map(i => `${esc(String(i.q).slice(0, 36))} (${i.shares} sh)`).join(' · ')}</div>` : ''}
+          <div style="margin-top:4px;color:var(--ink-3);font-size:11.5px">Fill simulation is queue-blind, so it overstates fill rate — read the sign, not the size. If the sign stays positive for weeks, that is the first strategy this project has produced where our own falsification is the reason it works.</div>
+        </div></div></div>` : ''}
       ${(d.lastNotes || []).length ? `<div class="card"><div class="card-pad"><strong>Last cycle</strong><div style="margin-top:6px;font-size:13px;color:var(--ink-2)">${d.lastNotes.map(x => esc(x)).join('<br>')}</div></div></div>` : ''}
       ${(d.positions || []).length ? `<div class="card"><div class="tscroll"><table>
         <thead><tr><th>Status</th><th>Market</th><th>Position</th><th class="num">Entry</th><th class="num">Now</th><th class="num">Stake</th><th class="num">P&L</th></tr></thead>
@@ -2613,6 +2631,7 @@ async function runBacktest() {
   btBusy = true;
   const RUNS = state.btRuns || 1;
   const allBets = [];
+  const allPennies = [];
   const runGaps = [];
   let lastHealth = null, totalMarkets = 0;
   const prog = $('#btProgress');
@@ -2638,6 +2657,10 @@ async function runBacktest() {
         seenPos.add(k); fresh.push(b);
       }
       allBets.push(...fresh);
+      for (const pb of (r.pennies || [])) {
+        const k = 'penny|' + pb.price.toFixed(4) + '|' + pb.usd.toFixed(2);
+        if (!seenPos.has(k)) { seenPos.add(k); allPennies.push(pb); }
+      }
       totalMarkets += r.nMarkets;
       lastHealth = r.health;
       if (lastHealth) lastHealth.dupes = dupes;
@@ -2650,6 +2673,7 @@ async function runBacktest() {
       return;
     }
     renderBacktest(allBets, totalMarkets, lastHealth, runGaps);
+    try { renderPennies(allPennies); } catch (e) {}
     renderHistory();
     publishResult('score-validation', { pooled: panelText('#histBody'), verdict: panelText('#btVerdict'), bands: panelText('#btTable'), price: panelText('#btPriceVerdict'), size: panelText('#btSizeVerdict'), crowd: panelText('#btFLVerdict'), persistence: panelText('#btPersistVerdict'), signals: panelText('#btSigTable'), n: allBets.length });
     $('#btState').textContent = RUNS > 1 ? `complete · ${RUNS} runs pooled` : 'complete';
@@ -2708,6 +2732,7 @@ async function backtestOnce(run, RUNS) {
     // 1. pull each wallet's own history
     prog.textContent = tag + `pulling history for ${wallets.length} traders…`;
     const fills = [];
+    const pennyFills = [];
     let skippedCertain = 0, walletsWithHistory = 0;
     for (let i = 0; i < wallets.length; i += 4) {
       await Promise.allSettled(wallets.slice(i, i + 4).map(async w => {
@@ -2725,7 +2750,14 @@ async function backtestOnce(run, RUNS) {
         for (const t of trs) {
           if (t.side !== 'BUY' || !t.conditionId) continue;
           const px = +t.price;
-          if (!(px >= 0.05 && px <= 0.85)) { skippedCertain++; continue; }   // symmetric uncertainty window
+          if (!(px >= 0.05 && px <= 0.85)) {
+            // The discard pile is itself a study. Fills at >=95c are useless for testing skill —
+            // but they are exactly the sample for the settlement-penny question: how often does a
+            // near-certain market resolve the OTHER way? At 98c you risk 98 to win 2, so that one
+            // reversal rate decides whether collecting the last pennies is income or ruin.
+            if (px >= 0.95) pennyFills.push({ t, px, usd });
+            skippedCertain++; continue;
+          }
           const usd = t.size * px;
           const cls = classifyTitle(t.title || '');
           if (newsOnly && cls !== 'news') continue;
@@ -2808,7 +2840,34 @@ async function backtestOnce(run, RUNS) {
         reasons: sc.reasons, isNewsy: sc.isNewsy });
     }
     if (!bets.length) return null;
-    return { bets, nMarkets: gradedMarkets.size,
+
+    /* Fold and grade the penny sample too — same one-position-per-wallet-market discipline. */
+    const pMap = new Map();
+    for (const f of pennyFills) {
+      const k = f.t.proxyWallet + '|' + f.t.conditionId + '|' + (f.t.outcomeIndex ?? 0);
+      let pp = pMap.get(k);
+      if (!pp) { pp = { cid: f.t.conditionId, oi: f.t.outcomeIndex ?? 0, shares: 0, cost: 0 }; pMap.set(k, pp); }
+      pp.shares += f.t.size; pp.cost += f.usd;
+    }
+    let pennyPos = [...pMap.values()].map(pp => ({ ...pp, px: pp.shares > 0 ? pp.cost / pp.shares : 0 }))
+      .filter(pp => pp.px >= 0.95 && pp.cost >= 50);
+    for (let i = pennyPos.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pennyPos[i], pennyPos[j]] = [pennyPos[j], pennyPos[i]]; }
+    pennyPos = pennyPos.slice(0, 400);
+    const pIds = [...new Set(pennyPos.map(pp => pp.cid))].filter(id => !resMap.has(id)).slice(0, 150);
+    for (let i = 0; i < pIds.length; i += 10) {
+      const chunk = pIds.slice(i, i + 10);
+      const got = await Promise.all(chunk.map(id => getMarketResolution(id).catch(() => null)));
+      chunk.forEach((id, k) => resMap.set(id, got[k]));
+    }
+    flushRes();
+    const pennies = [];
+    for (const pp of pennyPos) {
+      const r = resMap.get(pp.cid);
+      if (!r || !r.closed || r.winnerIndex == null || r.provisional) continue;
+      pennies.push({ price: pp.px, usd: pp.cost, won: pp.oi === r.winnerIndex ? 1 : 0 });
+    }
+
+    return { bets, pennies, nMarkets: gradedMarkets.size,
       health: { withHistory: walletsWithHistory, skippedCertain, sampled: wallets.length, lbSeeded, droppedIds, foldStats } };
   }
 }
@@ -3289,6 +3348,55 @@ const Study = {
   },
 };
 
+/* ============================== SETTLEMENT PENNIES ============================== */
+/* The one strategy where Polymarket's fee formula is a friend instead of an enemy: taker fee is
+   0.06·p·(1−p), which is 1.5c at 50c but 0.12c at 98c. Markets that are decided in reality trade
+   a shade under $1 until official settlement, and buying them collects the last pennies. The
+   asymmetry is savage — at 98c you risk 98 to win 2 — so everything reduces to the reversal rate:
+   how often does a >=98c market resolve the other way? Below the breakeven, this is income; above
+   it, it is picking up pennies in front of the one steamroller that matters. */
+function renderPennies(pennies) {
+  const el = $('#btPennyTable');
+  if (!el) return;
+  const BANDS = [[0.95, 0.98], [0.98, 1.001]];
+  const rows = BANDS.map(([lo, hi]) => {
+    const inb = pennies.filter(p => p.price >= lo && p.price < hi);
+    const st = Study.stats(inb);
+    const avgPx = inb.length ? inb.reduce((a, b) => a + b.price, 0) / inb.length : 0;
+    // EV per $1 staked: w·(1−p)/p − (1−w) − 0.06·(1−p)   (taker fee, per share ≈ per $p staked)
+    const w = st.n ? st.actual / 100 : 0;
+    const ev = st.n ? w * (1 - avgPx) / avgPx - (1 - w) - 0.06 * (1 - avgPx) : null;
+    // breakeven win rate for this band's average price
+    const be = avgPx ? ((1 + 0.06 * (1 - avgPx)) / (1 + (1 - avgPx) / avgPx)) : null;
+    return { lo, hi, st, avgPx, ev, be };
+  });
+  el.querySelector('tbody').innerHTML = rows.map(r => {
+    const a = r.st;
+    if (!a.n) return `<tr><td>${(r.lo * 100).toFixed(0)}–${(r.hi * 100).toFixed(0)}¢</td><td class="num">0</td><td colspan="4" class="empty" style="text-align:left">no graded positions at these prices</td></tr>`;
+    const col = r.ev > 0 ? 'var(--status-good)' : 'var(--status-critical)';
+    return `<tr>
+      <td><strong>${(r.lo * 100).toFixed(0)}–${Math.min(r.hi, 1) * 100}¢</strong> <span style="color:var(--ink-3);font-size:11px">avg ${(r.avgPx * 100).toFixed(1)}¢</span></td>
+      <td class="num">${a.n.toLocaleString()}</td>
+      <td class="num"><strong>${a.actual.toFixed(2)}%</strong> <span style="font-size:10.5px;color:var(--ink-3)">±${(2 * a.se).toFixed(2)}</span></td>
+      <td class="num" style="color:var(--ink-2)">${(100 - a.actual).toFixed(2)}%</td>
+      <td class="num" style="color:var(--ink-2)">${r.be == null ? '—' : (100 * (1 - r.be)).toFixed(2) + '%'}</td>
+      <td class="num" style="color:${col}"><strong>${r.ev == null ? '—' : (r.ev >= 0 ? '+' : '') + (r.ev * 100).toFixed(2) + '¢'}</strong></td>
+    </tr>`;
+  }).join('');
+  const hi = rows[1];
+  const verdictEl = $('#btPennyVerdict');
+  if (verdictEl && hi.st.n) {
+    const enough = hi.st.n >= 100;
+    const good = enough && hi.ev > 0 && (hi.st.actual - (100 * hi.be)) > 2 * hi.st.se;
+    recordRun('settlement', 'ev', hi.ev * 100, hi.st.n, hi.st.se * (1 - hi.avgPx) / hi.avgPx + 0.02);
+    verdictEl.innerHTML = `<div class="cluster ${good ? '' : 'calm'}" style="border-left-color:${good ? 'var(--status-good)' : 'var(--ink-3)'}">
+      <span class="big">${!enough ? '🔍 Not enough settled penny positions yet' : good ? '💰 The settlement-penny trade is profitable at these reversal rates' : '⚖️ Reversals eat the pennies — no edge after the losses'}</span>
+      <span style="width:100%">Positions bought at 98¢+ resolved their way <strong>${hi.st.actual.toFixed(2)}%</strong> of the time (${hi.st.n.toLocaleString()} graded). Breakeven at the average entry of ${(hi.avgPx * 100).toFixed(1)}¢ is <strong>${(100 * hi.be).toFixed(2)}%</strong> — every reversal costs ~${Math.round(hi.avgPx / (1 - hi.avgPx))}× what a win pays. Expected value: <strong style="color:${hi.ev > 0 ? 'var(--status-good)' : 'var(--status-critical)'}">${(hi.ev >= 0 ? '+' : '') + (hi.ev * 100).toFixed(2)}¢ per $1 staked</strong> after taker fees, which at these prices are nearly zero — the one place the fee formula is kind.</span>
+      <span style="width:100%;color:var(--ink-2);font-size:12.5px">Two things this sample cannot tell you: the <em>lock-up</em> (how many days from 98¢ to redemption — that sets the annualised yield) and <em>capacity</em> (book depth at the touch). And the losses are not independent events: a disputed resolution family (one UMA fight) can flip several related markets at once, so size as if the worst case arrives together.</span>
+    </div>`;
+  }
+}
+
 /* ============================== RUN HISTORY / META-ANALYSIS ============================== */
 /* The recurring failure of this whole project, in one place.
    Every study here has been read one run at a time, and a run that crosses its bar gets believed.
@@ -3342,6 +3450,7 @@ function renderHistory() {
     ['persistence', 'correlation', 'Does a trader\'s edge persist?', '', true],
     ['crowd-bias', 'slope', 'Favourite-longshot slope (edge per 1¢ of price)', '', false],
     ['insider', 'diff', 'Insider buys — abnormal return minus placebo', '%', false],
+    ['settlement', 'ev', 'Settlement pennies — EV per $1 at 98¢+ (¢)', '¢', false],
   ];
   const parts = specs.map(([study, metric, label, unit, isCorr]) => {
     const p = poolRuns(study, metric);
@@ -3378,7 +3487,7 @@ async function publishResult(study, payload) {
   try {
     await fetch(`${url}/results?k=${encodeURIComponent(topic)}`, {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ study, version: 'v10.1', ...payload }),
+      body: JSON.stringify({ study, version: 'v10.2', ...payload }),
     });
     const el = $('#pubState');
     if (el) { el.textContent = `published ${study} · ${new Date().toLocaleTimeString()}`; el.className = 'feedstate live'; }
