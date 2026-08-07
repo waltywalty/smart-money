@@ -214,7 +214,7 @@
 
 <header class="top">
   <div class="top-inner">
-    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v9.9</span></div>
+    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v10.0</span></div>
     <div class="top-meta">
       <span id="lastUpdated">loading…</span>
       <span id="countdown" title="Auto-refresh countdown"></span>
@@ -3341,10 +3341,11 @@ function renderHistory() {
     ['score-gap', 'gap', 'Score ranking — top fifth minus bottom fifth', 'pts', false],
     ['persistence', 'correlation', 'Does a trader\'s edge persist?', '', true],
     ['crowd-bias', 'slope', 'Favourite-longshot slope (edge per 1¢ of price)', '', false],
+    ['insider', 'diff', 'Insider buys — abnormal return minus placebo', '%', false],
   ];
   const parts = specs.map(([study, metric, label, unit, isCorr]) => {
     const p = poolRuns(study, metric);
-    if (!p) return `<div class="card" style="margin-bottom:8px"><div class="card-pad"><strong>${esc(label)}</strong><div class="empty" style="text-align:left;padding:6px 0">No runs recorded yet — run the backtest.</div></div></div>`;
+    if (!p) return `<div class="card" style="margin-bottom:8px"><div class="card-pad"><strong>${esc(label)}</strong><div class="empty" style="text-align:left;padding:6px 0">No runs recorded yet${study === 'insider' ? ' — run the insider-buy study' : ' — run the backtest'}.</div></div></div>`;
     const crosses = p.lo <= 0 && p.hi >= 0;
     const col = crosses ? 'var(--ink-3)' : p.pooled > 0 ? 'var(--status-good)' : 'var(--status-critical)';
     const dec = isCorr ? 3 : 2;
@@ -3377,7 +3378,7 @@ async function publishResult(study, payload) {
   try {
     await fetch(`${url}/results?k=${encodeURIComponent(topic)}`, {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ study, version: 'v9.9', ...payload }),
+      body: JSON.stringify({ study, version: 'v10.0', ...payload }),
     });
     const el = $('#pubState');
     if (el) { el.textContent = `published ${study} · ${new Date().toLocaleTimeString()}`; el.className = 'feedstate live'; }
@@ -3676,6 +3677,7 @@ async function runInsider() {
     if (!events.length) throw new Error('found purchases but no price history could be matched to them');
     renderInsider(events, hold, { fetched, failed, notPurchase, filings: filings.length,
       indexed: hits.length, tickers: byTicker.size, noBars, noWindow });
+    try { renderHistory(); } catch (e) {}
     publishResult('insider-study', { verdict: panelText('#insVerdict'), groups: panelText('#insTable'), events: events.length });
     $('#insState').textContent = `${events.length} events`;
     $('#insState').className = 'feedstate live';
@@ -3731,6 +3733,11 @@ function renderInsider(events, hold, health) {
   const useLabel = cl.n >= 20 ? 'Cluster buys' : 'All insider purchases';
   const vsPlacebo = (use.n && pl.n) ? use.mean - pl.mean : null;
   const vpSE = Math.sqrt((use.se || 0) ** 2 + (pl.se || 0) ** 2);
+  /* One window is one market regime — the April 2026 window sat inside a +12% index rally, which
+     is exactly the condition that makes any single window untrustworthy in either direction. Every
+     run therefore feeds the same pooled record the Polymarket studies use, and the verdict that
+     matters is the pooled one. */
+  if (vsPlacebo != null && use.n >= 5) recordRun('insider', 'diff', vsPlacebo, use.n, vpSE);
   const real = vsPlacebo != null && vsPlacebo > 2 * vpSE;
   const enough = use.n >= 20;
   $('#insVerdict').innerHTML = `<div class="cluster ${real ? '' : 'calm'}" style="border-left-color:${real ? 'var(--status-good)' : 'var(--ink-3)'}">
