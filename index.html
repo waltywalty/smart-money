@@ -214,7 +214,7 @@
 
 <header class="top">
   <div class="top-inner">
-    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v9.1</span></div>
+    <div class="logo"><span class="dot" id="liveDot"></span> Smart Money Detector <span style="font-weight:400;font-size:11px;color:var(--ink-3)">v9.4</span></div>
     <div class="top-meta">
       <span id="lastUpdated">loading…</span>
       <span id="countdown" title="Auto-refresh countdown"></span>
@@ -234,6 +234,7 @@
     <a href="#watchlist">Watchlist</a>
     <a href="#conviction">Conviction board</a>
     <a href="#arb">Free-money scanner</a>
+    <a href="#insider">Insider-buy study</a>
     <a href="#backtest">Score validation</a>
     <a href="#leadlag">Lead/lag study</a>
     <a href="#bot">Paper bot</a>
@@ -527,7 +528,7 @@
           <tbody><tr><td colspan="7" class="empty">Hit <strong>Scan for arbitrage</strong>. It reads every mutually-exclusive market set on Polymarket and checks whether the outcome prices add up.</td></tr></tbody>
         </table>
       </div>
-      <p class="note">Cost to own all = the sum of the best <em>ask</em> across every outcome — what you would actually pay right now, not the mid. Fees use Polymarket's real taker formula, 0.06 × shares × p × (1−p) per leg, which is brutal on baskets containing cheap legs. Max size is set by the thinnest leg in the basket, because a basket you can only half-fill is not an arbitrage — it is a directional bet you did not intend to make. A negative net edge means the market is behaving properly.</p>
+      <p class="note">Both directions are scanned. Below $1 you buy every outcome and collect the $1 settlement; above $1 you sell every outcome and keep the overround. Cost to own all = the sum of the best <em>ask</em> across every outcome — what you would actually pay right now, not the mid. Fees use Polymarket's real taker formula, 0.06 × shares × p × (1−p) per leg, which is brutal on baskets containing cheap legs. Max size is set by the thinnest leg in the basket, because a basket you can only half-fill is not an arbitrage — it is a directional bet you did not intend to make. A negative net edge means the market is behaving properly. Sets with no catch-all outcome are excluded rather than ranked: <em>mutually exclusive</em> is not the same as <em>exhaustive</em>, and on a set where the true answer can be something nobody listed, a sum below $1 is correct pricing rather than a discount.</p>
     </div>
   </section>
 
@@ -628,6 +629,55 @@
       </div>
     </div>
     <p class="note"><strong>How to read "edge":</strong> a bet placed at 20¢ should win about 20% of the time if the market is efficient. Edge is how much more (or less) often those bets actually won. Positive edge on high-score bands means the detector is finding genuine information; an edge near zero means the score is decoration. Caveats: this tests trade-shape signals only (size, entry odds, market type, anonymity) — the live wallet-age, cluster and liquidity bonuses can't be reconstructed historically. Sampling is weighted toward higher-volume resolved markets. Small samples are noisy; treat anything under ~30 bets in a band as indicative only.</p>
+  </section>
+
+  <!-- ======================= INSIDER BUY STUDY ======================= -->
+  <section class="block" id="insider">
+    <div class="block-head">
+      <h2>🏛️ Insider-buy study — the one with a real prior</h2>
+      <span class="feedstate" id="insState">not run yet</span>
+      <span class="desc">Corporate insiders buying their own company's stock is among the most replicated anomalies in finance, and it is a different mechanism from anything we falsified on Polymarket: these are people with genuine private information and a legal duty to disclose it, not gamblers with intuitions. It also executes in liquid equities, where a spread costs basis points rather than the 4% Polymarket charges. This reads real Form 4 filings from a past window, finds open-market purchases, and measures what the stock did afterwards against the S&amp;P — with a placebo built from the same companies on random dates, because stocks drift and that drift is not a signal.</span>
+    </div>
+    <div class="card">
+      <div class="controls">
+        <span>Look back</span>
+        <div class="seg" id="insBackSeg">
+          <button data-v="120" aria-pressed="true">120d</button>
+          <button data-v="200">200d</button>
+          <button data-v="300">300d</button>
+        </div>
+        <span>Filings</span>
+        <div class="seg" id="insSizeSeg">
+          <button data-v="40" aria-pressed="true">40</button>
+          <button data-v="80">80</button>
+          <button data-v="150">150</button>
+        </div>
+        <span>Hold</span>
+        <div class="seg" id="insHoldSeg">
+          <button data-v="20">20d</button>
+          <button data-v="60" aria-pressed="true">60d</button>
+        </div>
+        <button class="ctrl" id="insRun">▶ Run the study</button>
+        <span id="insProgress" style="color:var(--ink-3)"></span>
+      </div>
+      <div id="insVerdict"></div>
+      <div class="tscroll">
+        <table id="insTable">
+          <thead><tr>
+            <th>Group</th><th class="num">Events</th><th class="num">Avg return</th>
+            <th class="num">S&amp;P over the same days</th><th class="num">Abnormal ±2 s.e.</th><th>Read</th>
+          </tr></thead>
+          <tbody><tr><td colspan="6" class="empty">Hit <strong>Run the study</strong>. It pulls real Form 4 filings from the chosen window, keeps only open-market purchases, and measures the forward move against the index.</td></tr></tbody>
+        </table>
+      </div>
+      <div class="tscroll" style="margin-top:10px">
+        <table id="insEvents">
+          <thead><tr><th>Ticker</th><th class="num">Insiders buying</th><th>Filed</th><th class="num">Bought</th><th class="num">Stock</th><th class="num">S&amp;P</th><th class="num">Abnormal</th></tr></thead>
+          <tbody><tr><td colspan="7" class="empty">Individual events appear here.</td></tr></tbody>
+        </table>
+      </div>
+      <p class="note">Only transaction code <strong>P</strong> counts — an open-market purchase with the insider's own money. Codes A (award), S (sale), G (gift), M (option exercise) are excluded: executives sell for tax and diversification constantly and receive stock as pay, but they buy for one reason. Abnormal return is the stock's move minus the S&amp;P's over the identical calendar days, so a rising market cannot manufacture a result. The placebo re-runs the whole measurement on the same tickers at random unrelated dates — if it comes back near zero, the abnormal return is about the filings; if it comes back positive too, we are just measuring a rising stock.</p>
+    </div>
   </section>
 
   <!-- ======================= LEAD/LAG ======================= -->
@@ -1111,7 +1161,7 @@ const state = Object.assign({
   kThresh: 10000,
   radarSpeed: 15,
   alertThresh: 70,
-  btSize: 25, btRuns: 1, arbDepth: 40,
+  btSize: 25, btRuns: 1, arbDepth: 40, insBack: 120, insSize: 40, insHold: 60,
   btMin: 100,
   cvSrc: 'proven',
   sport: 'basketball_nba',
@@ -2023,15 +2073,20 @@ async function botConsider(trades) {
   const b = bot();
   if (!b.on) return;
   store.botPos = store.botPos || [];
-  const openCount = store.botPos.filter(p => p.status !== 'closed').length;
+  const openCount = store.botPos.filter(p => p.status === 'open' || p.status === 'pending').length;
   for (const t of trades) {
     if (openCount >= 12) break;
     if (t.side !== 'BUY' || t._s.score < b.minScore) continue;
     if (b.newsOnly && !t._s.isNewsy) continue;
     if (!t.asset || !t.conditionId) continue;
+    /* Hard price band. The bot opened "Backing No" at 98.3¢ — 1.7¢ of upside against 98.3¢ of
+       downside on a market whose answer is effectively known. Size and topic alone can clear the
+       score bar at any price, so the ceiling has to be stated separately. Same 5–85¢ window the
+       backtest uses: outside it you are not copying a forecast, you are picking up pennies. */
+    if (!(t.price >= 0.05 && t.price <= 0.85)) continue;
     const key = t.transactionHash || (t.proxyWallet + t.timestamp);
     if (store.botPos.some(p => p.srcKey === key)) continue;
-    if (store.botPos.some(p => p.tokenId === t.asset && p.status !== 'closed')) continue;
+    if (store.botPos.some(p => p.tokenId === t.asset && (p.status === 'open' || p.status === 'pending'))) continue;
     const book = await getBook(t.asset);
     if (!book) continue;
     const ask = bestAskFrom(book), bid = bestBidFrom(book);
@@ -2095,11 +2150,12 @@ async function botUpdate() {
           }
         }
       } else if (Date.now() - p.openedAt > 6 * 3600e3) {
-        Object.assign(p, { status: 'closed', pnl: 0, exitReason: 'limit never filled — cancelled' });
+        // cancelled is not closed: see the note in worker.js — an unfilled limit is not a trade
+        Object.assign(p, { status: 'cancelled', pnl: null, exitReason: 'limit never filled — cancelled' });
       }
       continue;
     }
-    p.markPx = bid ? +bid.price : (p.entryPx || 0);      // exit-realistic mark, not the mid
+    p.markPx = (bid && Number.isFinite(+bid.price)) ? +bid.price : (p.entryPx || 0);   // exit-realistic mark, never NaN
     // resolution check
     const res = await getMarketResolution(p.conditionId);
     if (res && res.closed && res.winnerIndex != null && !res.provisional) {
@@ -2151,7 +2207,8 @@ function renderBot() {
   $('#botState').className = 'feedstate ' + (b.on ? 'live' : '');
   $('#botToggle').textContent = b.on ? '⏸ Pause paper trading' : '▶ Start paper trading';
   const pos = store.botPos || [];
-  const closed = pos.filter(p => p.status === 'closed' && p.pnl != null);
+  const closed = pos.filter(p => p.status === 'closed' && Number.isFinite(p.pnl));
+  const cancelled = pos.filter(p => p.status === 'cancelled').length;
   const open = pos.filter(p => p.status === 'open');
   const pend = pos.filter(p => p.status === 'pending');
   const realised = closed.reduce((a, p) => a + p.pnl, 0);
@@ -2189,8 +2246,8 @@ function renderBot() {
   if (!pos.length) { tb.innerHTML = '<tr><td colspan="9" class="empty">No positions yet. The bot copies qualifying flagged trades as the radar finds them.</td></tr>'; }
   else tb.innerHTML = pos.slice(0, 40).map(p => {
     const mark = p.status === 'closed' ? p.exitPx : (p.markPx != null ? p.markPx : p.entryPx);
-    const pnl = p.status === 'closed' ? p.pnl : (p.status === 'open' ? p.shares * (p.markPx != null ? p.markPx : p.entryPx || 0) - p.cost : null);
-    const chip = p.status === 'open' ? '<span class="chip good">open</span>' : p.status === 'pending' ? '<span class="chip warn">● resting limit</span>' : (p.pnl > 0 ? '<span class="chip good">✓ won</span>' : '<span class="chip critical">✗ lost</span>');
+    const pnl = p.status === 'closed' ? p.pnl : (p.status === 'open' ? p.shares * (Number.isFinite(p.markPx) ? p.markPx : (p.entryPx || 0)) - p.cost : null);
+    const chip = p.status === 'open' ? '<span class="chip good">open</span>' : p.status === 'pending' ? '<span class="chip warn">● resting limit</span>' : p.status === 'cancelled' ? '<span class="chip muted">cancelled — never filled</span>' : (p.pnl > 0 ? '<span class="chip good">✓ won</span>' : '<span class="chip critical">✗ lost</span>');
     return `<tr title="${esc(p.exitReason || '')}">
       <td>${chip}</td>
       <td>${esc((p.title || '').slice(0, 52))}<div style="font-size:11px;color:var(--ink-3)">score ${p.score} · ${esc(p.mode)}</div></td>
@@ -2253,8 +2310,8 @@ async function loadCloudBot() {
       ${(d.positions || []).length ? `<div class="card"><div class="tscroll"><table>
         <thead><tr><th>Status</th><th>Market</th><th>Position</th><th class="num">Entry</th><th class="num">Now</th><th class="num">Stake</th><th class="num">P&L</th></tr></thead>
         <tbody>${d.positions.slice(0, 25).map(p => {
-          const pnl = p.status === 'closed' ? p.pnl : (p.status === 'open' ? p.shares * ((p.markPx != null ? p.markPx : p.entryPx) || 0) - p.cost : null);
-          const chip = p.status === 'open' ? '<span class="chip good">open</span>' : p.status === 'pending' ? '<span class="chip warn">● resting</span>' : (p.pnl > 0 ? '<span class="chip good">✓ won</span>' : '<span class="chip critical">✗ lost</span>');
+          const pnl = p.status === 'closed' ? p.pnl : (p.status === 'open' ? p.shares * ((Number.isFinite(p.markPx) ? p.markPx : p.entryPx) || 0) - p.cost : null);
+          const chip = p.status === 'open' ? '<span class="chip good">open</span>' : p.status === 'pending' ? '<span class="chip warn">● resting</span>' : p.status === 'cancelled' ? '<span class="chip muted">cancelled</span>' : (p.pnl > 0 ? '<span class="chip good">✓ won</span>' : '<span class="chip critical">✗ lost</span>');
           return `<tr title="${esc(p.exitReason || '')}"><td>${chip}</td><td>${esc((p.title || '').slice(0, 46))}</td><td>${positionLabel('BUY', p.outcome)}</td>
             <td class="num">${p.entryPx != null ? (p.entryPx * 100).toFixed(1) + '¢' : '@' + (p.limitPx * 100).toFixed(1) + '¢'}</td>
             <td class="num">${p.status === 'closed' ? (p.exitPx * 100).toFixed(0) + '¢' : (p.markPx != null ? (p.markPx * 100).toFixed(1) + '¢' : '—')}</td>
@@ -3220,6 +3277,256 @@ const Study = {
   },
 };
 
+/* ============================== INSIDER-BUY STUDY ============================== */
+/* Why this one is worth building after everything else came back null.
+   The Polymarket nulls were not a statement about markets in general — they were a statement
+   about one mechanism: that some gambler knows something and you can ride them. Corporate
+   insider purchases are a different mechanism entirely. The buyer is legally defined as having
+   material non-public information, is required to disclose within two business days, and is
+   spending their own money in the open market. The effect has been documented repeatedly since
+   Lakonishok and Lee, and the strongest version is the CLUSTER: several distinct insiders at one
+   company buying inside the same short window. And unlike Polymarket, the trade executes in
+   liquid equity where the spread is basis points rather than four percent.
+   The measurement discipline is the same as everywhere else on this page: an error bar, a
+   placebo, and the ability to come back negative. */
+
+let insBusy = false;
+
+async function fetchText(url) {
+  const attempts = [
+    u => u,
+    u => 'https://corsproxy.io/?url=' + encodeURIComponent(u),
+    u => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u),
+    u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u),
+  ];
+  let lastErr;
+  for (const wrap of attempts) {
+    const ctrl = new AbortController();
+    const to = setTimeout(() => ctrl.abort(), 9000);
+    try {
+      const r = await fetch(wrap(url), { signal: ctrl.signal });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const t = await r.text();
+      if (t && t.length > 20) return t;
+      throw new Error('empty');
+    } catch (e) { lastErr = e; } finally { clearTimeout(to); }
+  }
+  throw lastErr;
+}
+
+// Stooq serves free daily bars as CSV with no key and no quota. Date,Open,High,Low,Close,Volume.
+const barsCache = new Map();
+async function dailyBars(sym) {
+  const k = sym.toLowerCase();
+  if (barsCache.has(k)) return barsCache.get(k);
+  let out = null;
+  try {
+    const csv = await fetchText(`https://stooq.com/q/d/l/?s=${encodeURIComponent(k)}.us&i=d`);
+    const lines = csv.trim().split('\n');
+    if (lines.length > 30 && /date/i.test(lines[0])) {
+      out = [];
+      for (let i = 1; i < lines.length; i++) {
+        const c = lines[i].split(',');
+        const px = +c[4];
+        if (c[0] && Number.isFinite(px) && px > 0) out.push({ d: c[0], c: px });
+      }
+      if (out.length < 30) out = null;
+    }
+  } catch (e) {}
+  barsCache.set(k, out);
+  return out;
+}
+// Return over `hold` TRADING days starting at the first bar on or after `date`.
+function fwdReturn(bars, date, hold) {
+  if (!bars || !bars.length) return null;
+  let i = bars.findIndex(b => b.d >= date);
+  if (i < 0 || i + hold >= bars.length) return null;
+  const a = bars[i].c, b = bars[i + hold].c;
+  if (!(a > 0) || !(b > 0)) return null;
+  return (b / a - 1) * 100;
+}
+
+function parseForm4(xml) {
+  const pick = (tag, src) => { const m = src.match(new RegExp('<' + tag + '>\\s*([^<]*)<\\/' + tag + '>', 'i')); return m ? m[1].trim() : ''; };
+  const sym = pick('issuerTradingSymbol', xml).toUpperCase();
+  if (!sym || !/^[A-Z.\-]{1,6}$/.test(sym)) return null;
+  const owner = pick('rptOwnerName', xml) || pick('rptOwnerCik', xml);
+  const isOfficer = /<isOfficer>\s*(1|true)\s*<\/isOfficer>/i.test(xml);
+  const isDirector = /<isDirector>\s*(1|true)\s*<\/isDirector>/i.test(xml);
+  const buys = [];
+  // one <nonDerivativeTransaction> block per line item
+  const blocks = xml.split(/<nonDerivativeTransaction>/i).slice(1);
+  for (const raw of blocks) {
+    const blk = raw.split(/<\/nonDerivativeTransaction>/i)[0];
+    const code = (blk.match(/<transactionCode>\s*([A-Z])\s*<\/transactionCode>/i) || [])[1];
+    if (code !== 'P') continue;               // open-market purchase ONLY — see the note in the UI
+    const shares = +((blk.match(/<transactionShares>[\s\S]*?<value>\s*([\d.]+)/i) || [])[1] || 0);
+    const price = +((blk.match(/<transactionPricePerShare>[\s\S]*?<value>\s*([\d.]+)/i) || [])[1] || 0);
+    const date = ((blk.match(/<transactionDate>[\s\S]*?<value>\s*([\d\-]+)/i) || [])[1] || '');
+    if (shares > 0 && price > 0) buys.push({ shares, price, usd: shares * price, date });
+  }
+  if (!buys.length) return null;
+  return { sym, owner, isOfficer, isDirector, buys,
+    usd: buys.reduce((a, b) => a + b.usd, 0),
+    date: buys.map(b => b.date).filter(Boolean).sort()[0] || '' };
+}
+
+async function runInsider() {
+  if (insBusy) return;
+  insBusy = true;
+  const back = state.insBack || 120, want = state.insSize || 40, hold = state.insHold || 60;
+  const prog = $('#insProgress'), tbody = $('#insTable tbody');
+  $('#insVerdict').innerHTML = '';
+  setFeed('#insState', 'link'); $('#insState').textContent = 'running…';
+  try {
+    const day = n => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+    prog.textContent = 'searching EDGAR…';
+    const q = `https://efts.sec.gov/LATEST/search-index?q=%22Form+4%22&forms=4&dateRange=custom&startdt=${day(back + 4)}&enddt=${day(back)}&from=0`;
+    const idx = await fetchJSON(q);
+    const hits = ((idx.hits && idx.hits.hits) || []);
+    if (!hits.length) throw new Error('EDGAR returned no Form 4 filings for that window');
+
+    // shuffle so a sample is not just the alphabetically-first filers
+    for (let i = hits.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [hits[i], hits[j]] = [hits[j], hits[i]]; }
+
+    const filings = [];
+    let fetched = 0, failed = 0, notPurchase = 0;
+    for (let i = 0; i < hits.length && filings.length < want; i += 5) {
+      await Promise.allSettled(hits.slice(i, i + 5).map(async h => {
+        if (filings.length >= want) return;
+        const src = h._source || {};
+        const acc = String(h._id || '').split(':')[0].replace(/-/g, '');
+        const doc = String(h._id || '').split(':')[1] || '';
+        if (!acc || !doc) return;
+        /* The archive path needs the CIK of a filer on the submission, and a Form 4 has two —
+           the issuer and the reporting owner — with no way to know in advance which one EDGAR
+           filed it under. Rather than guess, try each CIK the search result carries. */
+        const ciks = (src.ciks || []).map(c => String(parseInt(c, 10)));
+        for (const cik of ciks) {
+          try {
+            const xml = await fetchText(`https://www.sec.gov/Archives/edgar/data/${cik}/${acc}/${doc}`);
+            fetched++;
+            const f = parseForm4(xml);
+            if (f) { f.filed = src.file_date || day(back); filings.push(f); }
+            else notPurchase++;
+            return;
+          } catch (e) {}
+        }
+        failed++;
+      }));
+      prog.textContent = `reading filings… ${fetched} read · ${filings.length} purchases found`;
+    }
+    if (!filings.length) {
+      throw new Error(`read ${fetched} filings but none were open-market purchases${failed ? ` (${failed} could not be fetched)` : ''}`);
+    }
+
+    /* CLUSTER = several DIFFERENT insiders at one company inside the same window. The literature
+       is consistent that this is where the effect concentrates, and it is also the version that
+       is hardest to fake: one executive can be wrong or liquidity-driven, three at once is a view. */
+    const byTicker = new Map();
+    for (const f of filings) {
+      if (!byTicker.has(f.sym)) byTicker.set(f.sym, []);
+      byTicker.get(f.sym).push(f);
+    }
+    prog.textContent = `pricing ${byTicker.size} tickers…`;
+    const spy = await dailyBars('spy');
+    if (!spy) throw new Error('could not load S&P daily bars to benchmark against');
+
+    const events = [];
+    const syms = [...byTicker.keys()];
+    for (let i = 0; i < syms.length; i += 4) {
+      await Promise.allSettled(syms.slice(i, i + 4).map(async sym => {
+        const bars = await dailyBars(sym);
+        if (!bars) return;
+        const group = byTicker.get(sym);
+        const filed = group.map(f => f.filed).sort()[0];
+        const owners = new Set(group.map(f => f.owner)).size;
+        const usd = group.reduce((a, f) => a + f.usd, 0);
+        const r = fwdReturn(bars, filed, hold), m = fwdReturn(spy, filed, hold);
+        if (r == null || m == null) return;
+        // PLACEBO: the identical measurement on the same stock at an unrelated date.
+        const pi = Math.floor(Math.random() * Math.max(1, bars.length - hold - 5));
+        const pd = bars[pi] ? bars[pi].d : null;
+        const pr = pd ? fwdReturn(bars, pd, hold) : null, pm = pd ? fwdReturn(spy, pd, hold) : null;
+        events.push({ sym, owners, usd, filed, ret: r, mkt: m, abn: r - m,
+          placebo: (pr != null && pm != null) ? pr - pm : null });
+      }));
+      prog.textContent = `pricing… ${Math.min(i + 4, syms.length)}/${syms.length}`;
+    }
+    if (!events.length) throw new Error('found purchases but no price history could be matched to them');
+    renderInsider(events, hold, { fetched, failed, notPurchase, filings: filings.length });
+    $('#insState').textContent = `${events.length} events`;
+    $('#insState').className = 'feedstate live';
+  } catch (e) {
+    setFeed('#insState', false);
+    tbody.innerHTML = `<tr><td colspan="6" class="empty">Study failed: ${esc(e.message || 'unknown error')}.</td></tr>`;
+  } finally { insBusy = false; prog.textContent = ''; }
+}
+
+function meanSE(arr) {
+  const v = arr.filter(x => Number.isFinite(x));
+  if (!v.length) return { n: 0 };
+  const m = v.reduce((a, b) => a + b, 0) / v.length;
+  const sd = v.length > 1 ? Math.sqrt(v.reduce((a, b) => a + (b - m) ** 2, 0) / (v.length - 1)) : 0;
+  return { n: v.length, mean: m, sd, se: sd / Math.sqrt(v.length) };
+}
+
+function renderInsider(events, hold, health) {
+  const cluster = events.filter(e => e.owners >= 3);
+  const pair = events.filter(e => e.owners === 2);
+  const single = events.filter(e => e.owners === 1);
+  const groups = [
+    ['Cluster buy — 3+ insiders', cluster],
+    ['Two insiders', pair],
+    ['Single insider', single],
+    ['Placebo — same stocks, random dates', null],
+  ];
+  $('#insTable tbody').innerHTML = groups.map(([label, arr]) => {
+    const isPlacebo = arr === null;
+    const abn = isPlacebo ? meanSE(events.map(e => e.placebo)) : meanSE(arr.map(e => e.abn));
+    if (!abn.n) return `<tr><td>${esc(label)}</td><td class="num">0</td><td colspan="4" class="empty" style="text-align:left">no events in this group</td></tr>`;
+    const ret = isPlacebo ? { mean: null } : meanSE(arr.map(e => e.ret));
+    const mkt = isPlacebo ? { mean: null } : meanSE(arr.map(e => e.mkt));
+    const sig = Math.abs(abn.mean) > 2 * abn.se;
+    const col = sig && abn.mean > 0 ? 'var(--status-good)' : sig && abn.mean < 0 ? 'var(--status-critical)' : 'var(--ink-2)';
+    return `<tr>
+      <td><strong>${esc(label)}</strong></td>
+      <td class="num">${abn.n}${abn.n < 20 ? '<div style="font-size:10.5px;color:var(--ink-3)">thin</div>' : ''}</td>
+      <td class="num">${ret.mean == null ? '—' : (ret.mean >= 0 ? '+' : '') + ret.mean.toFixed(2) + '%'}</td>
+      <td class="num" style="color:var(--ink-2)">${mkt.mean == null ? '—' : (mkt.mean >= 0 ? '+' : '') + mkt.mean.toFixed(2) + '%'}</td>
+      <td class="num" style="color:${col}"><strong>${(abn.mean >= 0 ? '+' : '') + abn.mean.toFixed(2)}%</strong> <span style="font-size:10.5px;color:var(--ink-3)">±${(2 * abn.se).toFixed(2)}</span></td>
+      <td style="color:var(--ink-2);font-size:12px">${abn.n < 20 ? 'too few to trust' : !sig ? 'within noise' : abn.mean > 0 ? 'beat the index' : 'lagged the index'}</td>
+    </tr>`;
+  }).join('');
+
+  const cl = meanSE(cluster.map(e => e.abn));
+  const pl = meanSE(events.map(e => e.placebo));
+  const all = meanSE(events.map(e => e.abn));
+  const use = cl.n >= 20 ? cl : all;
+  const useLabel = cl.n >= 20 ? 'Cluster buys' : 'All insider purchases';
+  const vsPlacebo = (use.n && pl.n) ? use.mean - pl.mean : null;
+  const vpSE = Math.sqrt((use.se || 0) ** 2 + (pl.se || 0) ** 2);
+  const real = vsPlacebo != null && vsPlacebo > 2 * vpSE;
+  const enough = use.n >= 20;
+  $('#insVerdict').innerHTML = `<div class="cluster ${real ? '' : 'calm'}" style="border-left-color:${real ? 'var(--status-good)' : 'var(--ink-3)'}">
+    <span class="big">${!enough ? '🔍 Not enough events yet' : real ? '✅ Insider buying beat the index — and beat its own placebo' : '⚖️ No abnormal return detected'}</span>
+    <span style="width:100%">${useLabel} (${use.n}) returned <strong>${use.n ? (use.mean >= 0 ? '+' : '') + use.mean.toFixed(2) + '%' : '—'}</strong> against the S&P over ${hold} trading days. The same stocks measured from random unrelated dates returned <strong>${pl.n ? (pl.mean >= 0 ? '+' : '') + pl.mean.toFixed(2) + '%' : '—'}</strong>. The difference — which is the part the filings can actually claim — is <strong style="color:${vsPlacebo > 0 ? 'var(--status-good)' : 'var(--status-critical)'}">${vsPlacebo == null ? '—' : (vsPlacebo >= 0 ? '+' : '') + vsPlacebo.toFixed(2) + '% ± ' + (2 * vpSE).toFixed(2)}</strong>.</span>
+    ${!enough ? '<span class="chip warn">● raise <strong>Filings</strong> to 150 — clusters are rare, and a handful of events cannot separate a real effect from a lucky quarter</span>' : ''}
+    <span class="chip muted">${health.filings} purchases parsed from ${health.fetched} filings read${health.notPurchase ? ` · ${health.notPurchase} had no open-market buy` : ''}${health.failed ? ` · ${health.failed} unreachable` : ''}</span>
+    <span style="width:100%;color:var(--ink-2);font-size:12.5px">One window is one quarter of market history and a single quarter can flatter or bury a real effect, so vary <strong>Look back</strong> and run it several times before believing either answer. The placebo row is the one that matters most: if it is also positive, we are measuring stocks that were going up anyway rather than anything the insiders knew.</span>
+  </div>`;
+
+  $('#insEvents tbody').innerHTML = events.slice().sort((a, b) => b.abn - a.abn).slice(0, 20).map(e => `<tr>
+    <td><a href="https://www.google.com/finance/quote/${esc(e.sym)}:NASDAQ" target="_blank" rel="noopener"><strong>${esc(e.sym)}</strong></a></td>
+    <td class="num">${e.owners}${e.owners >= 3 ? ' <span class="chip critical" style="font-size:10px">cluster</span>' : ''}</td>
+    <td style="color:var(--ink-3)">${esc(e.filed)}</td>
+    <td class="num">${fmtUSD(e.usd)}</td>
+    <td class="num">${(e.ret >= 0 ? '+' : '') + e.ret.toFixed(1)}%</td>
+    <td class="num" style="color:var(--ink-2)">${(e.mkt >= 0 ? '+' : '') + e.mkt.toFixed(1)}%</td>
+    <td class="num" style="color:${e.abn > 0 ? 'var(--status-good)' : 'var(--status-critical)'}"><strong>${(e.abn >= 0 ? '+' : '') + e.abn.toFixed(1)}%</strong></td>
+  </tr>`).join('');
+}
+
 /* ============================== LOGICAL ARBITRAGE ============================== */
 /* The one edge that does not require being right about anything.
    Polymarket groups mutually exclusive outcomes under a single event with negRisk = true: exactly
@@ -3259,46 +3566,82 @@ async function runArb() {
       let bad = false;
       for (const m of e.markets) {
         if (m.closed || m.active === false) { bad = true; break; }
-        // bestAsk on a Polymarket market is the ask for its YES token
         const ask = +m.bestAsk, bid = +m.bestBid;
         if (!Number.isFinite(ask) || ask <= 0 || ask >= 1) { bad = true; break; }
         legs.push({ title: m.groupItemTitle || m.question || '', ask, bid: Number.isFinite(bid) ? bid : 0,
           liq: +m.liquidity || 0 });
       }
       if (bad || legs.length < 3) continue;
-      const cost = legs.reduce((a, l) => a + l.ask, 0);
-      const gross = 1 - cost;                       // $1 payout minus what the basket costs
-      const fee = legs.reduce((a, l) => a + arbTakerFee(1, l.ask), 0);   // per single basket
-      const net = gross - fee;
-      // the thinnest leg caps the basket; liquidity is a dollar figure, shares ≈ liq / price
-      const maxShares = Math.min(...legs.map(l => (l.liq > 0 ? l.liq / Math.max(l.ask, 0.01) : 0)));
-      rows.push({ title: e.title || e.slug || '—', n: legs.length, cost, gross, fee, net,
-        maxShares, slug: e.slug, legs });
+
+      /* EXHAUSTIVENESS — the check that decides whether any of this is arbitrage at all.
+         negRisk guarantees the outcomes are mutually exclusive. It does NOT guarantee they are
+         exhaustive. A 19-way "where will the talks be held" set with no catch-all can resolve to
+         a venue nobody listed, in which case every leg pays zero and the basket is a total loss.
+         And that is almost certainly what a sum below $1 MEANS on such a set: the missing few
+         cents are the crowd pricing the chance that the answer is none of the above. Reading it
+         as free money would be the most expensive mistake this dashboard could make, so a set
+         without an explicit catch-all is reported as unpriceable rather than as an opportunity. */
+      const CATCHALL = /^(other|another|none|no( |-)?one|neither|any other|someone else|somewhere else|anywhere else|not listed|all others|else)\b|\b(other|else)$/i;
+      const exhaustive = legs.some(l => CATCHALL.test(l.title.trim()));
+
+      const cost = legs.reduce((a, l) => a + l.ask, 0);          // buy every outcome
+      const proceeds = legs.reduce((a, l) => a + l.bid, 0);      // sell every outcome
+      const feeBuy = legs.reduce((a, l) => a + arbTakerFee(1, l.ask), 0);
+      const feeSell = legs.reduce((a, l) => a + arbTakerFee(1, l.bid), 0);
+      const rebateBuy = legs.reduce((a, l) => a + 0.0125 * l.ask * (1 - l.ask), 0);
+      const rebateSell = legs.reduce((a, l) => a + 0.0125 * l.bid * (1 - l.bid), 0);
+
+      /* BOTH directions. The first version only checked whether a basket could be BOUGHT below
+         $1, and so was blind to the far commoner case: sets priced ABOVE $1, which is a bookmaker's
+         overround and is sold, not bought. Most of the sets in the first live scan sat at 101–105c
+         — every one of them invisible to a buy-side-only scanner. Selling all N outcomes collects
+         the bid sum against a $1 liability, so the edge is simply (sum of bids) − $1. */
+      const grossBuy = 1 - cost;
+      const grossSell = proceeds - 1;
+      const buySide = grossBuy >= grossSell;
+      const gross = buySide ? grossBuy : grossSell;
+      const fee = buySide ? feeBuy : feeSell;
+      const rebate = buySide ? rebateBuy : rebateSell;
+      const net = gross - fee;                 // crossing the spread now
+      const netMaker = gross + rebate;         // resting limits instead, and being paid to wait
+
+      const maxShares = Math.min(...legs.map(l => {
+        const px = buySide ? l.ask : Math.max(l.bid, 0.01);
+        return l.liq > 0 ? l.liq / Math.max(px, 0.01) : 0;
+      }));
+      rows.push({ title: e.title || e.slug || '—', n: legs.length, cost, proceeds, gross, fee, net,
+        netMaker, maxShares, slug: e.slug, legs, exhaustive, buySide });
     }
     rows.sort((a, b) => b.net - a.net);
-    const live = rows.filter(r => r.net > 0);
-    const shown = netOnly ? (live.length ? live : rows.slice(0, 12)) : rows.slice(0, 40);
+    const usable = rows.filter(r => r.exhaustive);
+    const live = usable.filter(r => r.net > 0);
+    const makerOnly = usable.filter(r => r.net <= 0 && r.netMaker > 0);
+    const excluded = rows.length - usable.length;
+    const shown = netOnly ? (live.length ? live : usable.slice(0, 12)) : rows.slice(0, 40);
 
     tbody.innerHTML = shown.length ? shown.map(r => {
       const good = r.net > 0;
-      const size = r.maxShares > 0 && Number.isFinite(r.maxShares) ? fmtUSD(r.maxShares * r.cost) : '—';
+      const size = r.maxShares > 0 && Number.isFinite(r.maxShares) ? fmtUSD(r.maxShares * (r.buySide ? r.cost : 1 - r.proceeds / r.n)) : '—';
       return `<tr>
-        <td><a href="https://polymarket.com/event/${encodeURIComponent(r.slug || '')}" target="_blank" rel="noopener">${esc(r.title.slice(0, 64))}</a></td>
+        <td><a href="https://polymarket.com/event/${encodeURIComponent(r.slug || '')}" target="_blank" rel="noopener">${esc(r.title.slice(0, 56))}</a>
+          <div style="font-size:10.5px;color:var(--ink-3)">${r.buySide ? 'buy every outcome' : 'sell every outcome'}${r.exhaustive ? '' : ' · <span style="color:var(--status-warn)">no catch-all outcome — not guaranteed</span>'}</div></td>
         <td class="num">${r.n}</td>
-        <td class="num">${(r.cost * 100).toFixed(1)}¢</td>
+        <td class="num">${r.buySide ? (r.cost * 100).toFixed(1) : (r.proceeds * 100).toFixed(1)}¢</td>
         <td class="num" style="color:${r.gross > 0 ? 'var(--status-good)' : 'var(--ink-2)'}">${(r.gross * 100) >= 0 ? '+' : ''}${(r.gross * 100).toFixed(2)}¢</td>
         <td class="num" style="color:var(--ink-2)">−${(r.fee * 100).toFixed(2)}¢</td>
-        <td class="num" style="color:${good ? 'var(--status-good)' : 'var(--status-critical)'}"><strong>${(r.net * 100) >= 0 ? '+' : ''}${(r.net * 100).toFixed(2)}¢</strong></td>
+        <td class="num" style="color:${good ? 'var(--status-good)' : 'var(--status-critical)'}"><strong>${(r.net * 100) >= 0 ? '+' : ''}${(r.net * 100).toFixed(2)}¢</strong>
+          <div style="font-size:10.5px;color:${r.netMaker > 0 ? 'var(--status-good)' : 'var(--ink-3)'}">${(r.netMaker * 100) >= 0 ? '+' : ''}${(r.netMaker * 100).toFixed(2)}¢ as maker</div></td>
         <td class="num" style="color:var(--ink-2)">${size}</td>
       </tr>`;
     }).join('') : `<tr><td colspan="7" class="empty">No mutually-exclusive sets could be priced right now.</td></tr>`;
 
-    const best = rows[0];
-    $('#arbVerdict').innerHTML = `<div class="cluster ${live.length ? '' : 'calm'}" style="border-left-color:${live.length ? 'var(--status-good)' : 'var(--ink-3)'}">
-      <span class="big">${live.length ? `💰 ${live.length} basket${live.length === 1 ? '' : 's'} priced below $1 after fees` : '⚖️ No arbitrage right now — the sets all price coherently'}</span>
-      <span style="width:100%">${rows.length} mutually-exclusive sets checked across ${events.length} events. ${best ? `Best basket costs <strong>${(best.cost * 100).toFixed(1)}¢</strong> to own outright, against a guaranteed <strong>100¢</strong> payout — <strong style="color:${best.net > 0 ? 'var(--status-good)' : 'var(--status-critical)'}">${(best.net * 100) >= 0 ? '+' : ''}${(best.net * 100).toFixed(2)}¢ per basket</strong> after fees.` : ''}</span>
-      <span style="width:100%;color:var(--ink-2);font-size:12.5px">A negative number here is the honest and expected result: it means the crowd is pricing coherently and the fee is doing its job. This scanner earns its place by being <em>checkable</em> — when it does fire, the profit follows from arithmetic rather than from anyone being right.</span>
-      ${live.length ? '<span class="chip warn">● verify the book depth on the actual event page before sizing — gamma liquidity is a rough figure and every leg must fill or it is not an arbitrage</span>' : ''}
+    const best = usable[0];
+    $('#arbVerdict').innerHTML = `<div class="cluster ${live.length ? '' : 'calm'}" style="border-left-color:${live.length ? 'var(--status-good)' : makerOnly.length ? 'var(--status-warn)' : 'var(--ink-3)'}">
+      <span class="big">${live.length ? `💰 ${live.length} basket${live.length === 1 ? '' : 's'} mispriced even after crossing the spread` : makerOnly.length ? `⏳ ${makerOnly.length} basket${makerOnly.length === 1 ? '' : 's'} only work if you can rest limit orders` : '⚖️ No arbitrage right now — the sets all price coherently'}</span>
+      <span style="width:100%">${rows.length} mutually-exclusive sets checked across ${events.length} events${excluded ? `, of which <strong>${excluded}</strong> were set aside as unpriceable` : ''}. ${best ? `Best usable basket: ${best.buySide ? 'buy' : 'sell'} all ${best.n} outcomes for <strong>${((best.buySide ? best.cost : best.proceeds) * 100).toFixed(1)}¢</strong> against a <strong>100¢</strong> settlement — <strong style="color:${best.net > 0 ? 'var(--status-good)' : 'var(--status-critical)'}">${(best.net * 100) >= 0 ? '+' : ''}${(best.net * 100).toFixed(2)}¢ taking</strong>, <strong style="color:${best.netMaker > 0 ? 'var(--status-good)' : 'var(--status-critical)'}">${(best.netMaker * 100) >= 0 ? '+' : ''}${(best.netMaker * 100).toFixed(2)}¢ making</strong>.` : ''}</span>
+      ${excluded ? `<span class="chip warn">● ${excluded} set${excluded === 1 ? '' : 's'} excluded for having no catch-all outcome. On those, a sum below $1 is not a discount — it is the crowd pricing the chance that the answer is something nobody listed, and buying the basket would lose the lot.</span>` : ''}
+      <span class="chip muted">Both directions are checked: below $1 you buy the set, above $1 you sell it. The sell side is the commoner one — a set priced at 103¢ is an overround, exactly what a bookmaker builds in.</span>
+      <span style="width:100%;color:var(--ink-2);font-size:12.5px">The "as maker" figure is the same basket filled by resting limit orders instead of crossing: the taker fee becomes a rebate, which is often the whole difference between −1¢ and +4¢. It is not free — every leg must fill, and a partly-filled basket is a directional bet you did not choose to make. Treat it as the ceiling, not the expectation.</span>
     </div>`;
     $('#arbState').textContent = `${rows.length} sets checked`;
     $('#arbState').className = 'feedstate live';
@@ -4196,6 +4539,10 @@ segWire('#btSizeSeg','btSize', () => {});
 segWire('#btMinSeg','btMin', () => {});
 segWire('#btRunsSeg','btRuns', () => {});
 segWire('#arbDepthSeg','arbDepth', () => {});
+segWire('#insBackSeg','insBack', () => {});
+segWire('#insSizeSeg','insSize', () => {});
+segWire('#insHoldSeg','insHold', () => {});
+$('#insRun').addEventListener('click', runInsider);
 $('#arbRun').addEventListener('click', runArb);
 segWire('#cvSrcSeg','cvSrc', () => loadConviction());
 $('#btRun').addEventListener('click', runBacktest);
