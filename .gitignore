@@ -1,0 +1,26 @@
+# node / cloudflare
+node_modules/
+.wrangler/
+dist/
+.dev.vars
+wrangler.toml.local
+
+# secrets — never commit
+.env
+.env.*
+*.key
+*.pem
+secrets.json
+*token*
+*.pat
+
+# scratch
+*.log
+*.tmp
+tmp/
+scratch/
+.DS_Store
+
+# ad-hoc dumps (the committed analysis/ captures are deliberate)
+raw_*.txt
+dump_*.json
