@@ -1,0 +1,442 @@
+{
+  "_what_this_is": "Hypothesis registry (Edge Playbook section 4.7). Every claim this project has tested, its status, and what would change the verdict. It exists because a killed idea has a habit of coming back wearing a new name \u2014 and because a project that only records its wins learns nothing. Status values: KILLED (evidence against, do not revive without the stated trigger), OPEN (running, insufficient evidence), CORRECTED (was believed, found wrong, fixed), PARKED (untested, blocked on something specific).",
+  "_updated": "2026-08-12",
+  "_rules": [
+    "One observation per event. Wallets, markets and days are not interchangeable units.",
+    "A verdict needs the same statistical bar in both directions. Asymmetric gating manufactured a false INVERTED result once already.",
+    "Nothing is 'confirmed' by the run that generated the hypothesis. Reproduction or it did not happen.",
+    "Record the sample size that would settle it BEFORE looking at results."
+  ],
+  "killed": [
+    {
+      "id": "H1",
+      "claim": "Large or unusually-shaped trades on Polymarket predict outcomes ('smart money' is visible in trade shape).",
+      "evidence": "Pooled across 8 runs / 29,947 observations, top-vs-bottom quintile gap = -0.85 points [-2.51, +0.80]. Interval spans zero and the point estimate has the wrong sign.",
+      "status": "KILLED",
+      "revive_if": "A cleanly pre-registered test on the point-in-time tape (not on resolved-market hindsight) shows a gap whose 95% interval excludes zero, reproduced on a second disjoint period.",
+      "cost_of_believing_it": "This was the project's founding premise. Four separate panels were built on it before the error bars were added."
+    },
+    {
+      "id": "H2",
+      "claim": "Traders who did well before will do well again (skill persists wallet-to-wallet).",
+      "evidence": "r = -0.04 across sampled wallets, folded to one observation per wallet-market-side.",
+      "status": "KILLED",
+      "revive_if": "Persistence measured on wallets with 50+ resolved positions each, which the sampled population never had."
+    },
+    {
+      "id": "H3",
+      "claim": "Crowd bias (favourite-longshot style mispricing) is exploitable from the trader tape.",
+      "evidence": "Slope -0.002 +/- 0.083. Indistinguishable from zero.",
+      "status": "KILLED on the trader tape; the PORTFOLIO version is now running (worker v11.3)",
+      "revive_if": "Re-run as a PORTFOLIO on resolved-market history rather than trader-sampled tape (audit Idea 7). The tape version answered a different question than the one worth asking.",
+      "now_testing": "Calibration curve across resolved markets: outcome-0 price at T-24h and T-7d before resolution, bucketed in 5c bands, realized win rate with a Wilson interval. A band is only called when its interval excludes its own implied price. Costs zero extra API calls - it reuses the tape the penny sweep already fetches.",
+      "bar": "A band needs n>=100 before it means much; the whole curve needs the cheap end (0-20c) populated, which is where favourite-longshot bias lives.",
+      "watch_for": "Twenty buckets is twenty chances to find noise. Also: the trades tape is capped at 500, so busy markets may not reach back to the horizon and get skipped - and a skipped market is not a random one. Coverage (used vs skipped) is reported for exactly this reason."
+    },
+    {
+      "id": "H4",
+      "claim": "Quoting two-sided markets in news-sensitive categories earns spread from uninformed flow.",
+      "evidence": "Book went systematically short \u2014 4 short markets vs 3 long, 0 sell fills against 4 buy fills \u2014 which is the signature of informed takers lifting the ask. Independently, the categories selected are frequently fee-free, so they also pay no maker rebate.",
+      "status": "KILLED as stated; replaced by H10 (cohort A/B) rather than simply inverted",
+      "revive_if": "News cohort shows markout >= 0 at both horizons over 200+ fills."
+    },
+    {
+      "id": "H5",
+      "claim": "In-play sports markets are quotable if you avoid obvious titles.",
+      "evidence": "Short 292 shares of a Bayern match kicking off the same night, admitted through a title regex that missed a single-team title. Twice: the same gap reopened when 'other' became a quotable cohort.",
+      "status": "KILLED",
+      "revive_if": "Never on title matching. The defence is now exchange metadata (feeType 'sports_*', gameId, sportsMarketType, gameStartTime)."
+    },
+    {
+      "id": "H16",
+      "claim": "Kalshi and Polymarket misprice the same macro event enough to arbitrage (audit Ideas 18/19).",
+      "evidence": "Sept 16 2026 FOMC, both venues read the same minute. Kalshi's 'above X%' ladder maps onto Polymarket's negRisk set exactly once EFFR (3.63%) fixes the upper bound at 3.75%. Largest gap: 'no change' 64.50% Kalshi vs 62.04% Polymarket = 2.46c. Round trip costs 4.83c (PM economics_fees 0.05*p*(1-p) + 1c spread, plus TWO Kalshi ladder legs at 0.07*p*(1-p) + 2c spreads each). Every other gap is smaller than its own quote-width uncertainty.",
+      "status": "KILLED for liquid macro; the venues agree more tightly than the round trip costs",
+      "revive_if": "A gap above ~5c appears on an event where both venues are liquid \u2014 most plausibly in the minutes after a surprise, when one venue lags. That is a latency strategy, not a static-mispricing one, and needs the recorder running on BOTH venues to test.",
+      "near_miss": "The first version of this calculation printed TRADEABLE (+0.67c on the -25 outcome). Two errors, both pointing the same way: it charged one Kalshi spread where an interior ladder outcome needs two legs crossed, and it read a 1.8-point probability difference out of two contracts both quoted 98 bid / 100 ask. Errors in this project keep running toward finding an opportunity.",
+      "script": "auto/xvenue-kalshi-fed.py",
+      "corrected_by_H46": "Right by accident \u2014 its premise that exactly one leg pays is false for 15 of 16 cross-listed pairs."
+    },
+    {
+      "id": "H9",
+      "claim": "Markets trading at >= 98c on the winning side essentially never reverse, so buying settlement pennies is a positive-carry strategy.",
+      "status": "OPEN, and materially harder than it looked \u2014 63 markets, 0 reversals",
+      "bar": "Conditioned on entry price, because that is what sets the bar. Breakeven r* = 1 - p. At 98.0c: r*=2.0%, needs n>=150 clean. At 99.25c (our observed average entry): r*=0.75%, n>=400. At 99.9c (the ask actually resting on the book): r*=0.1%, n>=3000. Same strategy, twenty times the evidence, purely because of entry price. The old 'n>=300' target silently assumed a 98c fill.",
+      "now_also_needs": "Portfolio APR (return / capital-days) to clear a threshold worth the capital lockup, not merely to clear zero.",
+      "watch_for": "Selection bias \u2014 the sweep walks gamma's resolved list by volume, which over-samples large clean markets. A reversal is likeliest in exactly the thin disputed markets this ordering reaches last.",
+      "execution_finding": "The 2c edge is not executable. Checked the live book directly: a near-certain market (Israel/Iran ceasefire, resolving same day, 99.85c) had exactly ONE ask level \u2014 68,373 shares at 99.9c. Deep enough for any size we would trade, and worth 0.1c per share. The 2c payoff and the 99.9% safety are never available at the same moment: a market sits at 98c precisely because real reversal risk remains, and once that risk is gone the book has already repriced to 99.9.",
+      "where_it_stands": "63 markets with 0 reversals gives a 95% upper bound of 3/63 = 4.76% on the reversal rate. That justifies buying only at 95.2c or better \u2014 far below penny territory. The study does not yet support any penny trade at all.",
+      "now_reports": "Worker v11.4 reports pennies.econ.byEntry: per 0.5c band, n, reversals, breakeven, the 95% upper bound, needN, and a `cleared` flag that only trips when a band's own record meets its own bar.",
+      "verdict_2026_08_10": "KILLED on economics already measured: the only resting ask on the safe outcome is 99.9c, so the taker edge is 0.1c. No reversal rate rescues a tenth of a cent."
+    },
+    {
+      "id": "H10",
+      "claim": "Boring markets are better to make markets in than news-sensitive ones (audit Idea 3).",
+      "status": "OPEN \u2014 A/B started in worker v11.0",
+      "design": "Half the quoting slots to each cohort, every fill tagged, realized markout measured at 10 and 60 minutes, share-weighted with a standard error. Sports excluded from both arms by exchange metadata.",
+      "bar": "200+ fills per cohort before reading it. Decide on markout, not on the mark \u2014 a mark on inventory you were forced into flatters whatever forced you.",
+      "why_not_just_flip": "The previous news-only rule was itself argued from a plausible story rather than measured. Replacing one unmeasured story with another would repeat the mistake, and paper money makes the controlled version free.",
+      "verdict_2026_08_10": "KILLED. 51 open markets across spreads 1c-95c: 40 of 51 quote a spread WIDER than their typical move, but the median 24h volume of those 40 is ZERO and 30 of 51 traded nothing in 48h. Median size at bid FIVE contracts. Boring markets are better to quote and nobody trades with you there."
+    },
+    {
+      "id": "H11",
+      "claim": "Polymarket overshoots Fed-funds futures on the same news, so PM extremes can be faded toward futures-implied.",
+      "status": "OPEN \u2014 1 observation, and it arrived by falsifying the OPPOSITE hypothesis",
+      "history": "Original claim (futures lead, PM converges up) was graded and FAILED: PM fell 12.0 points against futures' 5.4, widening the gap from 7.1 to 13.8.",
+      "bar": "4+ independent meeting-cycle observations before any position is sized on it.",
+      "blocked_on": "IBKR snapshots are only reliable in interactive sessions; grade opportunistically.",
+      "verdict_2026_08_10": "KILLED, premise inverted. Polymarket prices P(25bp Sept hike) 0.34/0.35 while ZQU6 futures imply 47.1% \u2014 PM is 12c BELOW, not above, and agrees with Kalshi to within 1c across three feeds. dP/d(EFFR) is 8.57 points per basis point, so the whole 12.6-point gap is 1.48bp of assumption."
+    },
+    {
+      "id": "H12",
+      "claim": "Prediction markets misprice against free professional benchmarks (Kalshi macro vs Cleveland Fed / GDPNow; weather markets vs GFS / ECMWF).",
+      "status": "PARKED \u2014 the audit rates this family highest and it is untouched",
+      "why_promising": "The benchmark is public, free, and better than the crowd. That is a rarer setup than any signal we have tested so far.",
+      "next_step": "Weather first: the forecast skill of GFS/ECMWF is documented, and settlement is mechanical.",
+      "verdict_2026_08_10": "KILLED by measurement (GDPNow, the untested instance). KXGDP-26OCT30 rungs are 0.5pp apart; GDPNow's published RMSE is 1.17pp at best horizon and ~1.7-2.6pp at the actual 80-day one. Error bar is 2.3x-5x a rung; it cannot resolve a band. FOURTH instance of the same mechanism."
+    },
+    {
+      "id": "H13",
+      "claim": "Perpetual-futures funding carry is harvestable (audit Idea 14, its highest prior at 65%).",
+      "status": "PARKED \u2014 no venue connected",
+      "blocked_on": "Requires an exchange this project does not currently reach.",
+      "verdict_2026_08_10": "KILLED on a distribution rather than the single snapshot it was parked on. 13 OKX perps, 295 funding periods each: median annualised carry +2.61% GROSS, -1.69% NET vs 4% cash. 3 of 13 beat cash. At ZERO fees the median is still -1.39%. Widening the sample moved the median DOWN."
+    },
+    {
+      "id": "H14",
+      "claim": "Form 4 insider clusters predict returns when filtered six ways (cluster of 3+ insiders within 14 days, role, routine-vs-opportunistic, size relative to salary, market cap, context).",
+      "status": "PARKED \u2014 single-filter version built, six-filter version not",
+      "note": "Data access works (SEC + Alpha Vantage). This one is blocked on effort, not on capability.",
+      "verdict_2026_08_10": "KILLED via EDGAR Form 4 XML, which carries the transactionCode the Alpha Vantage feed omits. Filtering to P (open-market purchase) cuts clusters ~85% (20 -> 3 on tickers with full coverage), confirming the prior scan was compensation artifacts. 24 clusters/15 tickers, 18 priced: +21d mean -2.51% CI [-6.32,+1.18]; +63d mean -2.08% CI [-11.18,+7.92]. Both span zero, both negative, one name carries each."
+    },
+    {
+      "id": "H15",
+      "claim": "negRisk sets that fail to sum to $1 are free money.",
+      "status": "PARKED \u2014 scanner built, gated on exhaustiveness",
+      "note": "A set without a catch-all outcome SHOULD trade at a discount; that is correct pricing, not an arbitrage. The gate is the whole strategy.",
+      "verdict_2026_08_10": "KILLED on a live 30-set scan. Zero net-positive either side. Three gross-positive shorts (EPL +1.30c, Fed +1.10c, Brazil +0.20c) all killed by 2.5-3.8c fees. Only 1 of 30 sets is fee-free and it sums to 0.9970 \u2014 0.3c short. Event-level fetches fabricated a phantom +0.40c hit; per-market corroborated by /midpoint was the only reliable read."
+    },
+    {
+      "id": "H18",
+      "verdict_2026_08_10": "KILLED. Kalshi's CPI ladder implies SD 0.119pp; the Cleveland Fed nowcast's own published RMSE is 0.164pp. The free model is LESS confident than the price it was meant to correct. Plus a settlement trap: a 3.42 nowcast PRINTS as 3.4, so the 'above 3.4' rung loses the whole stake.",
+      "note": "reconstructed after a container rollback lost the full entry; the complete 136KB registry was delivered to Walton as a file."
+    },
+    {
+      "id": "H19",
+      "verdict_2026_08_10": "KILLED. Six genuinely nested ladders scanned live, all STRICTLY monotone at every pair. Largest gross credit -1.20c, i.e. 1.2c short of breakeven before fees; five of six are fee-free so fees were never load-bearing.",
+      "note": "reconstructed after a container rollback lost the full entry; the complete 136KB registry was delivered to Walton as a file."
+    },
+    {
+      "id": "H20",
+      "verdict_2026_08_10": "KILLED structurally \u2014 the premise is false. In 17 of 26 markets the YES and NO books are EXACT MIRRORS: every NO bid at p is the identical resting order as the YES ask at 1-p, matched to the cent in price AND size. There are not two books to drift apart.",
+      "note": "reconstructed after a container rollback lost the full entry; the complete 136KB registry was delivered to Walton as a file."
+    },
+    {
+      "id": "H21",
+      "verdict_2026_08_10": "KILLED. Polymarket's endDate is a stale placeholder matching the real deadline in 1 of 19 cases. The one real past-deadline market is ambiguous by its own default-to-NO clause \u2014 a stale market is stale BECAUSE it is ambiguous.",
+      "note": "reconstructed after a container rollback lost the full entry; the complete 136KB registry was delivered to Walton as a file."
+    },
+    {
+      "id": "H28",
+      "verdict_2026_08_10": "KILLED. IEM's 1-minute archive lags 26-33 hours. And CLINYC published the 7 Aug max of 91 at 20:33Z; H28 entered at 20:00Z, 33 minutes before the fact existed publicly. The +76.8c that was 69% of its P&L was a coin flip.",
+      "note": "reconstructed after a container rollback lost the full entry; the complete 136KB registry was delivered to Walton as a file."
+    },
+    {
+      "id": "H29",
+      "verdict_2026_08_10": "KILLED by H30's measurement. The asymmetry is real and permanent \u2014 settle >= spotmax on 65 of 65 city-days, strictly greater on 43 \u2014 and contracts already certain to lose still carried 14c-72c bids cleared by 800-3000 contract sweeps. Unreachable: the window is too narrow.",
+      "note": "reconstructed after a container rollback lost the full entry; the complete 136KB registry was delivered to Walton as a file."
+    },
+    {
+      "id": "H30",
+      "verdict_2026_08_10": "KILLED on the pre-registered bar. Public METAR publication lag by station: KNYC 78-130s, KMIA 140-190s, KMDW 140-190s, KDEN 190-258s, against a book that reprices in ONE minute at ob+180s. New York leads by 50-102s; Denver's free feed arrives AFTER the book has moved. Bar wanted a 90th percentile under 150s and consistency across stations.",
+      "note": "reconstructed after a container rollback lost the full entry; the complete 136KB registry was delivered to Walton as a file."
+    },
+    {
+      "id": "H31",
+      "verdict_2026_08_10": "KILLED. Polymarket's Liquidity Rewards Program is REAL and pays on presence, not fills \u2014 0.2-0.4%/day on resting capital, no KYC or lockup. But the scoring function is ((v-s)/v)^2 in distance from the midpoint, so earning it means quoting inside the spread. 56x against measured adverse selection; still loses 5.6x at ten times gentler.",
+      "note": "reconstructed after a container rollback lost the full entry; the complete 136KB registry was delivered to Walton as a file."
+    },
+    {
+      "id": "H33",
+      "verdict_2026_08_10": "KILLED. The supervolcano contract is 0.20 against a published base rate of 0.000033 \u2014 a 6000x mispricing \u2014 and selling it fully collateralised returns 0.91% A YEAR, because return is premium/tenor. Ebola base rates invalidated by an active PHEIC; hurricane rungs flip sign on which published rate you cite.",
+      "note": "reconstructed after a container rollback lost the full entry; the complete 136KB registry was delivered to Walton as a file."
+    },
+    {
+      "id": "H34",
+      "verdict_2026_08_10": "KILLED. 3 of 9 far-tail strikes carry a bid; a bid appears ONLY on the first rung where a cent is ~3x fair value, and one rung further out the book is EMPTY \u2014 30 consecutive rungs at zero bid. You cannot harvest a discretisation artifact because nobody must take the other side.",
+      "note": "reconstructed after a container rollback lost the full entry; the complete 136KB registry was delivered to Walton as a file."
+    },
+    {
+      "id": "H35",
+      "verdict_2026_08_10": "KILLED. On all five NYC days the winning band was already >=0.95 when the afternoon CLI was issued. But it exposed 7 Aug: the band sat at 0.17 for NINETY-NINE MINUTES after the 18:39Z max, then jumped to 0.99 at 20:18Z \u2014 15 minutes BEFORE the CLI.",
+      "note": "reconstructed after a container rollback lost the full entry; the complete 136KB registry was delivered to Walton as a file."
+    },
+    {
+      "id": "H36",
+      "verdict_2026_08_10": "KILLED as a free-data strategy. No free real-time 1-minute ASOS feed exists: Synoptic's demo token 403s and reports whole degrees C (cannot separate 91 from 90); MADIS is free but gated by an approved application; NWS HiResASOS is KPHX-only and down. A peak at 18:39Z first becomes public in the 23:51Z METAR remark \u2014 5h12m later.",
+      "note": "reconstructed after a container rollback lost the full entry; the complete 136KB registry was delivered to Walton as a file."
+    },
+    {
+      "id": "H37",
+      "verdict_2026_08_10": "KILLED out of sample. The sampling bias is real (gap 0F on 33.8% of days, 1F on 49.2%, 2F on 15.4%, 3F on 1.5%, never negative) but on 29 city-days in PHIL/BOS/ATL/DC the rule returns -2.44c, CI [-9.3,+4.4]. On the 7 high-conviction days the market's mean ask was 0.98 when the trade won and 0.07 when it lost \u2014 near-perfect discrimination the hourly feed cannot make.",
+      "note": "reconstructed after a container rollback lost the full entry; the complete 136KB registry was delivered to Walton as a file."
+    },
+    {
+      "id": "H38",
+      "verdict_2026_08_10": "KILLED, and the most informative death. 60 market-observations at a fixed pre-observation timestamp: 0.010->0%, 0.082->0%, 0.241->8.3%, 0.515->60%, 0.719->90%, 0.900->100%. Every bucket's price inside the interval of its own outcome. Buying at the ask returns -1.92c.",
+      "note": "reconstructed after a container rollback lost the full entry; the complete 136KB registry was delivered to Walton as a file."
+    },
+    {
+      "id": "H39",
+      "verdict_2026_08_10": "KILLED as executed \u2014 the instrument, not the market, was the problem. last_price on settled markets is converged (0.01/0.99) or stale; 4 weather series gave 286 markets and ZERO survivors. The one apparent departure was one payrolls print wearing twelve hats.",
+      "note": "reconstructed after a container rollback lost the full entry; the complete 136KB registry was delivered to Walton as a file."
+    },
+    {
+      "id": "H40",
+      "verdict_2026_08_10": "KILLED, and it produced THE HURDLE. 41 independent settled events, 345 markets, live prices at close-24h: 10 of 11 buckets on the diagonal, and buying every contract at the ask loses 4.03 CENTS PER EVENT, 95% CI [-7.4c, -0.7c] \u2014 EXCLUDING ZERO. First significant result in either direction, and it retroactively prices out a dozen ideas that reported 1c-8c gross against zero.",
+      "note": "reconstructed after a container rollback lost the full entry; the complete 136KB registry was delivered to Walton as a file."
+    },
+    {
+      "id": "H41",
+      "verdict_2026_08_10": "KILLED. Polymarket also calibrated: 7 of 8 buckets on the diagonal, buying returns +1.57c grouped by topic with CI [-8.9,+12.0]. But prices-history returns an UNSPECIFIED observed price, not an ask, so it is optimistic by half a spread. And only 2 of 45 markets were fee-free \u2014 zero-fee is a legacy state, not a live exemption.",
+      "note": "reconstructed after a container rollback lost the full entry; the complete 136KB registry was delivered to Walton as a file."
+    },
+    {
+      "id": "H42",
+      "verdict_2026_08_10": "KILLED. Both sides priced against the same outcomes: taker buys at ask -2.37c, sells at bid -0.83c; maker filled on bid -0.32c, on ask +1.29c, both sides +0.99c. The positive number is an IDENTITY \u2014 mean spread 1.42c, median 1.00c, minus fees. That 1c is the entire maker gross, against adverse selection measured at 2.7x the spread.",
+      "note": "reconstructed after a container rollback lost the full entry; the complete 136KB registry was delivered to Walton as a file."
+    },
+    {
+      "id": "H43",
+      "verdict_2026_08_10": "See H10 \u2014 spread and flow are inversely coupled.",
+      "note": "reconstructed after a container rollback lost the full entry; the complete 136KB registry was delivered to Walton as a file."
+    },
+    {
+      "id": "H44",
+      "verdict_2026_08_10": "KILLED at an estimate of ZERO after six iterations. 231 wallets screened, panel of 11: Pearson -0.016 all flow / +0.015 excluding wash, Spearman -0.064/-0.115, top-half transition at chance. Earlier n=3 and n=4 panels gave +0.759 and +0.885 \u2014 leverage artifacts whose own leave-one-out ranges were [-1,+1]. Underpowered for a moderate effect (n=11 vs n~29) so not proof of absence.",
+      "note": "reconstructed after a container rollback lost the full entry; the complete 136KB registry was delivered to Walton as a file."
+    },
+    {
+      "id": "H46",
+      "claim": "For cross-listed events the two venues' settlement CRITERIA diverge, so a cross-venue box does not pay exactly $1 \u2014 it can pay $2 or $0.",
+      "blind_classification": "16 pairs classified with a hard bar on reading any price. BOTH 7, DIV-DOWN 6, DIV-UP 2, IDENTICAL 1. ONE of sixteen is identical.",
+      "it_corrects_H16": "H16 killed cross-venue arbitrage on a 2.46c gap vs a 4.83c round trip. Its unstated premise was that exactly one leg pays. That is FALSE for 15 of 16 pairs \u2014 the trade is an unhedged bet on settlement criteria that looks riskless.",
+      "the_one_sided_mechanism": "Polymarket carries explicit fallback clauses (no-release, VP tiebreak, precedence, default-to-No) where Kalshi's rules_primary is a single silent sentence. Those fire by resolving Polymarket YES where Kalshi's silence leaves NO \u2014 the DIV-DOWN direction. The box is biased toward paying ZERO, so it is a trap and the correct direction is to SELL it.",
+      "examples": "BTC same-day: Kalshi 60-second average of CF BRTI at 3pm EDT vs Polymarket Binance BTC/USDT 1-minute CLOSE at noon ET \u2014 different index, method and three hours apart. Recession: Polymarket also resolves YES on an NBER declaration, which happened in 2001 and 2020 WITHOUT two negative quarters. CPI: if BLS never publishes July, Polymarket resolves on JUNE's number. Shutdown: Kalshi is a 10:00 ET snapshot, Polymarket any lapse by 23:59 \u2014 ~14 hours unmatched.",
+      "status": "KILLED as a trade; the classification stands as a correction to H16.",
+      "price_leg": {
+        "the_prediction": "If divergence is priced, DIV-DOWN boxes (which can pay ZERO) should cost LESS than $1 \u2014 you must be paid to hold them \u2014 and DIV-UP boxes (which can pay $2) should cost MORE.",
+        "the_observation_is_exactly_backwards": "Mean box cost by class: IDENTICAL 1.0110 (n=1), DIV-UP 0.9955 (n=2), DIV-DOWN 1.0246 (n=5), BOTH 1.0392 (n=6). DIV-DOWN costs MORE than a dollar and DIV-UP costs LESS \u2014 the reverse of the prediction on both sides.",
+        "but_it_is_not_a_short_either": "Every real box costs ABOVE $1.00 \u2014 all-divergent mean 1.0268, range 0.99 to 1.07 \u2014 so buying any of them loses before the divergence even matters. That is H16's round trip showing up exactly where it said it would. And the ordering across classes is noise on n = 1, 2, 5, 6; the two sub-dollar boxes are both artifacts, one with 38 shares of size on its Polymarket leg and the other a horizon mismatch (Kalshi 1 Oct vs Polymarket 31 Dec).",
+        "and_depth_kills_what_is_left": "Size at the touch on several legs: Bennett 5.00, Zelenskyy 3.85, recession 50.54, Nobel VOL 38.46. A box you cannot fill is not a box.",
+        "three_rows_are_not_one_for_one": "CPI is a genuine NO MATCH \u2014 Kalshi lists HEADLINE CPI YoY >3.4% while Polymarket lists only CORE, whose top bucket never reaches 3.4. Payrolls needs a 3-leg synthetic and ETH's Polymarket buckets carry no bids at all.",
+        "the_verdict": "KILLED as a trade. The market prices these boxes at roughly a dollar REGARDLESS of whether the contracts can disagree \u2014 so participants are indeed treating them as identical, and the criteria risk is genuinely unpriced. But that asymmetry cannot be harvested in either direction, because the box already costs more than it can pay in the base case.",
+        "what_survives_and_it_is_the_real_finding": "The CLASSIFICATION. One of sixteen cross-listed pairs has identical settlement criteria. H16 killed cross-venue arbitrage on the arithmetic and was RIGHT BY ACCIDENT \u2014 its premise that exactly one leg pays is false for fifteen of sixteen. So the trade was never a mispriced hedge; it was an unhedged bet on rulebooks that reads as riskless. Anyone who revisits cross-venue arb on a price gap alone is walking into that."
+      }
+    },
+    {
+      "id": "H47",
+      "claim": "Where one venue's contract has strictly MORE winning paths than its twin on the same fact, it should trade higher. Where it trades level or lower, the cheap leg is mispriced \u2014 and a single leg pays one round trip, not the two that killed H46's box.",
+      "the_strict_superset_discipline": "A leg qualified ONLY if every state resolving the twin YES also resolves it YES, plus one more. Anything needing a judgement call about which is broader was EXCLUDED rather than guessed. Six of thirteen candidates were excluded on exactly that: the Fed pair because Kalshi's rules_secondary carries its OWN fallback so neither contains the other; Senate because Kalshi determines control by President pro tempore on 1 Feb 2027 against Polymarket's VP tiebreak at election, non-nested across a party switch; Venezuela because the snapshot times differ AND Kalshi adds an 'actively serving with full authority' branch.",
+      "result": "KILLED, and it fails in the direction that says the market is RIGHT. Seven verified supersets. The superset leg is cheaper on only 3 of 7 \u2014 a minority \u2014 and the mean gap is +0.0039, i.e. the broader contract is DEARER by 0.39c on average, which is exactly what it should be. The rulebook is priced, directionally.",
+      "the_three_cheap_cases_are_explained": "All three gaps are under 1.1c, well inside the ~4c hurdle and inside typical spreads. And the largest apparent gap \u2014 Musk's Nobel at Kalshi 0.02 against Polymarket 0.003, a 6.7x ratio \u2014 sits on a Kalshi book with a single YES bid level of FOUR contracts. Stale quote, not edge.",
+      "the_structural_asymmetry_it_did_surface": "Six of the seven supersets run KALSHI-broader, all in the Nobel ladder, for a specific reason: Polymarket forces a shared prize to a single winner via an explicit precedence list, while Kalshi's rules_primary is a bare 'If X wins' with NO mutual-exclusivity clause \u2014 so Kalshi pays on any co-laureate. That is a genuine and permanent structural difference between the venues, and Kalshi's legs being dearer is the correct pricing of it.",
+      "and_it_revises_H46": "H46 concluded from BOX costs that criteria risk is unpriced. The single-leg test says otherwise \u2014 the direction is right and the magnitude is about a third of a cent. H46's box result was the two round trips, not a pricing failure. Both readings stand together only because the single-leg test avoided comparing an ask on one venue to a bid on the other, which is the error H46's price leg made.",
+      "status": "KILLED."
+    },
+    {
+      "id": "H48",
+      "claim": "Kalshi ladders lacking a mutual-exclusivity clause can pay MULTIPLE legs at once, and the market prices them as though exactly one can win.",
+      "step_one_confirmed_the_premise": "No exclusivity clause anywhere. rules_primary is a bare 'If X wins the Nobel Peace Prize in 2026, then the market resolves to Yes'; rules_secondary is only a Nobel Foundation disclaimer; the contract-terms PDF gives NO settlement mechanics for a divided prize; and the event endpoint states `mutually_exclusive: false` outright.",
+      "the_base_rate_fetched_before_judging_the_sum": "34 of 106 Peace Prizes shared, 32.1%, mean 2.09 laureates in a shared year -> 1.349 laureates per award (nobelprize.org; reconciles exactly with the published 143 laureates across 106 awards).",
+      "the_result_KILLS_it": "21 legs, no Field leg. sum(mid) = 110c. A partition CANNOT sum above 100c on mids, so the multi-winner structure is ALREADY PRICED \u2014 the 110c is the signature of a non-partition ladder, not evidence of one being missed. Implied coverage of the laureate pool is 82%.",
+      "and_both_directions_lose": "Buy the set at asks: 128c for an expected payoff of 110c = -18c. Sell at bids: receive 92c against an expected 110c liability = -18c. The aggregate spread across 21 legs is 36c and it eats both sides. Depth is thin on most legs besides Trump.",
+      "THE_CORRECTION_IT_FORCES_ON_H15": "H15 concluded that shorting a negRisk set for more than $1 is riskless WHATEVER the exhaustiveness, because maximum liability is $1 \u2014 at most one outcome can win. That premise is FALSE for any set without an exclusivity clause: liability is UNCAPPED. Kalshi's own event field says `mutually_exclusive: false`. H15's kill stands on its arithmetic, but its stated safety argument was wrong, and anyone reusing that reasoning on a non-exclusive set would be writing an uncapped short believing it capped. Third kill this session that was right for the wrong reason, after H16 and H46.",
+      "a_parser_trap_worth_keeping": "EIGHT of the 21 legs carry a `-27-` ticker prefix while reporting event_ticker KXNOBELPEACE-26 and 2026 rules. Any code keying on the ticker year silently drops 38% of the ladder. And the event/markets endpoints reported leg COUNTS of 24, 25 and 26 while their actual enumerations were all the same 21 \u2014 the counts were fabricated, the lists were not.",
+      "status": "KILLED. The non-partition structure is real and already in the price."
+    },
+    {
+      "id": "H49",
+      "claim": "Among Kalshi events with `mutually_exclusive: false`, any summing BELOW 100c on mids is structurally underpriced, because a set where several legs can pay must be worth more than one where exactly one can.",
+      "status": "KILLED \u2014 and by its own premise, which was wrong as I stated it.",
+      "the_error_was_mine": "A non-exclusive set must exceed 100c only if its legs EXHAUST the outcome space. A non-exclusive set sums to E[number of winning legs], and for a union of independent low-probability events that is far BELOW 1. All four sub-100c flags \u2014 KXEUREF-30 at 17.4c, KXEUEXITCOUNTRY-30 at 22.3c, KXAGENCYELIM-29 at 50.5c, KXUSAEXPANDTERRITORY at 93.7c \u2014 are non-exhaustive unions whose dominant outcome (no country exits the EU, no agency is eliminated) has NO LEG. Sub-100 is the arithmetically correct signature there, not underpricing. The Nobel ladder summed above 100c because its legs nearly exhaust a pool that always produces a winner; these do not.",
+      "why_that_matters_more_than_the_null": "I generated H49 from H48's finding and got the logic wrong. The subagent caught it and refused to report four apparent finds. That is the fourth time today a conclusion was right for the wrong reason or wrong for a checkable reason \u2014 after H16, H46 and H15 \u2014 and the only one where the error was in a hypothesis I had just written.",
+      "the_base_rate_is_a_data_artifact": "216 of 300 open events report `mutually_exclusive: false`, 72% \u2014 but in the one unbiased nested page every `false` event was SINGLE-leg and every multi-leg event was `true`. The flag is vacuous on binaries, so the headline fraction means nothing.",
+      "two_data_hazards_worth_keeping": "First, the event endpoint reports an EMPTY orderbook as 0.0000/1.0000, which injects a phantom 50c mid \u2014 confirmed on three legs. Any sum-based scan reading event-level quotes will silently add half a dollar per dead leg. Second, WebFetch truncated three large ladders mid-enumeration (43, 44 and 41 legs), so they were excluded rather than reported with wrong counts."
+    },
+    {
+      "id": "H50",
+      "claim": "Calibration was measured at ONE horizon, which does not imply the martingale property. A market can be perfectly calibrated in LEVEL and still have autocorrelated CHANGES. So: are successive price changes autocorrelated?",
+      "why_it_was_a_real_gap": "Every prior hypothesis tested a level, a feed, a structure or a rulebook. None tested the PATH, and the calibration result does not cover it. This needed no feed, no speed, no privileged data \u2014 only price history.",
+      "THE_EFFECT_IS_REAL": "Lag-1 autocorrelation of hourly mid changes: mean -0.2472, 95% bootstrap interval over MARKETS (not hours) of [-0.3471, -0.1416] \u2014 EXCLUDING ZERO. Negative in 18 of 19 markets. 22 markets, 6 series, 2,398 hourly candles. This is MEAN REVERSION, and it is the first statistically significant non-zero effect this project has found.",
+      "and_it_survived_the_microstructure_test": "A stale mid bouncing between bid and ask manufactures spurious negative autocorrelation. It did not happen here: the sign holds and the magnitude does not collapse across mid (-0.2472), bid (-0.2773) and ask (-0.2455). Robustness held under six further specifications \u2014 dropping the last 3 candles (-0.2235), strictly contiguous pairs (-0.2510), volume-bearing candles only (-0.2368), and 3h/6h subsampling (-0.1905/-0.2352).",
+      "and_it_is_STILL_not_a_trade": "The reversion is entirely SUB-SPREAD. Mean absolute hourly move is 0.69c against a mean quoted spread of 2.00c, so the expected reversion after a typical move is 0.2472 x 0.69 = 0.17c against a 2.00c cost to cross. That is 11.7x against. Breakeven needs a prior hourly move above 8.1c before the expected reversion covers one spread crossing \u2014 against a mean move of 0.69c, with 62% of hourly changes exactly zero.",
+      "the_honest_caveat": "Bid and ask flicker TOGETHER (the whole book is re-quoted), which the mid/bid/ask comparison cannot distinguish from genuine signal. The executed-trade series would be the cleaner discriminator and was not pulled. Two of the largest negative markets are in-play endgame whipsaws.",
+      "status": "KILLED. The purest statement of this project's finding: the signal is REAL, significant and robust \u2014 and the spread is twelve times bigger."
+    },
+    {
+      "id": "H51",
+      "claim": "H42 measured adverse selection at 2.7x the spread \u2014 price moves AGAINST a maker after a fill. H50 measured reversion at -0.247 \u2014 price comes BACK. Those cannot both be general. H42 used ONE market chosen as a deliberate worst case; H50 used twenty-two. So: across many markets, does post-fill drift favour the maker?",
+      "the_number_it_produced": "Across 19 markets and 885 hypothetical fills, post-fill mid drift in the maker's favour is +0.573c, 95% bootstrap over markets [+0.271c, +0.931c], positive in 16 of 19. With a 2.16c mean spread that gives half-spread 1.08c + drift 0.573c - maker fee 0.44c = +1.217c per fill. That would be the first positive result in fifty-one hypotheses.",
+      "and_it_is_almost_certainly_MY_ARTIFACT": "Three reasons, and the third is decisive. (1) FILL ASSUMPTION: I filled the maker whenever the mid ticked down. This project's own market-making simulation states the rule explicitly \u2014 fills happen only when price trades THROUGH the quote, because joining the touch puts you at the back of the queue \u2014 and calls assuming otherwise the single most common way a maker backtest invents profit. (2) MARKING: I measured mid-to-mid and marked inventory at the mid; the same simulation requires settling inventory at the TRUE outcome, because a mark on inventory the market forced onto you flatters exactly the thing that hurt you. (3) DECISIVE: conditioning on 'the mid fell' and averaging the next change IS the lag-1 autocorrelation statistic, in different units. A coefficient of -0.247 MECHANICALLY produces a positive conditional next move. So this is not independent evidence \u2014 it is H50 restated, and it inherits H50's unresolved caveat that bid and ask flicker together in a way the mid/bid/ask test cannot separate from signal.",
+      "so_the_reconciliation_is_NOT_established": "The gap between H42 and H50 is not resolved by this. H42 used trade-through fills and true-outcome settlement; this used touch fills and mid marking. Those are different experiments and the difference is exactly the direction that manufactures profit.",
+      "the_test_that_would_settle_it": "Executed-trade prices rather than quotes \u2014 Kalshi's trades endpoint \u2014 with fills only where a trade prints through the resting quote, exit at the opposite TOUCH rather than the mid, and inventory settled at the true outcome. That is a bounded job and it is the single most valuable open measurement left, because it decides whether adverse selection or reversion dominates, and the whole maker case turns on it.",
+      "status": "KILLED as reported. The +1.217c is not a finding; it is the fifth false positive caught today, and the only one I generated myself in the final step rather than inherited."
+    },
+    {
+      "id": "H52",
+      "claim": "The decisive experiment: post-fill markout on EXECUTED TRADES, settled at the true outcome. Fills only where a trade actually printed; no marking. This is what H42 (n=1, adverse selection 2.7x the spread) and H50 (n=22, changes revert at -0.247) disagreed about, and the whole market-making case turns on it.",
+      "the_headline_number_and_why_it_is_void": "15 markets, 2,156 trades, 50,494 contracts: maker P&L +0.68c per contract equal-weighted, 95% CI [+0.37, +1.05] excluding zero, positive in 12 of 15. It is void. ALL FIFTEEN MARKETS SETTLED NO, and that is not chance \u2014 only far-OTM strikes have few enough trades to page fully, and far-OTM strikes almost always expire worthless. The sample measures the profitability of selling lottery tickets that happened to lose.",
+      "THE_DIAGNOSTIC_THAT_ANSWERS_IT": "One YES-settling market was reachable: KXHIGHCHI-26AUG09-B85.5, 1,857 trades, mean price 62.08c. Maker P&L there is MINUS 15.00c equal-weighted and MINUS 15.85c size-weighted. Takers bought YES on 66.6% of contracts as it ran 17c to 99c and won \u2014 informed flow, exactly as H42 described. Adding that single market flips the sample mean to -0.30c equal-weighted, -0.62c size-weighted and -5.04c VOLUME-weighted. It takes about FORTY of the tail markets to offset one of it.",
+      "so_the_contradiction_resolves_for_H42": "Adverse selection dominates. The maker sells at a mean price of 2.17c, earns about 0.7c when the contract expires worthless, and loses 15c when one runs. H50's reversion is real in the quote path and irrelevant to the fill economics, because the fills that matter are the ones that keep going. H42 generalised from one market and was RIGHT.",
+      "and_the_size_weighting_shows_it_directly": "Size-weighted P&L is below equal-weighted in 9 of 15 markets. Big fills are systematically worse for the maker. That gap IS adverse selection, measured, and it does not need the YES-settling market to appear.",
+      "methodology_worth_keeping": "The taker-side convention was VALIDATED rather than assumed: correlating each 40-trade block's taker-yes share against the NEXT block's price change gives +0.42 pooled, positive in rising and falling markets. A naive trade-by-trade version gives the opposite sign \u2014 bid-ask bounce plus the 1c price floor. And a completeness gate (sum of count_fp must equal the market's volume) caught feeds that are genuinely short by 27-42% despite the cursor being exhausted.",
+      "schema": "Actual trade fields: count_fp, created_time, is_block_trade, no_price_dollars, taker_book_side, taker_outcome_side, taker_side, ticker, trade_id, yes_price_dollars. Prices are STRINGS in dollars; sizes are fractional. There is no `count` and no `yes_price`.",
+      "status": "KILLED, and it is the most valuable kill of the fifty-two: it resolves the one internal contradiction in this registry, in favour of adverse selection."
+    },
+    {
+      "id": "H53",
+      "claim": "Buying far-OTM contracts at the ask and holding to settlement is profitable, because a 1-cent tick floor cannot price a sub-1% event low enough. Tested because SELLING tails died on execution twice \u2014 you cannot sell them, the book is empty \u2014 but there are always asks, so buying is executable where selling is not.",
+      "result": "76 far-OTM markets (24h-lead ask <=5c) from 30 complete 6-rung ladders across 5 series. YES rate 0 of 76. Mean P&L -2.51c, median -2.14c, event-resampled 95% CI [-2.86, -2.21]. Every ask bucket negative and MONOTONE in ask: -1.07c at 1c, -2.14c at 2c, -3.20c, -4.27c, -5.33c at 5c. The tick-floor prediction that edge concentrates at 1c is not merely unsupported \u2014 1c is simply the least-bad bucket because it risks least.",
+      "the_honest_bound_and_it_matters": "The agent refused to let the bootstrap carry this and it was right. With ZERO winners anywhere, no event resample can produce one, so the per-bucket intervals are degenerate point masses and the bootstrap cannot express the dominant uncertainty. The real bound: break-even YES rate is ask+fee = 2.68%, and the exact one-sided 95% upper bound given 0/76 is 3.87% \u2014 which is ABOVE 2.68%. So this sample does NOT exclude profitability at 95%. 76 contracts at a 2.5c mean is ~1.9 expected winners; observing zero has probability ~15% under fair pricing. This is consistent with FAIR pricing, not proof of overpricing.",
+      "and_it_confirms_the_execution_asymmetry": "29 of 76 (38%) had bid = 0.0000 at the same timestamp \u2014 buyable but unsellable, exactly as the short-tail work found.",
+      "data_integrity_defect_worth_keeping": "`/events?with_nested_markets=true` returns status=active with a BLANK result for markets that settled days earlier \u2014 confirmed on five events. The single-market endpoint and `/markets?status=settled` both return finalized/no for the same tickers. The events endpoint serves stale status and must not be used alone for outcomes.",
+      "status": "KILLED DECISIVELY. n=128, zero winners, 95% upper bound 2.313% below a 2.68% break-even. The only hypothesis today closed with a sufficient sample rather than an underpowered one \u2014 and it took extending the sample rather than accepting the weaker claim.",
+      "extended_to_decisive_n": {
+        "why": "At n=76 the point estimate was firmly negative but the exact one-sided 95% upper bound on the YES rate was 3.87% against a 2.68% break-even \u2014 so profitability was NOT excluded. By the rule of three, ~120 contracts with zero winners settles it. The honest move was to go and get them rather than report the weaker claim.",
+        "the_extension": "52 additional far-OTM contracts across 22 events, zero ticker or event overlap with the original 76 (asserted in code): six new city series (ATL, DAL, BOS, HOU, PHIL, PHX) on 26AUG02-03, plus earlier dates 26JUL29-30 on the original five. Definitions unchanged and not re-tuned.",
+        "THE_VERDICT": "POOLED n=128, 52 events, ZERO settled YES. Exact one-sided 95% upper bound on the YES rate = 2.313%, against a break-even of 2.68%. **BELOW.** The sample's own ask+fee break-even of 2.586% is also above the bound. Profitability is now EXCLUDED at 95%, which it was not at n=76. Pooled mean P&L -2.586c per contract, event-resampled 95% interval [-2.807, -2.379].",
+        "and_the_margin_is_not_close": "Every one of the 52 new events' actual YES rung priced at 13c or more at the 24-hour lead. The nearest any winner came to the 5c cutoff was 13c \u2014 roughly three times it. Far-OTM strikes in this window do not merely lose on average; in 128 contracts they never won once.",
+        "execution_asymmetry_confirmed_again": "43 of 128 pooled (33.6%) had a zero bid at the same timestamp \u2014 buyable but unsellable.",
+        "a_second_stale_endpoint": "The SINGLE-MARKET endpoint also served stale `active`/blank results for four already-settled 26JUL markets \u2014 the same pathology previously pinned only on `/events?with_nested_markets=true`. Cache-busted refetches returned finalized. So outcomes must come from `?status=settled`, and neither the events nor the single-market endpoint can be trusted alone. Also `/markets?limit=100` transcribed 34 of ~100 rows on one probe."
+      }
+    },
+    {
+      "id": "H54",
+      "claim": "If far-OTM rungs carry probability mass that never realises, conservation says that mass is underpriced somewhere else \u2014 and in a 6-way partition the only place left is the middle. So: the ladder is OVER-DISPERSED and buying the favourite at the 24h lead pays.",
+      "the_signal_is_real_at_the_hit_rate_level": "61 complete 6-rung ladders, 11 series, 366 rungs. The favourite won 59.02% of the time against a mean implied 50.10% at the raw ask and 46.82% de-vigged \u2014 z = 1.91, one-sided p = 0.028. Favourites DO win more often than they are priced. And the overround cannot explain it: refunding the favourite's proportional share of the 7.11pp vig makes the trade BETTER, from +7.23c to +10.51c, so the vig works against the result.",
+      "but_the_P&L_does_not_survive": "TOP1 mean +7.23c with a 95% event-bootstrap interval of [-4.55, +18.64] \u2014 straddles zero. TOP2 is -1.60c, [-10.99, +7.09]. Neither is a result.",
+      "and_ONE_CHECK_dissolves_it": "Restricting to the 51 ladders where EVERY rung had a candle at the lead (offset <=60s) collapses TOP1 from +7.23c to +0.82c and the hit rate from 59.0% to 52.9%. The entire effect lives in the 10 ladders where some tail rung had no trade that hour \u2014 and the favourite won 9 of those 10. A missing tail candle means nobody was trading the tails, which happens when the outcome is already obvious. So the sample selected for already-decided ladders and then discovered that favourites win them. That is the candle-availability selection, not over-dispersion.",
+      "concentration_confirms_it": "The largest single winner is 13.9% of the total P&L and is worth 8.5 mean-events; the top three are 41.3%; removing the eight best events drives the total negative.",
+      "AND_IT_CORRECTS_H53": "Two premises I carried into this failed on the wider sample. Three of 61 winning rungs priced BELOW 13c (at 3c, 7c and 12c), and of 147 rungs at ask <=5c, ONE settled YES \u2014 0.68%, not zero. H53's verdict survives, because 0.68% is still well under the 2.68% break-even, but its phrasing that far-OTM strikes 'never won once' was an artifact of that sample and should not be repeated.",
+      "status": "KILLED. The over-dispersion signal is real on the hit rate and does not reach the P&L; what looked like +7.23c is +0.82c once ladders with missing tail candles are excluded.",
+      "note": "recovered from the session record after the 2026-08-12 container rollback."
+    },
+    {
+      "id": "H56",
+      "claim": "THE HURDLE. Buying at the ask loses money after fees, by an amount every idea must clear. Re-measured because the original -4.03c rested on 41 events collected through a fetch layer since proven to fabricate quotes, drop rows silently, and invent midpoints for empty books.",
+      "preregistration": "sha256 433b4a1ec4d52f8e5531351dce4e18a5824a0411abb970e5fd7d34cfcffc90a3, sealed 2026-08-12T07:49Z before any outcome was joined to any price. Outcome meanings, sample minimum (150 events), primary statistic, and all four robustness checks were fixed in advance.",
+      "evidence": "Mean P&L per event -4.39c, 95% event-bootstrap CI [-5.20, -3.67], n=346 independent events drawn from 21 real series. Prior: -4.03c [-7.40, -0.70] on n=41. Point estimate essentially unchanged; interval 4.4x tighter.",
+      "robustness": {
+        "R1_by_market": "-6.69c [-8.28, -5.08] n=1973. Worse, as expected - rungs of one ladder are not independent.",
+        "R2_H54_selection_check": "Restricted to the 320 events where EVERY rung had a quote at the lead: -4.17c [-4.95, -3.48]. The candle-availability selection that destroyed H54 does not touch this result. This was the check most likely to kill it.",
+        "R3_leave_one_series_out": "Range -4.57c to -3.54c across all 19 series. Sign stable everywhere. Most influential single series is KXRAIN; without it, -3.54c.",
+        "R4_concentration": "Largest single event is 3.9% of total P&L. For contrast the H54 false positive had its top event at 13.9% and top three at 41.3%."
+      },
+      "decomposition_post_hoc": "Gross before fees -2.84c [-3.66, -2.12]; fee -1.55c; quoted spread at entry 2.99c mean / 1.30c median. Residual after removing the half-spread: -1.34c. So the cost is roughly thirds - crossing the spread, the fee, and the ask sitting above fair value beyond the half-spread. Only that last third is attackable in principle.",
+      "cheapest_venue_to_cross": "Liquid sports and weather ladders at -2.50c. That is the floor. Nothing in 21 series is positive.",
+      "status": "CONFIRMED at -4.39c [-5.20, -3.67]. Supersedes -4.03c. The pre-registered expensive branch - interval spanning zero, which would have forced a dozen verdicts re-opened - did not fire.",
+      "revive_if": "Never as stated. To move the number, re-measure on a disjoint venue or a materially later period; the estimator and pre-registration are in h56/.",
+      "note": "The old number was right despite being measured through a lying layer. The layer was fabricating, but not in a direction that moved this particular estimate. That is luck, not vindication of the old method."
+    },
+    {
+      "id": "H55",
+      "claim": "Buying near-certainties (ask 0.93-0.98) at a 24h lead pays, because the Kalshi fee 0.07*p*(1-p) is minimised at the extremes (0.33c at p=0.95 vs 1.75c at p=0.50), and the 0.95-1.00 bucket was the only one in the H40 calibration with meaningful n returning positive P&L.",
+      "evidence": "Incidental to H56, not a dedicated test. The 90-99c ask bucket realises 77.1% at the EVENT level against 95.6% implied, over 26 events.",
+      "status": "NOT SUPPORTED - but not cleanly killed. 41 of the bucket's 54 markets are KXRAIN, the single worst-performing series in the study at -16.94c. The evidence is contaminated by one series.",
+      "revive_if": "A pre-registered test on a KXRAIN-free sample of 150+ independent events in the 0.93-0.98 band. Until then this is neither alive nor honestly dead."
+    }
+  ],
+  "corrected": [
+    {
+      "id": "H6",
+      "claim": "Polymarket pays a flat 1.25% maker rebate on every fill.",
+      "found": "Makers are never charged a fee anywhere, and a real rebate program does exist \u2014 but it is per-market and per-category, paid daily from taker fees. politics_fees = 0.04 x 0.25 = 0.0100. sports_fees_v2 = 0.05 x 0.15 = 0.0075. General/mentions = 0.05 x 0.25 = 0.0125. Geopolitical markets have feesEnabled:false and pay NOTHING.",
+      "impact": "$142.02 of house mode's $436.25 equity was accrued rebate, on a book made almost entirely of Iran and geopolitics markets that fund no rebate pool at all. A third of the reported edge was an artefact of a constant.",
+      "fix": "feeTerms() reads feesEnabled / feeSchedule / feeType straight off the market object. Legacy total quarantined into house.rebateAudit rather than deleted.",
+      "status": "CORRECTED in worker v11.0",
+      "lesson": "The audit said 'verify the rebate assumption' and it was half right in a way that mattered more than if it had been simply right \u2014 the rebate exists, so the assumption looked confirmable, but the rate was wrong exactly where we were trading."
+    },
+    {
+      "id": "H7",
+      "claim": "The penny strategy's breakeven reversal rate is 1.5%, and EV per $1 is the metric.",
+      "found": "Breakeven with the real fee is 1.92%, not 1.5% \u2014 the old figure assumed a flat 6% taker fee that no category charges. And EV per $1 hides the two things that decide viability: how long capital is locked and what the exchange takes. Restated as return on locked capital: an all-winners book at ~7.5 day holds annualises to roughly 97%, not the four-figure number a naive reading suggests.",
+      "status": "CORRECTED in worker v11.1",
+      "note": "The easier breakeven bar (1.92% vs 1.5%) also lowers the sample size needed for a verdict."
+    },
+    {
+      "id": "H8",
+      "claim": "Offline backtest scores are comparable to the live 60/80 thresholds.",
+      "found": "Offline scoring omits up to +55 points of context bonuses, so zero of 1,157 bets scored 60+. Replaced with tie-respecting rank quintiles.",
+      "status": "CORRECTED"
+    },
+    {
+      "id": "H17",
+      "claim": "Cohort labels in the boring-vs-news A/B are measured.",
+      "found": "They were not, for one deploy. The house market list persists in KV, so after v11.1 shipped it still held pre-cohort entries with no cohort and no fee. The fill loop read `pos.cohort = mk.cohort || pos.cohort || 'news'` and labelled every one of them NEWS. Worse, the legacy verification sweep opens with `if (pos.cohort) continue`, so the invented label blocked the lookup that would have corrected it - a guess that defends itself from being checked.",
+      "how_found": "Not by a test. By reading the live deploy's inventory table and noticing a confident cohort label sitting next to feeType 'unknown'. A measured label always brings its fee schedule with it; an invented one cannot.",
+      "impact": "Caught within ~15 minutes of deploy, before the A/B had accumulated fills. Had it run, the news arm would have been contaminated with unlabelled markets and the boring-vs-news verdict would have been decided by a default.",
+      "fix": "Default is now 'unverified', which has its own markout bucket the comparison never reads; verification re-asks anything 'unverified'; and a market list lacking cohort/fee forces an immediate refresh instead of waiting up to an hour for the cadence. Regression test wtest15 includes the starved-refresh path, since the obvious version of the test passes even with the bug present.",
+      "status": "CORRECTED in worker v11.2",
+      "lesson": "Three of this project's worst bugs now share one shape: a fallback that invents a value rather than admitting it does not have one. Fills counted as positions, winnerIndex defaulting to 1, and now cohort defaulting to news. The fix is always the same - carry 'unknown' as a first-class value and let it be visibly absent."
+    }
+  ],
+  "open": [
+    {
+      "id": "H57",
+      "claim": "KXRAIN contracts quoted above ~70c are systematically overpriced.",
+      "how_found": "POST-HOC SLICING of the H56 sample. This is the weakest possible provenance and the entry says so.",
+      "evidence_such_as_it_is": "KXRAIN is the worst series in H56 at -16.94c per event (n=22). It supplies 62 of 89 markets in the 70-79c bucket, 13 of 29 in 80-89c, and 41 of 54 in 90-99c - i.e. it is the entire reason the high-ask calibration table looked dramatic. At the market level those buckets showed -29.7pp, -26.6pp and -19.7pp against implied; recomputed at the EVENT level the 70-79c gap shrinks from 43.8% to 60.1% realised.",
+      "status": "OPEN - hypothesis only, no verdict. 41 events, discovered by slicing, in the single worst series.",
+      "bar": "Pre-register before touching it: a fresh disjoint sample of KXRAIN events, 150+ independent observations, the direction stated in advance, and the hurdle (-4.39c) as the thing to clear rather than zero.",
+      "watch_for": "This has the exact shape of false positive #3 (a calibration bucket that was one payrolls print in twelve hats) and #5 (fifteen markets that all settled NO because only far-OTM strikes were reachable). Treat with suspicion proportional to how good it looks."
+    }
+  ],
+  "parked": [],
+  "infrastructure_facts": {
+    "recorder": "Live from worker v11.0. Hour-sharded book snapshots, 60-day TTL, zero extra subrequests, one KV write per cycle. Half the parked ideas are blocked on history nobody sells \u2014 this is the only way to get it.",
+    "subrequest_ceiling": "50 per invocation. Worst measured cycle is 22. Exceeding it silently kills scheduled runs \u2014 that failure once looked exactly like a broken cron trigger and was misdiagnosed as one.",
+    "kv_writes": "~1k/day free. Recorder uses 288.",
+    "winner_source": "clob.polymarket.com/markets/{cid} tokens[].winner ONLY. A summarizer once defaulted every winnerIndex to 1 and nearly logged two fake reversals into a study whose breakeven is under 2%.",
+    "github_push": "Repo is waltywalty/smart-money (public, branch main). Pushing works from the Kernel browser VM via the GitHub Git Data API; it is NOT reachable from the Cowork sandbox, and the Claude Code cloud environment blocks the trading APIs at the proxy unless the environment's network access is set to Custom.",
+    "kalshi": "Public market data at api.elections.kalshi.com/trade-api/v2 reads WITHOUT auth via WebFetch, and works headlessly (unlike IBKR). Series list, event tickers (KXFED-26SEP style), bids/asks/volume/OI all available. Fee schedule verified: taker round_up(M*0.07*C*P*(1-P)), maker round_up(M*0.0175*...), multiplier 0 on a few series. This is a genuinely new capability - a second venue we can see without Walton present.",
+    "weather_blocked": "api.weather.gov and api.open-meteo.com are both robots-disallowed for WebFetch, so H12's forecast leg has no data source right now. Polymarket also had zero weather markets in the top 200 by volume. Kalshi does list weather series - the missing piece is a reachable forecast API, not the market.",
+    "raw_http_available": "Kernel browser VM (mcp__Kernel__exec_command) reaches api.elections.kalshi.com, clob/gamma/data-api.polymarket.com directly with curl and urllib. Raw bytes, real HTTP status codes, real exit codes. This ends the constraint that produced every false positive in this project.",
+    "verified_clean": "limit=100 returns exactly 100 rows / 400,039 bytes (the old layer returned 34 or 92). Six pages paginated to 1,200 rows with 1,200 unique tickers - zero gaps, zero repeats. List quotes vs order book agreed exactly on 15 of 18 liquid markets; the other three are empty-book convention and one 1c tick on a BTC market between sequential calls. Polymarket's gamma outcomePrices, /midpoint and raw /book agree to 0.0000.",
+    "kalshi_schema_migrated": "Fields are now yes_bid_dollars / yes_ask_dollars / volume_fp / volume_24h_fp / open_interest_fp / liquidity_dollars, and the order book is orderbook_fp with yes_dollars / no_dollars arrays of [price, size] strings. Old names return undefined. liquidity_dollars reads 0.0000 even on a market with 236k volume and appears dead. Candlesticks are UNCHANGED - yes_ask.close_dollars still works, and end_period_ts is still the inclusive end of the bucket.",
+    "worker_unaffected": "worker.js calls ONLY Polymarket (clob x8, gamma x4, data-api x4) and ntfy.sh. Zero Kalshi endpoints. The schema migration does not touch production. A claim that it did was made and retracted on 2026-08-12.",
+    "worker_version_correction": "The worker.js recovered from the archive is v11.4, NOT v12.3 as previously labelled. v12.3 was lost in the first container rollback of 2026-08-10 and is not recoverable from this sandbox. Live is v11.5, so the surviving file is one version BEHIND production.",
+    "rate_limit": "Kalshi rate-limits and returns a real 429. Sustainable pacing is 3 threads at 0.55s per request (~13% rejection, all retried); 4 threads at 0.4s bounces 42%. The old layer never surfaced a 429 in its life - it just quietly returned fewer rows.",
+    "container_volatility": "This sandbox rolled back twice on 2026-08-10 and again on 2026-08-12, each time destroying analysis directories and reverting the registry. The Kernel VM has its own timeout. Nothing that matters should live only in a sandbox."
+  },
+  "state_of_play_2026_08_10": {
+    "counts": "41 killed, 4 corrected, 0 open, 0 parked",
+    "_recovery_note": "A container rollback lost the full-prose registry mid-session. This is a compact reconstruction of every verdict reached on 2026-08-10 from the session record. The complete 136KB version was delivered to Walton before the rollback (file 3807d39a).",
+    "the_hurdle": "-4.03c per contract, 95% CI [-7.4, -0.7], on 41 independent settled events. The cost of crossing the spread, and the number every future idea must beat.",
+    "the_mechanisms": [
+      "Taker on public info: edge = spread + fee; the public feed is 78-258s behind a book that moves at 180s.",
+      "Maker capturing spread: the spread IS the compensation for adverse selection.",
+      "Maker collecting a subsidy: the reward is tied quadratically to exposure.",
+      "Internal-consistency arb: the two books are one book; ladders are monotone; sets sum to $1.",
+      "Cross-venue: gap < round trip \u2014 and per H46 it was never even a hedge.",
+      "Model vs market: the free model's error bar is WIDER than the market's implied distribution (4 instances).",
+      "Long-dated tails: collateral drag beats mispricing; a 6000x mispricing returns 0.91%/yr.",
+      "Short-dated tails: where the tick exceeds fair value the book is empty.",
+      "Every bias measurable from free data is a bias only relative to free data.",
+      "Prices are calibrated on both venues at every bucket with enough events to test.",
+      "Spread and flow are inversely coupled \u2014 no market offers both.",
+      "Cross-venue boxes: settlement criteria diverge on 15 of 16 cross-listed pairs, and the market prices the box at ~$1 regardless \u2014 so the criteria risk is real, unpriced, and still unharvestable, because the box costs above a dollar before the divergence matters.",
+      "Rulebook breadth IS priced: on strict-superset pairs the broader contract is dearer by ~0.39c on average, the correct sign. What looked unpriced in the box was the two round trips.",
+      "Non-partition ladders: where no exclusivity clause exists, multiple legs can pay, and the market already prices it \u2014 mids sum to 110c where a partition caps at 100c.",
+      "Path, not level: hourly changes mean-revert at -0.247 lag-1, interval excluding zero and robust across six specifications. Expected reversion 0.17c against a 2.00c spread \u2014 11.7x against. The only significant effect found, and still sub-spread."
+    ],
+    "contradiction_resolved": "H42 vs H50 is settled on executed trades at true settlement: adverse selection dominates. The one YES-settling market reachable cost the maker 15c against ~0.7c earned on each worthless tail, and size-weighted P&L is below equal-weighted in 9 of 15 markets. Reversion in the quote path is real and does not reach the fill economics."
+  },
+  "state_of_play_2026_08_12": {
+    "counts": "44 killed, 4 corrected, 1 open (H57), 0 parked",
+    "the_hurdle": "-4.39c per contract, 95% CI [-5.20, -3.67], on 346 independent settled events across 21 series, measured on a verified-clean raw-HTTP data path. Supersedes -4.03c [-7.40, -0.70] on n=41.",
+    "what_changed_today": "Not the answer - the instrument. The central number survived contact with a data path that cannot fabricate, and got 4.4x more precise. Every mechanism in the registry that was priced out by the hurdle stays priced out.",
+    "what_is_now_possible": "Every killed hypothesis is cheap to re-run. The binding constraint for this project's entire life was that measurements went through a summarising layer; it is gone. The question is no longer 'can we trust this number' but 'which number is worth 20 minutes of collection'."
+  },
+  "_gaps": "H22-H27, H32 and H45 were lost in the 2026-08-10 container rollback and could not be honestly reconstructed after the fact. Their absence is recorded rather than papered over. Five pre-registrations (H29, H30, H32, H33, H34) were lost the same way; the three that survive are in registry/."
+}
