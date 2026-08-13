@@ -19,7 +19,7 @@ Observed, repeatedly, in production:
 - A quote returned as `0.29/0.30` where the order book said `0.05/0.06`.
 - A stated `COUNT=101` for a page enumerating exactly 100 rows; `COUNT=62` for a window that can hold
   at most 61.
-- `limit=100` silently returning **92 rows**, truncating the tail with no error.
+- `limit=100` silently returning **92 rows** — and, on another probe, **34** — truncating with no error.
 - The *same wrong answer* reproduced across two independent fetches — so re-fetching alone does not
   catch systematic failure.
 - An entire order book invented, showing `0.409/0.415` where the true midpoint was `0.2685`.
@@ -42,6 +42,10 @@ Observed, repeatedly, in production:
    volume, probabilities sum near one, a monotone series stays monotone — and check it. This catches
    what re-fetching cannot.
 8. When a source is blocked by policy or `robots.txt`, **report it blocked**. Do not route around it.
+9. **Close what you open.** An unclosed HTTP response leaks a file descriptor; a few hundred of them
+   exhaust the socket pool and the client hangs *below* the timeout layer, alive and making no
+   progress. Use `with urlopen(...) as r:` or a pooled session. Add a heartbeat file and treat a stale
+   heartbeat as a stall, because this failure is silent by construction.
 
 ## Part 2 — the verification gate
 
@@ -73,6 +77,25 @@ Report depth beside every opportunity. A 3-cent edge on 20 shares is $0.60.
 > One candidate rested on **five contracts**. Another on 38. A third bucket's entire opportunity was
 > $789 of collateral for $7.41.
 
+### Measure the price you could have TRANSACTED at
+
+This is the gate that survives every statistical check and still kills the finding.
+
+**For any entry taken from a bar, re-run the identical strategy entering one bar later.** If the edge
+does not survive one bar of delay, it is a measurement of the past, not an opportunity. A bar's
+closing price is not knowable until the bar has closed, so acting on it is lookahead by construction.
+
+> A strategy returned **+4.96¢** in-sample and **+4.99¢** out-of-sample on 644 held-out events —
+> matching to 0.03¢ — with leave-one-out stable, the largest single event a *loser*, and 98%
+> coverage. It passed every check in this document. Then the entry ask was measured one, two and
+> three minutes later: **+1.64¢, +3.12¢, +5.00¢ against the buyer.** Three minutes of delay consumed
+> the entire edge. The effect was real, replicable, and belonged to whoever was fastest.
+
+Corollary: when the same instrument shows an attractive price and no obtainable size, that is a
+recurring structural fact, not bad luck. Four independent routes to it have been measured — far-OTM
+tails carry no bid, cheap rungs never win, near-certainties are not quoted at the horizon you would
+enter, and short-horizon favourites reprice away faster than a polling architecture can act.
+
 ### Name the moment the fact became public
 
 For anything time-sensitive, state when the information existed and refuse any entry before it.
@@ -88,6 +111,17 @@ the selection.
 > Fifteen markets all settled the same way — not by chance, but because only far-out-of-the-money
 > strikes were small enough to page fully. The single reachable counterexample flipped the mean.
 
+Missing data is itself a selection variable. A missing quote means nobody was trading, which happens
+when the outcome is already obvious.
+
+### Report the composition of any subgroup you highlight
+
+Before calling a bucket, print what is inside it.
+
+> A calibration table showed a **−29.7pp** departure at high prices. 62 of its 89 markets were a
+> single series — already the worst performer in the study. The dramatic version of the table was one
+> series wearing a disguise.
+
 ### State the hurdle, then clear it
 
 Find the cost of acting — spread, fee, slippage, collateral drag — and **measure it** rather than
@@ -96,10 +130,15 @@ assuming it. Compare every gross figure to it.
 > A measured round-trip cost retroactively priced out a dozen findings that had reported gross edges
 > against zero.
 
+And check whether the hurdle is a constant or a function. The same measurement gave **−3.81¢** at a
+24-hour horizon and **−1.94¢** at ten minutes; quoting the first as universal made a whole registry
+of verdicts calibrate against the wrong bar. Fee schedules can also vary by instrument — one series
+charged half of what the code assumed.
+
 ## Part 3 — pre-registration
 
 Before looking at outcomes, write down: the rule, the sample size that would settle it, what would
-make you abandon it, and the direction you expect. Then look.
+make you abandon it, and the direction you expect. Then look. Hash the file so the order is provable.
 
 Where a classification and a price are both involved, **seal the classification first, blind to the
 price.** Have one agent classify with an explicit bar on reading any price; only then fetch prices.
@@ -107,6 +146,13 @@ This makes it structurally impossible to fit the reading to the payoff.
 
 If the motivating observation is what suggested the hypothesis, **it cannot also be evidence for
 it.** Exclude it from the verdict and say so.
+
+**Check that held-out data exists before designing an out-of-sample test.** A hypothesis found by
+slicing can have consumed its own test set.
+
+> A post-hoc lead was found in a series with 22 events in its entire universe. All 22 had already
+> been used by the study that produced the lead. No amount of further collection creates held-out
+> data — only time does.
 
 ## Part 4 — reporting
 
@@ -116,3 +162,5 @@ it.** Exclude it from the verdict and say so.
   the distinction matters — recording an instrument failure as a finding is worse than either.
 - A conclusion can be **right for the wrong reason**. When a verdict rests on an unstated premise,
   check the premise; if it is false, the verdict needs re-deriving even when the answer survives.
+- **A perfect replication is not evidence of tradability.** Statistical validity and obtainability are
+  separate gates and must be reported separately.

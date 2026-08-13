@@ -6,7 +6,13 @@ and the measurement that killed it.**
 
 The headline result is a cost, not an edge.
 
-> ### The hurdle: −4.39¢ per contract, 95% CI [−5.20, −3.67], on 346 independent settled events
+> ### The hurdle is horizon-dependent
+>
+> **−3.81¢ per contract at a 24-hour lead** [−4.91, −2.81], falling to **−1.94¢ at a 10-minute
+> lead** [−2.02, −1.88], measured on liquid sports with real per-series fee multipliers (H60,
+> n=336–412 events per horizon). The earlier −4.39¢ [−5.20, −3.67] figure is the 24-hour,
+> weather-and-macro-ladder case and **must not be quoted as universal.** It is never positive at
+> any horizon tested.
 >
 > That is what crossing the spread costs. Every idea in this repo clears it or it isn't an idea.
 
@@ -16,9 +22,9 @@ The headline result is a cost, not an edge.
 
 ## The registry is the point
 
-`registry/hypotheses.json` holds **49 entries — 44 killed, 4 corrected, 1 open.** It exists because a
-killed idea has a habit of coming back wearing a new name, and because a project that only records
-its wins learns nothing.
+`registry/hypotheses.json` holds **53 entries — 45 killed, 4 corrected, 1 confirmed, 1 open, 2
+could-not-establish.** It exists because a killed idea has a habit of coming back wearing a new name,
+and because a project that only records its wins learns nothing.
 
 Every entry carries a `revive_if` field: the specific evidence that would reopen it. A verdict
 without one is an opinion.
@@ -45,14 +51,37 @@ as missing rather than reconstructed from memory.
   move, and the median 24h volume of those 40 is **zero**.
 - **Calibration** — prices are calibrated on both venues at every bucket with enough events to test.
 
-### The one real effect
+### The one confirmed result
 
-**H50.** Lag-1 autocorrelation of hourly price changes = **−0.2472, 95% CI [−0.3471, −0.1416]**,
-robust across six specifications and a mid/bid/ask microstructure control. Prices mean-revert.
+**H60.** The cost of crossing is not a constant but a **function of horizon**, falling from −3.81¢ at
+a 24-hour lead to −1.94¢ at ten minutes as the spread collapses from 5.01¢ to ~1.3¢. The half-spread
+saving (1.82¢) and the P&L improvement (1.87¢) match, so the gain passes through to the taker in full
+rather than being absorbed by adverse selection — that pass-through was the pre-registered check and
+is why the finding stands.
 
-Still not tradeable: expected reversion is 0.17¢ against a 2.00¢ spread — 11.7× against. Break-even
-needs an 8.1¢ prior move. Recorded as a real finding that does not reach the fill economics, a
-distinction the registry keeps deliberately.
+It is the project's first positive-direction result, and it is still a cost, not an edge.
+
+### The effect that was real, replicated, and worthless anyway
+
+**H61.** Buying favourites at a 10-minute lead returned **+4.96¢ in-sample and +4.99¢ on 644 genuinely
+held-out events** — matching to 0.03¢, leave-one-series-out all positive, the largest single event a
+*loser*, 98% coverage. It passed every statistical check in this repo.
+
+Then the entry ask was measured one, two and three minutes later: **+1.64¢, +3.12¢, +5.00¢ against the
+buyer.** Three minutes of delay consumes the whole edge, and the real entry is already a minute late by
+construction. Capturing it needs sub-60-second detect-to-fill against a 5-minute cron — three orders of
+magnitude too slow. Killed on execution, not on statistics.
+
+**A perfect replication is not evidence of tradability.** Statistical validity and obtainability are
+separate gates. That distinction is now the sharpest lesson in the registry.
+
+### H50 has been downgraded to UNVERIFIED
+
+Formerly billed here as "the one real effect" — lag-1 autocorrelation **−0.2472 [−0.3471, −0.1416]**.
+It was measured entirely through the fetch layer now known to fabricate, and it **failed to replicate**
+on an independent instrument (H59: −0.0038, CI spanning zero, on a point-in-time recorder well-powered
+to detect an effect six interval-widths smaller). Not retracted — downgraded, and **not to be cited
+until re-measured on the clean path.** That is the highest-value open measurement in the project.
 
 ## Method
 
@@ -64,7 +93,7 @@ silently returning 34 rows; an empty book reported as `0.0000/1.0000`, injecting
 midpoint; and the *same wrong answer* reproduced across two independent fetches. Cross-check against
 a **different endpoint**, never a second call to the same one.
 
-**Seven false positives were caught before shipping.** Each is now a rule:
+**Eight false positives were caught before shipping.** Each is now a rule:
 
 1. `+$284` market-making profit — lookahead.
 2. `r = +0.885` on n=4 — became `−0.016` at n=11; the leave-one-out range was `[−1, +1]` throughout.
@@ -73,6 +102,9 @@ a **different endpoint**, never a second call to the same one.
 5. `+0.68¢` on 15 markets that all settled NO — reachable *because* they were far OTM. *Selection.*
 6. `+7.23¢` on favourites — collapsed to `+0.82¢` once ladders with missing tail candles were excluded.
 7. A `−29.7pp` calibration gap at high asks (H56) — 62 of its 89 markets were one series, `KXRAIN`.
+8. `+4.99¢` on 644 held-out events (H61), replicating in-sample to 0.03¢ — and the ask moved
+   `+1.64¢`/`+3.12¢`/`+5.00¢` against the buyer at 1/2/3 minutes after entry. *Measure the price you
+   could have transacted at, not the price you observed.*
 
 Four kills were also **right for the wrong reason** (H15, H16, H46, and H49's own premise), and the
 registry says so rather than quietly keeping the correct answer.

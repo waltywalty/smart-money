@@ -30,15 +30,25 @@ and analysis need no permission. Trading and deploying always do.
 
 Quantitative research across prediction markets (Kalshi, Polymarket). It began as a
 "follow the smart money" detector. It is now a record of **every idea that did not work
-and the measurement that killed it** — 49 hypotheses, 44 killed, 4 corrected, 1 open.
+and the measurement that killed it** — 53 hypotheses, 45 killed, 4 corrected, 1 confirmed,
+1 open, 2 could-not-establish.
 
-**The hurdle: −4.39¢ per contract, 95% CI [−5.20, −3.67], n=346 independent settled
-events.** That is the cost of crossing the spread, measured on a clean data path.
-Every idea clears it or it is not an idea. Compare gross figures to −4.39¢, never to zero.
+**The hurdle is horizon-dependent.** −3.81¢ per contract at a 24-hour lead
+[−4.91, −2.81], falling to −1.94¢ at a 10-minute lead [−2.02, −1.88], measured on liquid
+sports with real per-series fee multipliers (H60, n=336–412 events per horizon). The
+earlier −4.39¢ [−5.20, −3.67] figure is the 24-hour, weather-and-macro-ladder case and
+must not be quoted as universal. It is never positive at any horizon tested.
 
-Decomposition: ~1.5¢ half-spread + ~1.55¢ fee + ~1.34¢ of the ask sitting above fair
-value. Only that last third is attackable in principle. Cheapest series to cross in
-bottom out at −2.50¢; nothing across 21 series is positive.
+Every idea clears the hurdle *at the horizon it would be entered at*, never zero. The
+spread collapses from 5.01¢ at 24h to ~1.3¢ from 4h onward, and the half-spread saving
+passes through to the taker in full rather than being absorbed by adverse selection.
+
+Decomposition at the 24-hour lead: ~1.5¢ half-spread + ~1.55¢ fee + ~1.34¢ of the ask
+sitting above fair value. Only that last third is attackable in principle. Cheapest series
+to cross in bottom out at −2.50¢; nothing across 21 series is positive.
+
+**Fee multipliers vary by series — read them, never assume.** `KXMLBGAME` carries
+`fee_multiplier: 0.5` where the code assumed 1.0 everywhere.
 
 ## 3. Infrastructure — the part that keeps getting relearned
 
@@ -137,7 +147,14 @@ against a ~1k/day free tier.
 **Unit of observation is the EVENT, not the market.** Rungs of one ladder resolve
 together. This single rule has killed more false positives than everything else combined.
 
-**Seven false positives were caught before shipping.** Each is now a check:
+**Measure the price you could have transacted at, not the price you observed.**
+Re-run any bar-based entry one bar later. H61 replicated out-of-sample to within 0.03¢
+and was still worth nothing — three minutes of delay consumed the entire edge.
+
+**A perfect replication is not evidence of tradability.** Statistical validity and
+obtainability are separate gates and must be reported separately.
+
+**Eight false positives were caught before shipping.** Each is now a check:
 
 1. `+$284` market-making profit — lookahead.
 2. `r = +0.885` on n=4 → `−0.016` at n=11; leave-one-out range was `[−1, +1]` throughout.
@@ -151,6 +168,8 @@ together. This single rule has killed more false positives than everything else 
    **A missing quote means nobody was trading, which happens when the outcome is obvious.**
 7. A `−29.7pp` calibration gap at high asks — 62 of its 89 markets were one series.
    **Always report series composition behind any bucket.**
+8. `+4.99¢` on 644 held-out events, replicating in-sample to 0.03¢ — the ask
+   moved +1.64¢/+3.12¢/+5.00¢ against the buyer at 1/2/3 minutes after entry.
 
 **Four kills were right for the wrong reason** (H15, H16, H46, and H49's own premise).
 When a verdict rests on an unstated premise, check the premise even if the answer survives.
@@ -164,14 +183,22 @@ null, and recording an instrument failure as a finding is worse than either.
 
 ## 5. State of play
 
-- **44 killed, 4 corrected, 1 open.** Numbering gaps at H22–H27, H32, H45 were lost to a
-  rollback and are recorded as lost, not reconstructed.
-- **The one real effect: H50.** Lag-1 autocorrelation of hourly changes
-  **−0.2472 [−0.3471, −0.1416]**, robust across six specifications. Still untradeable:
-  0.17¢ expected reversion against a 2.00¢ spread, 11.7× against. *Measured on the old
-  fetch layer — has not been re-verified on clean data.*
-- **H57 is the only open lead**, and it is weak: KXRAIN rungs above ~70¢ may be
-  overpriced, found by post-hoc slicing. Prior is that it is noise.
+- **45 killed, 4 corrected, 1 confirmed, 1 open, 2 could-not-establish.** Numbering gaps at
+  H22–H27, H32, H45 were lost to a rollback and are recorded as lost, not reconstructed.
+- **The one confirmed result: H60.** The cost of crossing is horizon-dependent, roughly
+  halving between a 24-hour and a 10-minute lead. The first positive-direction finding in
+  the project — and it is a property of the exchange, not an edge.
+- **H50 is UNVERIFIED, not retracted.** Its lag-1 autocorrelation −0.2472 [−0.3471, −0.1416]
+  was measured entirely through the fetch layer now known to fabricate, and failed to
+  replicate on an independent instrument (H59, demonstrably well-powered to detect an effect
+  of that size). **Do not cite it anywhere until it is re-measured on the clean Kalshi path.**
+  That re-measurement is the highest-value open work in the project.
+- **H61 is the sharpest lesson**: a real, out-of-sample-replicated ~5¢ effect that is
+  unobtainable, needing sub-60-second detect-to-fill against a 5-minute cron. Walton decided
+  on 2026-08-13 not to invest in latency infrastructure; the line stays closed.
+- **H58 is the only open lead** — H40's calibration curve re-run on the clean path.
+  H55 and H57 are could-not-establish: their samples do not exist, which is a calendar
+  problem rather than a compute one. Neither may be carried as a live lead.
 - Fifteen mechanisms explain all the kills — see `state_of_play_*.the_mechanisms` in the
   registry. Read them before proposing anything; most new ideas are one of them renamed.
 

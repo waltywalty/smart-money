@@ -1,11 +1,24 @@
 {
   "_what_this_is": "Hypothesis registry (Edge Playbook section 4.7). Every claim this project has tested, its status, and what would change the verdict. It exists because a killed idea has a habit of coming back wearing a new name \u2014 and because a project that only records its wins learns nothing. Status values: KILLED (evidence against, do not revive without the stated trigger), OPEN (running, insufficient evidence), CORRECTED (was believed, found wrong, fixed), PARKED (untested, blocked on something specific).",
-  "_updated": "2026-08-12",
+  "_updated": "2026-08-13",
   "_rules": [
     "One observation per event. Wallets, markets and days are not interchangeable units.",
     "A verdict needs the same statistical bar in both directions. Asymmetric gating manufactured a false INVERTED result once already.",
     "Nothing is 'confirmed' by the run that generated the hypothesis. Reproduction or it did not happen.",
     "Record the sample size that would settle it BEFORE looking at results."
+  ],
+  "confirmed": [
+    {
+      "id": "H60",
+      "claim": "The -4.39c hurdle is a property of the T-24h pre-game regime, not of the exchange. As settlement approaches and liquidity arrives, the cost of crossing falls.",
+      "preregistration": "sha256 03d09f6403dfb47fbc3284bf484595ba76457ff989fb532594898b1059819f47",
+      "motivation": "Live depth measurement 2026-08-13: the liquid core of Kalshi quotes a 1.0c median spread with a median 24,292 contracts at the ask and $46,628 within 2c; total 24h volume across real series is 26.5M contracts ($26.5M notional). H10's 'median size at bid FIVE contracts' and H46's sizes of 3.85-50.54 were correct and were taken on weather ladders and cross-listed macro contracts - the illiquid periphery.",
+      "result": "By lead, liquid sports, event-level bootstrap: 24h -3.81c [-4.91,-2.81] n=336; 4h -2.23c [-2.34,-2.15] n=411; 2h -2.69c [-3.94,-1.50] n=406; 1h -2.54c [-3.25,-2.03] n=412; 30m -2.11c [-2.18,-2.03] n=407; 10m -1.94c [-2.02,-1.88] n=401.",
+      "mechanism": "The spread collapses from 5.01c at 24h to ~1.3c from 4h onward. The half-spread saving (1.82c) and the P&L improvement (1.87c) MATCH, so the gain passes through to the taker in full rather than being absorbed by adverse selection. That pass-through was the pre-registered check and is why the finding stands.",
+      "robustness": "Leave-one-series-out stable at every lead. Coverage 81-100%, never selection-contaminated. Not strictly monotone (4h beats 2h and 1h) but the 2h interval is wide and the shape is unambiguous.",
+      "fee_correction": "First study to use REAL per-series fee multipliers. KXMLBGAME is 0.5; every prior study including H56 assumed 1.0 everywhere. Correcting H56's 30 MLB events of 346 moves its headline about +0.09c, from -4.39c to approximately -4.30c. Immaterial, inside the interval, recorded for completeness.",
+      "status": "CONFIRMED. The cost of taking liquidity is horizon-dependent and roughly halves between 24 hours and 10 minutes before settlement. It is never positive at any horizon tested."
+    }
   ],
   "killed": [
     {
@@ -272,7 +285,12 @@
       "and_it_survived_the_microstructure_test": "A stale mid bouncing between bid and ask manufactures spurious negative autocorrelation. It did not happen here: the sign holds and the magnitude does not collapse across mid (-0.2472), bid (-0.2773) and ask (-0.2455). Robustness held under six further specifications \u2014 dropping the last 3 candles (-0.2235), strictly contiguous pairs (-0.2510), volume-bearing candles only (-0.2368), and 3h/6h subsampling (-0.1905/-0.2352).",
       "and_it_is_STILL_not_a_trade": "The reversion is entirely SUB-SPREAD. Mean absolute hourly move is 0.69c against a mean quoted spread of 2.00c, so the expected reversion after a typical move is 0.2472 x 0.69 = 0.17c against a 2.00c cost to cross. That is 11.7x against. Breakeven needs a prior hourly move above 8.1c before the expected reversion covers one spread crossing \u2014 against a mean move of 0.69c, with 62% of hourly changes exactly zero.",
       "the_honest_caveat": "Bid and ask flicker TOGETHER (the whole book is re-quoted), which the mid/bid/ask comparison cannot distinguish from genuine signal. The executed-trade series would be the cleaner discriminator and was not pulled. Two of the largest negative markets are in-play endgame whipsaws.",
-      "status": "KILLED. The purest statement of this project's finding: the signal is REAL, significant and robust \u2014 and the spread is twelve times bigger."
+      "status": "KILLED. The purest statement of this project's finding: the signal is REAL, significant and robust \u2014 and the spread is twelve times bigger.",
+      "was": "The only statistically significant effect in the registry: lag-1 autocorrelation -0.2472 [-0.3471,-0.1416].",
+      "now": "UNVERIFIED. Not retracted - downgraded.",
+      "why": "Measured entirely through the fetch layer now known to fabricate, and never checked on raw data; and failed to replicate on an independent instrument (H59) demonstrably well-powered to detect an effect of its size.",
+      "consequence_preregistered_in_advance": "Must be re-measured on the clean Kalshi path before being cited again anywhere, including CLAUDE.md, README.md and state_of_play.the_mechanisms.",
+      "priority": "Highest-value open measurement in the project."
     },
     {
       "id": "H51",
@@ -326,7 +344,7 @@
       "id": "H56",
       "claim": "THE HURDLE. Buying at the ask loses money after fees, by an amount every idea must clear. Re-measured because the original -4.03c rested on 41 events collected through a fetch layer since proven to fabricate quotes, drop rows silently, and invent midpoints for empty books.",
       "preregistration": "sha256 433b4a1ec4d52f8e5531351dce4e18a5824a0411abb970e5fd7d34cfcffc90a3, sealed 2026-08-12T07:49Z before any outcome was joined to any price. Outcome meanings, sample minimum (150 events), primary statistic, and all four robustness checks were fixed in advance.",
-      "evidence": "Mean P&L per event -4.39c, 95% event-bootstrap CI [-5.20, -3.67], n=346 independent events drawn from 21 real series. Prior: -4.03c [-7.40, -0.70] on n=41. Point estimate essentially unchanged; interval 4.4x tighter.",
+      "evidence": "-4.39c per event, 95% CI [-5.20, -3.67], n=346 independent events across 21 series, from 7,542 settled markets / 1,763 events sampled to 377 events evenly across each series' time range. Prior: -4.03c [-7.40, -0.70] on n=41. Point estimate essentially unchanged; interval 4.4x tighter.",
       "robustness": {
         "R1_by_market": "-6.69c [-8.28, -5.08] n=1973. Worse, as expected - rungs of one ladder are not independent.",
         "R2_H54_selection_check": "Restricted to the 320 events where EVERY rung had a quote at the lead: -4.17c [-4.95, -3.48]. The candle-availability selection that destroyed H54 does not touch this result. This was the check most likely to kill it.",
@@ -335,16 +353,33 @@
       },
       "decomposition_post_hoc": "Gross before fees -2.84c [-3.66, -2.12]; fee -1.55c; quoted spread at entry 2.99c mean / 1.30c median. Residual after removing the half-spread: -1.34c. So the cost is roughly thirds - crossing the spread, the fee, and the ask sitting above fair value beyond the half-spread. Only that last third is attackable in principle.",
       "cheapest_venue_to_cross": "Liquid sports and weather ladders at -2.50c. That is the floor. Nothing in 21 series is positive.",
-      "status": "CONFIRMED at -4.39c [-5.20, -3.67]. Supersedes -4.03c. The pre-registered expensive branch - interval spanning zero, which would have forced a dozen verdicts re-opened - did not fire.",
+      "status": "CONFIRMED at the time as -4.39c; SCOPE CORRECTED by H60 - see scope_correction below. The old number was right despite being measured through a lying layer; the layer fabricated, but not in a direction that moved this estimate.",
       "revive_if": "Never as stated. To move the number, re-measure on a disjoint venue or a materially later period; the estimator and pre-registration are in h56/.",
-      "note": "The old number was right despite being measured through a lying layer. The layer was fabricating, but not in a direction that moved this particular estimate. That is luck, not vindication of the old method."
+      "note": "The old number was right despite being measured through a lying layer. The layer was fabricating, but not in a direction that moved this particular estimate. That is luck, not vindication of the old method.",
+      "false_positive_caught_inside": "The calibration table showed -29.7pp at the 70-79c bucket. 62 of its 89 markets were KXRAIN, already the worst series in the study. At the event level the gap shrank from 43.8% to 60.1% realised. One series wearing a disguise."
     },
     {
-      "id": "H55",
-      "claim": "Buying near-certainties (ask 0.93-0.98) at a 24h lead pays, because the Kalshi fee 0.07*p*(1-p) is minimised at the extremes (0.33c at p=0.95 vs 1.75c at p=0.50), and the 0.95-1.00 bucket was the only one in the H40 calibration with meaningful n returning positive P&L.",
-      "evidence": "Incidental to H56, not a dedicated test. The 90-99c ask bucket realises 77.1% at the EVENT level against 95.6% implied, over 26 events.",
-      "status": "NOT SUPPORTED - but not cleanly killed. 41 of the bucket's 54 markets are KXRAIN, the single worst-performing series in the study at -16.94c. The evidence is contaminated by one series.",
-      "revive_if": "A pre-registered test on a KXRAIN-free sample of 150+ independent events in the 0.93-0.98 band. Until then this is neither alive nor honestly dead."
+      "id": "H59",
+      "claim": "H50's mean reversion is a general property of prediction markets and should appear on an independent venue, frequency and instrument.",
+      "preregistration": "sha256 99626f62cc6a44715fca08cf9d6baa3724bc65107d75e6c8ea9f030178ae436d, sealed before any tape data was fetched. The consequence of a null - downgrading H50 - was written down in advance.",
+      "instrument": "The worker's own point-in-time recorder, used for the first time. 643 snapshots 2026-08-10 to 08-12, top 40 Polymarket markets by 24h volume, every 5 minutes, BID AND ASK at tenth-of-a-cent resolution, written live before any outcome was known. 300 distinct market ids; 52 cleared the pre-registered gate of 100 consecutive usable pairs (gap <= 450s). Every prior study used SETTLED markets; nothing the recorder captured depended on how anything resolved.",
+      "result": "Lag-1 autocorrelation of 5-minute mid changes: -0.0038, 95% bootstrap over markets [-0.0414, +0.0372], n=52. Spans zero. 65x smaller than H50's -0.2472 [-0.3471,-0.1416]. Negative in only 31 of 52 markets; leave-one-market-out -0.0134 to +0.0010, THE SIGN FLIPS.",
+      "not_underpowered": "The interval is +/-0.039 wide. An effect of H50's magnitude sits SIX interval-widths outside anything observed. A genuine null, not an inconclusive one.",
+      "microstructure": "bid-only -0.0498 [-0.0835,-0.0122]; ask-only -0.0366 [-0.0671,-0.0049]; MID flat. With 83.2% of changes exactly zero this is quotes flickering one tick and returning - a wobble worth a twentieth of H50's claim that vanishes when the sides are averaged.",
+      "tradeability": "Mean absolute 5-min move 0.242c against a 0.587c spread. Expected reversion 0.0009c. 632x AGAINST, versus H50's 11.7x.",
+      "structural_fact": "83.2% of 5-minute changes on the top-40 Polymarket markets by volume are EXACTLY ZERO (H50's hourly Kalshi series was 62%). The busiest markets on the venue are motionless five-sixths of the time.",
+      "status": "KILLED as a replication. Does NOT refute H50 - venue, frequency and instrument all changed at once - but removes its standing as a general property."
+    },
+    {
+      "id": "H61",
+      "claim": "The monotone favourite-longshot bias at short horizons is tradeable: buy YES at the ask at T-10m when the mid sits in [80,100)c.",
+      "preregistration": "sha256 67efa712eb20873abc70d26c45349bc9b0cf898f400447d3fb2509b2e33c0e2f, sealed before any held-out event was touched. Provenance stated in the pre-registration itself: found by post-hoc slicing of H60's calibration table, the weakest possible origin.",
+      "the_replication_was_real": "In-sample +4.96c [+3.77,+5.92] n=221. Out-of-sample on 644 genuinely held-out events (H60's deterministic selection recomputed and excluded, leaving 1,138 of 1,552): +4.99c [+4.25,+5.64]. Point estimate matched to 0.03c.",
+      "every_statistical_check_passed": "Leave-one-series-out +4.72 to +5.14, all positive. Largest single event is a LOSER at -3% of total P&L; removing the best five leaves +4.89c. Series mix ATP 223 / MLB 219 / WTA 202. Coverage 98%. Specification reproduced the horizon-specificity: absent at 1h (-0.84c, sign flips), present at 30m (+4.27c).",
+      "the_confound": "Only 4 of 967 contracts in the band lost - 0.4%, where an 88% implied predicts ~12%. And 754 of 965 rose more than 5c between T-60m and T-10m against 14 that fell, mean absolute move 25.0c. Outcomes were effectively decided at entry. Not a forecasting edge; the price racing toward 100 on a nearly-settled outcome.",
+      "THE_KILL": "Execution. On 240 markets priced 80-95c at T-10m the ask moves +1.64c against the buyer after 1 minute (worse in 57% of cases), +3.12c after 2 minutes (70%), +5.00c after 3 minutes (79%). Three minutes of delay consumes the entire +4.99c. A LOWER bound, because the entry price is the ask at the CLOSE of the T-10m minute - unknowable until the minute ends, so you are already at T-9m and 1.64c down. On the worker's 5-minute cadence the ask has moved roughly 8c.",
+      "status": "KILLED on execution after a clean out-of-sample replication. The eighth false positive and the only one that replicated before dying.",
+      "revive_if": "BOTH: an execution path with demonstrated sub-60-second detect-to-fill latency, AND the edge re-measured entering at the NEXT bar's ask rather than the signal bar's."
     }
   ],
   "corrected": [
@@ -381,15 +416,31 @@
       "lesson": "Three of this project's worst bugs now share one shape: a fallback that invents a value rather than admitting it does not have one. Fills counted as positions, winnerIndex defaulting to 1, and now cohort defaulting to news. The fix is always the same - carry 'unknown' as a first-class value and let it be visibly absent."
     }
   ],
-  "open": [
+  "could_not_establish": [
     {
       "id": "H57",
       "claim": "KXRAIN contracts quoted above ~70c are systematically overpriced.",
-      "how_found": "POST-HOC SLICING of the H56 sample. This is the weakest possible provenance and the entry says so.",
-      "evidence_such_as_it_is": "KXRAIN is the worst series in H56 at -16.94c per event (n=22). It supplies 62 of 89 markets in the 70-79c bucket, 13 of 29 in 80-89c, and 41 of 54 in 90-99c - i.e. it is the entire reason the high-ask calibration table looked dramatic. At the market level those buckets showed -29.7pp, -26.6pp and -19.7pp against implied; recomputed at the EVENT level the 70-79c gap shrinks from 43.8% to 60.1% realised.",
-      "status": "OPEN - hypothesis only, no verdict. 41 events, discovered by slicing, in the single worst series.",
-      "bar": "Pre-register before touching it: a fresh disjoint sample of KXRAIN events, 150+ independent observations, the direction stated in advance, and the hurdle (-4.39c) as the thing to clear rather than zero.",
-      "watch_for": "This has the exact shape of false positive #3 (a calibration bucket that was one payrolls print in twelve hats) and #5 (fifteen markets that all settled NO because only far-OTM strikes were reachable). Treat with suspicion proportional to how good it looks."
+      "verdict": "COULD NOT ESTABLISH - and cannot be, on existing data.",
+      "the_structural_finding": "KXRAIN universe verified unchanged at 440 markets, so the recomputed H56 exclusion is exact. KXRAIN has 22 events in the entire reachable universe and ALL 22 were inside H56 - the 30-per-series cap never bound, so H56 consumed every one. The series that generated the hypothesis had already been fully spent by the study that generated it.",
+      "revive_if": "At least 100 NEW KXRAIN events have settled that were not in the 2026-08-12 universe. A calendar problem, not a compute problem.",
+      "status": "UNFALSIFIABLE WITH AVAILABLE DATA. Must not be carried or cited as a live lead."
+    },
+    {
+      "id": "H55",
+      "claim": "Buying near-certainties (ask 0.93-0.98) at a 24h lead pays, because the fee 0.07*p*(1-p) is minimised at the extremes.",
+      "verdict": "COULD NOT ESTABLISH - the price band is essentially empty at that horizon.",
+      "evidence": "Of 1,523 non-KXRAIN rungs carrying a quote at the 24h lead, exactly ONE sat in the 93-98c band (0.07%). Pre-registration required 150 events. H56 agrees from another angle: its whole 90-99c bucket held 54 markets across 21 series, 41 of them KXRAIN.",
+      "the_real_answer": "Structural, not statistical. Contracts are not priced at 93-98c 24 hours out; by the time one is that certain it is close to settlement. The fee arithmetic is correct and irrelevant.",
+      "revive_if": "Re-tested at a shorter lead where the band is populated - a different hypothesis needing its own pre-registration, with H7/H9's capital-lockup arithmetic applied."
+    }
+  ],
+  "open": [
+    {
+      "id": "H58",
+      "claim": "Re-run of H40's calibration curve on a clean raw-HTTP data path, across the full 21-series universe.",
+      "why_it_matters": "The calibration claim underwrites a dozen kills across this registry and has only ever been measured through the fabricating layer.",
+      "history": "Blocked twice on 2026-08-12 by a collector bug: leaked file descriptors from unclosed urlopen responses exhausted the socket pool, hanging threads beneath the timeout layer with the process alive. Kalshi was verified responsive throughout (200s in 50ms). Fixed 2026-08-13 with `with urlopen(...) as r:` plus a heartbeat file; the fixed collector completed 904 and 2,276 market runs with zero errors.",
+      "status": "OPEN, collection re-launched 2026-08-13."
     }
   ],
   "parked": [],
@@ -407,7 +458,45 @@
     "worker_unaffected": "worker.js calls ONLY Polymarket (clob x8, gamma x4, data-api x4) and ntfy.sh. Zero Kalshi endpoints. The schema migration does not touch production. A claim that it did was made and retracted on 2026-08-12.",
     "worker_version_correction": "The worker.js recovered from the archive is v11.4, NOT v12.3 as previously labelled. v12.3 was lost in the first container rollback of 2026-08-10 and is not recoverable from this sandbox. Live is v11.5, so the surviving file is one version BEHIND production.",
     "rate_limit": "Kalshi rate-limits and returns a real 429. Sustainable pacing is 3 threads at 0.55s per request (~13% rejection, all retried); 4 threads at 0.4s bounces 42%. The old layer never surfaced a 429 in its life - it just quietly returned fewer rows.",
-    "container_volatility": "This sandbox rolled back twice on 2026-08-10 and again on 2026-08-12, each time destroying analysis directories and reverting the registry. The Kernel VM has its own timeout. Nothing that matters should live only in a sandbox."
+    "container_volatility": "The Cowork sandbox rolled back four times across 2026-08-12/13, each time destroying analysis directories and addenda. Deliver results as files as they are produced; never hold them to the end.",
+    "raw_http": "The Kernel browser VM reaches api.elections.kalshi.com and all Polymarket hosts directly - raw bytes, real status codes, real exit codes. Python present, git absent. This ended the constraint that produced every false positive in this project.",
+    "kalshi_schema": "yes_bid_dollars / yes_ask_dollars / volume_fp / volume_24h_fp / open_interest_fp / liquidity_dollars; order book is orderbook_fp with yes_dollars / no_dollars as [price,size] strings. liquidity_dollars reads 0.0000 even on a market with 236k volume - dead field. Candlesticks UNCHANGED: yes_ask.close_dollars works and end_period_ts is the inclusive end.",
+    "mve_flood": "?status=settled unfiltered is flooded with KXMVE* machine-generated combinatorial markets - 2,000 of the first 2,000 rows. Exclude a priori.",
+    "exchange_scale": "26.5M contracts of 24h volume across real series; 521 of 1,028 open markets carry any volume; top 10 markets are 67.3% of it. The liquid core is live in-play sports.",
+    "cowork_cannot_push": "The Cowork git proxy refuses any repo outside the session's authorized set - it strips your credential and will not inject its own. Reads and clone work on a public repo; writes 403. api.github.com is also proxied from Cowork but works from Kernel. Claude Code can push but only to its own branch, so it must open a PR; .github/workflows/automerge.yml auto-merges claude/* PRs by the owner."
+  },
+  "method_rules_added": [
+    {
+      "rule": "Measure the price you could have TRANSACTED at, not the price you observed.",
+      "test": "For any entry taken from a bar, re-run the identical strategy entering one bar later. If the edge does not survive one bar of delay it is a measurement of the past, not an opportunity. A bar's closing price is unknowable until the bar closes, so acting on it is lookahead by construction.",
+      "why": "H61 passed unit-of-observation, event bootstrap, leave-one-series-out, concentration, coverage, specification AND out-of-sample replication to within 0.03c, and was still worth nothing. None of those checks asks whether the price was obtainable.",
+      "precedent": "H9 said the same thing in different words: 'the 2c edge is not executable; the only resting ask on the safe outcome is 99.9c'."
+    },
+    {
+      "rule": "Check that held-out data EXISTS before designing an out-of-sample test.",
+      "why": "H57's entire universe - 22 events - was already inside the study that produced the lead. A hypothesis found by slicing can consume its own test set."
+    },
+    {
+      "rule": "Close what you open.",
+      "why": "Unclosed HTTP responses leak file descriptors; a few hundred exhaust the socket pool and the client hangs BELOW the timeout layer, alive and making no progress. Add a heartbeat file and treat a stale heartbeat as a stall - this failure is silent by construction. Cost two collection runs on 2026-08-12."
+    },
+    {
+      "rule": "A perfect replication is not evidence of tradability. Statistical validity and obtainability are separate gates and must be reported separately."
+    }
+  ],
+  "mechanisms_added": [
+    "Where the price is attractive, the market is not there - now four independent routes. Far-OTM tails carry no bid (H34), cheap rungs never win (H53), near-certainties are not quoted at the horizon you would enter (H55), and short-horizon favourites reprice away faster than a polling architecture can act (H61).",
+    "The cost of crossing is a FUNCTION of horizon, not a constant. It halves between 24 hours and 10 minutes as the spread collapses from 5.01c to ~1.3c, and the saving passes through to the taker in full (H60).",
+    "Fee schedules vary by instrument. KXMLBGAME carries fee_multiplier 0.5 where the code assumed 1.0 everywhere. Read the multiplier, never assume it."
+  ],
+  "scope_correction": {
+    "what": "-4.39c must no longer be quoted as a universal constant.",
+    "correct_statement": "-4.39c [-5.20,-3.67] is the cost of crossing at a 24-hour lead on a sample dominated by weather and macro ladders. On liquid sports ten minutes from settlement the same estimator gives -1.94c [-2.02,-1.88]. The cost is horizon-dependent and roughly halves.",
+    "must_be_updated_in": [
+      "registry/hypotheses.json state_of_play",
+      "README.md",
+      "CLAUDE.md"
+    ]
   },
   "state_of_play_2026_08_10": {
     "counts": "41 killed, 4 corrected, 0 open, 0 parked",
@@ -437,6 +526,13 @@
     "the_hurdle": "-4.39c per contract, 95% CI [-5.20, -3.67], on 346 independent settled events across 21 series, measured on a verified-clean raw-HTTP data path. Supersedes -4.03c [-7.40, -0.70] on n=41.",
     "what_changed_today": "Not the answer - the instrument. The central number survived contact with a data path that cannot fabricate, and got 4.4x more precise. Every mechanism in the registry that was priced out by the hurdle stays priced out.",
     "what_is_now_possible": "Every killed hypothesis is cheap to re-run. The binding constraint for this project's entire life was that measurements went through a summarising layer; it is gone. The question is no longer 'can we trust this number' but 'which number is worth 20 minutes of collection'."
+  },
+  "state_of_play_2026_08_13": {
+    "counts": "46 killed, 4 corrected, 1 confirmed (H60), 1 open (H58), 2 could-not-establish (H55, H57), 1 unverified (H50)",
+    "the_hurdle": "Horizon-dependent. -3.81c at a 24h lead, -1.94c at a 10m lead, on liquid sports with real fee multipliers. Never positive at any horizon tested.",
+    "what_changed": "The project produced its first confirmed positive-direction result (H60: the hurdle falls with horizon) and its first out-of-sample replication (H61), then killed the replication on execution rather than on statistics. The distinction between a real effect and an obtainable one is now the sharpest lesson in the registry.",
+    "the_standing_decision": "H61 is a real, replicated ~5c effect requiring sub-60-second detect-to-fill to capture. The current stack is a 5-minute Cloudflare cron, roughly three orders of magnitude too slow. Walton decided on 2026-08-13 NOT to invest in latency infrastructure at this time. The line stays closed unless that changes.",
+    "never": "No real trade has ever been placed. Deployment GO is Walton's alone, in writing."
   },
   "_gaps": "H22-H27, H32 and H45 were lost in the 2026-08-10 container rollback and could not be honestly reconstructed after the fact. Their absence is recorded rather than papered over. Five pre-registrations (H29, H30, H32, H33, H34) were lost the same way; the three that survive are in registry/."
 }
