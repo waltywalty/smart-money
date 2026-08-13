@@ -22,7 +22,7 @@ The headline result is a cost, not an edge.
 
 ## The registry is the point
 
-`registry/hypotheses.json` holds **53 entries — 45 killed, 4 corrected, 1 confirmed, 1 open, 2
+`registry/hypotheses.json` holds **54 entries — 45 killed, 4 corrected, 2 confirmed, 1 open, 2
 could-not-establish.** It exists because a killed idea has a habit of coming back wearing a new name,
 and because a project that only records its wins learns nothing.
 
@@ -51,7 +51,7 @@ as missing rather than reconstructed from memory.
   move, and the median 24h volume of those 40 is **zero**.
 - **Calibration** — prices are calibrated on both venues at every bucket with enough events to test.
 
-### The one confirmed result
+### Confirmed: the hurdle is a function, not a constant
 
 **H60.** The cost of crossing is not a constant but a **function of horizon**, falling from −3.81¢ at
 a 24-hour lead to −1.94¢ at ten minutes as the spread collapses from 5.01¢ to ~1.3¢. The half-spread
@@ -75,13 +75,23 @@ magnitude too slow. Killed on execution, not on statistics.
 **A perfect replication is not evidence of tradability.** Statistical validity and obtainability are
 separate gates. That distinction is now the sharpest lesson in the registry.
 
-### H50 has been downgraded to UNVERIFIED
+### The one confirmed effect
 
-Formerly billed here as "the one real effect" — lag-1 autocorrelation **−0.2472 [−0.3471, −0.1416]**.
-It was measured entirely through the fetch layer now known to fabricate, and it **failed to replicate**
-on an independent instrument (H59: −0.0038, CI spanning zero, on a point-in-time recorder well-powered
-to detect an effect six interval-widths smaller). Not retracted — downgraded, and **not to be cited
-until re-measured on the clean path.** That is the highest-value open measurement in the project.
+Hourly prices mean-revert on Kalshi: lag-1 autocorrelation **−0.1896, 95% CI [−0.2147, −0.1650]**, over
+90 markets and 87,315 candles, measured on a raw-HTTP path that cannot fabricate (H62). Negative in 88
+of 90 markets, stable under leave-one-market-out and leave-one-series-out, and present independently in
+the bid and the ask.
+
+It is **not tradeable**: expected reversion is 0.146¢ against a spread of 1.3¢ at the very best —
+roughly 9× short of covering a single crossing. Scope is Kalshi at an hourly horizon; it is absent on
+Polymarket at 5 minutes (H59).
+
+This restores **H50**, which spent part of 2026-08-13 marked UNVERIFIED after H59 failed to replicate
+it. H59's null is correct but it varied venue, frequency *and* instrument at once, so it could never
+have settled H50 either way. H62 varied only the data path. Cite H62's figures, not H50's original
+−0.2472 [−0.3471, −0.1416] on n=19 — that stands as the first observation, superseded in precision.
+
+**The signal is real and the spread is bigger.**
 
 ## Method
 
