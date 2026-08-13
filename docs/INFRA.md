@@ -104,10 +104,14 @@ Zero Kalshi endpoints — Kalshi schema changes do not affect production.
 
 ### The worker
 
-Live is **v11.5**. The file in this repo is **v11.4**. **v12.3 existed and was lost** to
-a container rollback on 2026-08-10; it is not recoverable from any sandbox — only
-Cloudflare's version history might still have it. Do not deploy the repo copy without
-checking that first.
+Live is **v11.4**, and so is the file in this repo — verified 2026-08-13 by fetching the
+worker's own `GET /`, which returns `version` from the source constant. **There is no
+evidence v11.5 was ever deployed**; that claim sat here unchecked for days and one HTTP
+request settled it. **Ask the worker, not the dashboard.** See `DEPLOY.md`.
+
+**v12.3 existed and was lost** to a container rollback on 2026-08-10. It is not recoverable
+from any sandbox — but Cloudflare keeps its own version history and **that list has still
+not been checked.**
 
 Subrequest ceiling 50 per invocation, worst measured cycle 22 — exceeding it silently
 kills scheduled runs and once looked exactly like a broken cron trigger. KV writes ~288/day

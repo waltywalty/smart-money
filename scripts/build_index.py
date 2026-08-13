@@ -73,7 +73,7 @@ TOPIC = {
     "H63": "reversion-in-trades",
 }
 
-W_ID, W_VERDICT, W_TOPIC, W_ONE = 4, 9, 24, 41
+W_ID, W_VERDICT, W_TOPIC, W_ONE = 4, 9, 24, 38
 
 HEADER = """# Registry index — GENERATED, do not edit by hand
 
@@ -141,7 +141,8 @@ def main():
                 verdict += "*"
                 nowtxt = " ".join(e["now"].split())
                 notes.append("* %s sits in the `%s` bucket; its own `now` field reads \"%s\". "
-                             "The bucket is stale, the field is current."
+                             "Both may hold - killed as a TRADE, confirmed as an EFFECT. "
+                             "Flagged, not adjudicated; unreconciled in the registry."
                              % (hid, bucket, nowtxt[:46].rstrip() + "…"
                                 if len(nowtxt) > 46 else nowtxt))
             rows.append((hnum(hid), "%-*s | %-*s | %-*s | %s" % (
