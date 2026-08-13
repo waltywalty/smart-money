@@ -248,6 +248,13 @@
     },
     {
       "id": "H46",
+      "external_evidence": {
+        "corroboration": "Independent corroboration: Oddpool reports ~1/3 settlement-fungibility on 250 matched cross-venue events, with divergence recorded rather than assumed away. Same finding, larger n, disinterested party. Retrieved 2026-08-13.",
+        "source": "https://www.oddpool.com/institutional",
+        "retrieved": "2026-08-13",
+        "verified_quote": "Fetched raw over HTTP from the Kernel VM on 2026-08-13 and read verbatim from the page, not taken on report: \"On a sample of 250 matched events, only about a third are settlement-fungible across both venues. The rest carry a real settlement difference, recorded explicitly so it isn\u2019t mistaken for a clean spread.\" The page breaks the remainder out as Identical 34%, Settlement window 33%, Settlement universe 33%.",
+        "the_magnitude_does_not_match_and_that_is_worth_recording": "The DIRECTION agrees - most cross-listed pairs are not settlement-fungible - but the levels differ by roughly 5x. H46 found 1 of 16 pairs identical (6.3%); Oddpool reports 34% identical on n=250. Both cannot be a estimate of the same quantity. The likely cause is sample construction: H46 matched on the underlying fact across macro, election and named-entity events, while Oddpool matches through its own canonical symbology and may admit pairs H46 would not have called cross-listed. Cite the corroboration for the direction, never for the rate."
+      },
       "claim": "For cross-listed events the two venues' settlement CRITERIA diverge, so a cross-venue box does not pay exactly $1 \u2014 it can pay $2 or $0.",
       "blind_classification": "16 pairs classified with a hard bar on reading any price. BOTH 7, DIV-DOWN 6, DIV-UP 2, IDENTICAL 1. ONE of sixteen is identical.",
       "it_corrects_H16": "H16 killed cross-venue arbitrage on a 2.46c gap vs a 4.83c round trip. Its unstated premise was that exactly one leg pays. That is FALSE for 15 of 16 pairs \u2014 the trade is an unhedged bet on settlement criteria that looks riskless.",
