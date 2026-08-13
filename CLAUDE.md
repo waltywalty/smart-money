@@ -30,7 +30,7 @@ and analysis need no permission. Trading and deploying always do.
 
 Quantitative research across prediction markets (Kalshi, Polymarket). It began as a
 "follow the smart money" detector. It is now a record of **every idea that did not work
-and the measurement that killed it** — 53 hypotheses, 45 killed, 4 corrected, 1 confirmed,
+and the measurement that killed it** — 54 hypotheses, 45 killed, 4 corrected, 2 confirmed,
 1 open, 2 could-not-establish.
 
 **The hurdle is horizon-dependent.** −3.81¢ per contract at a 24-hour lead
@@ -154,6 +154,11 @@ and was still worth nothing — three minutes of delay consumed the entire edge.
 **A perfect replication is not evidence of tradability.** Statistical validity and
 obtainability are separate gates and must be reported separately.
 
+**Change one thing at a time when replicating.** H59 varied venue, frequency and
+instrument together, found nothing, and wrongly triggered a downgrade of H50. H62 varied
+only the data path and confirmed it. A failed replication that moves several factors at
+once cannot tell you which one mattered.
+
 **Eight false positives were caught before shipping.** Each is now a check:
 
 1. `+$284` market-making profit — lookahead.
@@ -183,16 +188,20 @@ null, and recording an instrument failure as a finding is worse than either.
 
 ## 5. State of play
 
-- **45 killed, 4 corrected, 1 confirmed, 1 open, 2 could-not-establish.** Numbering gaps at
+- **45 killed, 4 corrected, 2 confirmed, 1 open, 2 could-not-establish.** Numbering gaps at
   H22–H27, H32, H45 were lost to a rollback and are recorded as lost, not reconstructed.
-- **The one confirmed result: H60.** The cost of crossing is horizon-dependent, roughly
-  halving between a 24-hour and a 10-minute lead. The first positive-direction finding in
-  the project — and it is a property of the exchange, not an edge.
-- **H50 is UNVERIFIED, not retracted.** Its lag-1 autocorrelation −0.2472 [−0.3471, −0.1416]
-  was measured entirely through the fetch layer now known to fabricate, and failed to
-  replicate on an independent instrument (H59, demonstrably well-powered to detect an effect
-  of that size). **Do not cite it anywhere until it is re-measured on the clean Kalshi path.**
-  That re-measurement is the highest-value open work in the project.
+- **The one confirmed effect.** Hourly prices mean-revert on Kalshi: lag-1 autocorrelation
+  **−0.1896, 95% CI [−0.2147, −0.1650]**, over 90 markets and 87,315 candles, measured on a
+  raw-HTTP path that cannot fabricate (H62). Negative in 88 of 90 markets, stable under
+  leave-one-market-out and leave-one-series-out, and present independently in the bid and the
+  ask. It is **not tradeable**: expected reversion is 0.146¢ against a spread of 1.3¢ at the
+  very best — roughly 9× short of covering a single crossing. Scope is Kalshi at an hourly
+  horizon; it is absent on Polymarket at 5 minutes (H59).
+- **H50 is restored to CONFIRMED**, having spent part of 2026-08-13 wrongly marked UNVERIFIED.
+  Cite H62's figures, never the original −0.2472 [−0.3471, −0.1416] on n=19 — that stands as
+  the first observation, superseded in precision. H59 is a scope limit, not a refutation.
+- **H60 is the other confirmed result.** The cost of crossing is horizon-dependent, roughly
+  halving between a 24-hour and a 10-minute lead — a property of the exchange, not an edge.
 - **H61 is the sharpest lesson**: a real, out-of-sample-replicated ~5¢ effect that is
   unobtainable, needing sub-60-second detect-to-fill against a 5-minute cron. Walton decided
   on 2026-08-13 not to invest in latency infrastructure; the line stays closed.
