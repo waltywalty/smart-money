@@ -134,13 +134,21 @@ registry says so rather than quietly keeping the correct answer.
 | `analysis/mm/` | Market-making / adverse-selection study |
 | `analysis/h56/` | The hurdle re-measurement — result, 346 events, collector, analysis |
 
-## ⚠️ worker.js is v11.4 — production runs v11.5
+## worker.js is v11.4, and so is production
 
-`worker.js` in this repo is **v11.4**. The deployed worker is **v11.5**, and a **v12.3** existed but
-was lost in a container rollback on 2026-08-10 and is not recoverable from any sandbox.
+`worker.js` in this repo is **v11.4**, and that is what is live. Verified 2026-08-13 by fetching
+the worker's own status endpoint — `GET /` returns `version` from the source constant — which
+reported `v11.4` on a build with `runs: 2044` and a four-minute-old `lastRun`. The deployed source
+read in the Cloudflare dashboard the same day carries the same constant, and the repo file matches
+it on twelve distinctive markers.
 
-**Do not deploy this file without checking Cloudflare's version history first.** It is committed as
-history, not as the current build.
+This replaces an earlier warning that production ran **v11.5** and that this file was one build
+behind. **No evidence of a v11.5 deployment was found**, and the claim had never been checked
+against the endpoint that answers it. See `DEPLOY.md`.
+
+A **v12.3** existed and was lost in a container rollback on 2026-08-10. It is unrecoverable *from
+any sandbox* — Cloudflare keeps its own version history, and that list has still not been checked.
+That is the one open question about what this worker has ever run.
 
 Operational notes:
 
