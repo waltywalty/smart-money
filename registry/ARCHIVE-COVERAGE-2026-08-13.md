@@ -141,3 +141,80 @@ including files already proven present. Silent, and in the same direction as a r
 read as a 404.
 
 Both were caught by disagreement between two methods, not by inspection. Neither announced itself.
+
+---
+
+# AMENDMENT — 2026-08-14
+
+Two corrections to this note, both found by external audit, both mine.
+
+## 1. The self-collection estimate was wrong by more than half
+
+This note said KXRAIN accumulates at "~11–12 events/month — roughly 9 months of continuous
+self-collection" to reach 100. **Both halves are wrong.**
+
+The 11–12 figure came from bucketing events by calendar month and reading the buckets as rates:
+`{2026-07: 11, 2026-08: 12}`. But July was counted from the 16th and August only to the 12th —
+two partial months read as full ones. That is a units error, and it roughly halved the rate.
+
+Measured from the same table this note already contained: **23 events over 2026-07-16 →
+2026-08-12 is 27 days**, so
+
+```
+23 events / 27 days  =  0.85 events/day  =  ~26 events/month
+100 events / 26 per month  =  3.9 months
+```
+
+**Under four months, not nine.** The arithmetic is shown because it halves an infrastructure
+decision.
+
+**Which definition H57 means.** `H57.revive_if` reads "at least 100 NEW KXRAIN events have
+settled that were not in the 2026-08-12 universe." That is a *cumulative recorded* count, not a
+simultaneously-reachable one, and the distinction is load-bearing now that retention is measured:
+at 0.85 events/day against a 67-day window, the reachable-at-once ceiling is about **57 events**.
+**100 is not reachable in a single query at any future date.** It is only reachable by recording
+events as they settle. So the timeline is ~4 months of collection, and no amount of waiting
+without collecting will ever produce it.
+
+One caveat on the rate: `/events?series_ticker=KXRAIN&status=settled` returns **24 events in
+total with the cursor exhausted**, so 0.85/day is measured over essentially the whole life of the
+series. It is a young-series rate and may not be stable.
+
+## 2. The retention finding was right in substance and wrong in its evidence
+
+This note concluded that Kalshi "serves a rolling window" from KXRAIN going 22 → 23 events and
+from one day's floor reading. That is growth at the front edge plus a single observation; neither
+tests whether old events drop off the back. The audit was correct that the conclusion was not
+established by what was presented.
+
+It is established now, and the conclusion survives — see
+`registry/retention/FINDINGS-2026-08-14.md`. Sixteen series carrying between 25 and 6,348 events
+all floor on the identical date, which only a date cutoff produces; and the floor advanced from
+2026-06-07 to 2026-06-08 between 08-13 and 08-14 on two independently checked series.
+
+Three specifics in this note need correcting:
+
+- **"67 days exchange-wide, 28 for KXRAIN"** — the KXRAIN figure is not retention. KXRAIN is a
+  **young series**: 24 events in total, cursor exhausted, earliest `KXRAIN-26AUG01`. Its floor is
+  where its history begins. Retention is uniform at 67 days for every series old enough to test.
+- **"Kalshi does not retain settled history"** — too broad. **Market-level** data expires at 67
+  days. **Event-level** metadata persists for years (`HIGHNY-21AUG06`, `FED-21DEC`, `CPIYOY-22DEC`
+  are all still listed). The two are different objects, and `/events` listing an event whose
+  markets are gone is an active trap.
+- **The H55/H64 deadline of ~2026-08-17 stands.** A later amendment to the H64 pre-registration
+  briefly claimed candlesticks escaped it. They do not — see that file's Amendment 2.
+
+## 3. And the retention framing itself is wrong — Kalshi deletes nothing
+
+Later on 2026-08-14, after the amendment above was written: Kalshi splits data into a **live**
+set and a **historical** set at a documented, queryable boundary (`GET /historical/cutoff`), and
+serves the historical set from `/historical/*`. `HIGHNY-21AUG06` — an event from 2021 — returns
+its market and its settlement result from `/historical/markets`. Nothing expires.
+
+So this note's central claim, that Kalshi's window slides and old data is lost, is **wrong**. The
+live set does slide, exactly as measured. The data does not go anywhere. Both the 9-month and the
+corrected 4-month self-collection figures are moot, the H55/H64 deadline is void, and
+`archive.pmxt.dev` was never the only route to this history — Kalshi's own is deeper and carries
+settlement.
+
+Full correction in `registry/retention/FINDINGS-2026-08-14.md`.
