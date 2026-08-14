@@ -192,3 +192,48 @@ the required leave-one-series-out survival, the obtainability and depth reportin
 capital-lockup arithmetic, and what each outcome is allowed to mean.
 
 **Still unseen at the time of this amendment:** band population, hit rate, and every settlement.
+
+---
+
+# AMENDMENT 2 — 2026-08-14, before any settlement was examined
+
+**Amendment 1 was wrong about the deadline. Retracted here, in full.**
+
+Amendment 1 claimed that moving the quote instrument from `archive.pmxt.dev` to Kalshi's
+1-minute candlesticks removed the 2026-08-17 expiry, because "the binding constraint is Kalshi's
+own rolling settled-history window, which refreshes daily."
+
+**It does not refresh in the direction I assumed, and candlesticks are not a separate retention
+domain.** Measured today with a control:
+
+```
+KXHIGHNY-26JUN10-T82   candlesticks  200, 25 candles     (inside the window)
+KXHIGHNY-26JUN08-T82   candlesticks  404 not_found
+KXHIGHNY-26JUN03-T82   candlesticks  404 not_found
+KXHIGHNY-25DEC15-T82   candlesticks  404 not_found
+CONTROL, impossible ticker           404 not_found
+```
+
+Once a market passes the retention floor its candlesticks 404, and `/markets?event_ticker=` returns
+zero rows, so the ticker cannot even be discovered to ask for candles. **The quote history expires
+with the market listing.** Changing endpoint changed nothing about the deadline; I assumed a
+different endpoint meant a different retention domain and did not test it until now.
+
+One honest caveat on that table: the `-T82` strike may not have existed on the older events, so a
+404 there is consistent with "wrong strike" as well as "expired". The load-bearing evidence is not
+the strike probe — it is that `/markets?event_ticker=KXHIGHNY-26JUN03` returns **zero markets**, so
+no valid ticker for that event can be obtained by any route.
+
+**Consequence:** the deadline is real and is roughly where it was originally estimated. The archive
+ends 2026-06-11; the exchange-wide floor is 2026-06-08 today and advancing about a day per day, so
+the H64 window empties on or about **2026-08-17**. Markets closing 2026-06-08 are expiring now.
+
+**What this changes in the procedure, and nothing else:** collection is re-ordered **oldest close
+date first**, so the most endangered observations are captured before the least. The universe was
+captured at 01:43 UTC today and already shows the erosion — 13 markets closing 06-07 against 2,644
+closing 06-08, because 06-07 had almost entirely fallen off by the time it was pulled.
+
+The claim, the entry rule, the fee formula, the unit of observation, the 150-event bar, the
+leave-one-series-out requirement, the staleness filter and the outcome meanings are unchanged.
+
+**Still unseen at the time of this amendment:** band population, hit rate, and every settlement.
