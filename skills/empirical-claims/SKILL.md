@@ -54,6 +54,17 @@ Observed, repeatedly, in production:
    exhaust the socket pool and the client hangs *below* the timeout layer, alive and making no
    progress. Use `with urlopen(...) as r:` or a pooled session. Add a heartbeat file and treat a stale
    heartbeat as a stall, because this failure is silent by construction.
+10. **Probe object stores with a ranged `GET`, never `HEAD`, and always include an impossible
+    control key.** `HEAD` on `r2kalshi.pmxt.dev` returns `200` for keys that do not exist — a
+    control dated 1999-01-01 passed. A coverage sweep built on `HEAD` reported an archive complete
+    through August that ends in June.
+11. **Report status codes, never booleans, and send an explicit User-Agent.** A bare
+    `python-urllib` UA is blocked at some edges; the resulting `HTTPError` was mapped by a
+    `try/except` to "file absent", and the sweep reported everything missing — including files
+    already proven present. A 403 must never be readable as a 404.
+
+Both of those were caught by disagreement between two methods, not by inspection. Neither
+announced itself.
 
 ## Part 2 — the verification gate
 

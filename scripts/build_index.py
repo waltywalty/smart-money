@@ -43,10 +43,15 @@ BUCKETS = ["confirmed", "killed", "corrected", "could_not_establish", "open", "p
 LOST = ["H22", "H23", "H24", "H25", "H26", "H27", "H32", "H45"]
 
 # First field present wins. Ordered most-specific-result first, claim last.
+# The index answers "has this been tried?", so the one-line carries the CLAIM.
+# The verdict column already carries the outcome; repeating it there wasted the
+# width and, with the ECHO strip, left dangling conjunctions ("and it fails in
+# the direction that..."). Result fields are the fallback only, for the 20
+# rollback-reconstructed entries that have no `claim`.
 ONE_LINE_FIELDS = [
-    "result", "verdict_2026_08_10", "THE_KILL", "the_result_KILLS_it",
+    "claim", "why_it_matters",
+    "verdict_2026_08_10", "result", "THE_KILL", "the_result_KILLS_it",
     "found", "verdict", "the_real_answer", "evidence", "status", "note",
-    "why_it_matters", "claim",
 ]
 
 # Hand-authored topic labels. Derived by reading each entry's own claim /
@@ -73,7 +78,7 @@ TOPIC = {
     "H63": "reversion-in-trades",
 }
 
-W_ID, W_VERDICT, W_TOPIC, W_ONE = 4, 9, 24, 38
+W_ID, W_VERDICT, W_TOPIC, W_ONE = 4, 9, 24, 42
 
 HEADER = """# Registry index — GENERATED, do not edit by hand
 
@@ -91,9 +96,12 @@ def hnum(hid):
     return int("".join(c for c in hid if c.isdigit()) or 0)
 
 
-# The verdict column already carries the verdict; drop a leading echo of it.
+# The verdict column already carries the verdict, so a leading echo of it is
+# dead width on the fallback path. Strip it ONLY when what follows starts a new
+# sentence — otherwise "KILLED, and the most informative death" becomes "and the
+# most informative death", a dangling conjunction that reads as a fragment.
 ECHO = re.compile(r"^(KILLED|CONFIRMED|CORRECTED|OPEN|UNVERIFIED|"
-                  r"COULD NOT ESTABLISH)\b[\s,.:;–—-]*")
+                  r"COULD NOT ESTABLISH)\b[\s,.:;–—-]*(?=[A-Z0-9])")
 
 # A verdict word at the head of the `now` field, where one exists.
 NOW_VERDICT = re.compile(r"^(CONFIRMED|KILLED|CORRECTED|UNVERIFIED|OPEN)\b")
@@ -141,8 +149,8 @@ def main():
                 verdict += "*"
                 nowtxt = " ".join(e["now"].split())
                 notes.append("* %s sits in the `%s` bucket; its own `now` field reads \"%s\". "
-                             "Both may hold - killed as a TRADE, confirmed as an EFFECT. "
-                             "Flagged, not adjudicated; unreconciled in the registry."
+                             "Ruled by Walton 2026-08-14: killed as a TRADE, confirmed as an "
+                             "EFFECT. It stays in `killed`; see its audit_note."
                              % (hid, bucket, nowtxt[:46].rstrip() + "…"
                                 if len(nowtxt) > 46 else nowtxt))
             rows.append((hnum(hid), "%-*s | %-*s | %-*s | %s" % (

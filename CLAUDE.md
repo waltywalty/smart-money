@@ -30,7 +30,7 @@ and analysis need no permission. Trading and deploying always do.
 
 Quantitative research across prediction markets (Kalshi, Polymarket). It began as a
 "follow the smart money" detector. It is now a record of **every idea that did not work
-and the measurement that killed it** — 54 hypotheses, 45 killed, 4 corrected, 2 confirmed,
+and the measurement that killed it** — 55 hypotheses, 45 killed, 4 corrected, 3 confirmed,
 1 open, 2 could-not-establish.
 
 **The hurdle is horizon-dependent.** −3.81¢ per contract at a 24-hour lead

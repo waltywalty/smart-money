@@ -22,7 +22,7 @@ The headline result is a cost, not an edge.
 
 ## The registry is the point
 
-`registry/hypotheses.json` holds **54 entries — 45 killed, 4 corrected, 2 confirmed, 1 open, 2
+`registry/hypotheses.json` holds **55 entries — 45 killed, 4 corrected, 3 confirmed, 1 open, 2
 could-not-establish.** It exists because a killed idea has a habit of coming back wearing a new name,
 and because a project that only records its wins learns nothing.
 
