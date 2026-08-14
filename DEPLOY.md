@@ -13,6 +13,9 @@ first thing to fix.
 | Repo tag | none yet — tag this commit `v11.4` |
 | Matches repo `worker.js` | **Yes** |
 
+**v12.3 is no longer an open question.** It was recovered on 2026-08-13 and is archived, not
+deployed. The claim that it was unrecoverable was true of the sandboxes and false of Cloudflare.
+
 **How that was established, 2026-08-13.** Not from the dashboard. The worker reports its own
 build: `VERSION` is a source constant returned as `version` by `GET /`. A raw HTTP fetch of
 `https://smart-money-bot.rogerlgk.workers.dev/` returned `"version":"v11.4"`, with `runs: 2044`
@@ -36,7 +39,7 @@ settle it outright.
 
 | Version | Deployed | Tag | Notes |
 |---|---|---|---|
-| v12.3 | 2026-08-?? | — | Lost to container rollback 2026-08-10. Cloudflare version history: **not yet checked** — the only open question here |
+| v12.3 | 2026-08-?? | — | **RECOVERED 2026-08-13** from Cloudflare's version history, which the repo never checked. Archived verbatim at `archive/worker-v12.3.js`; see `archive/WORKER-V12.3-RECOVERY.md`. **Does not run today** — its Kalshi leg reads pre-migration field names and would silently record zeros |
 | v11.5 | — | — | **No evidence it was ever deployed.** The live endpoint reports v11.4 and the deployed source reads v11.4. Treat the earlier claim as unverified until Cloudflare's version list says otherwise |
 | v11.4 | ≤ 2026-08-06 | — | **LIVE.** Matches repo `worker.js` (73,451 bytes) |
 
