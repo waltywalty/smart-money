@@ -99,6 +99,10 @@ pre-registrations are in `registry/`.
 Say **"could not establish"** when the instrument failed. That is a different claim from a
 null, and recording an instrument failure as a finding is worse than either.
 
+**An operational claim is subject to the same evidence standard as an empirical one.** Tag it
+measured or asserted. The retention window and worker v11.5 were both asserted, both wrong, and
+both shaped decisions for weeks.
+
 **Rebuild `registry/INDEX.md` whenever a verdict changes** — `python scripts/build_index.py`.
 The index is generated and `registry/hypotheses.json` stays authoritative; read the index
 to answer "has this been tried?", not the whole registry.
