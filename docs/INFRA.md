@@ -109,9 +109,11 @@ worker's own `GET /`, which returns `version` from the source constant. **There 
 evidence v11.5 was ever deployed**; that claim sat here unchecked for days and one HTTP
 request settled it. **Ask the worker, not the dashboard.** See `DEPLOY.md`.
 
-**v12.3 existed and was lost** to a container rollback on 2026-08-10. It is not recoverable
-from any sandbox — but Cloudflare keeps its own version history and **that list has still
-not been checked.**
+**v12.3 existed and was lost** to a container rollback on 2026-08-10 — and was then **recovered
+on 2026-08-13 from Cloudflare's own version history**, which nobody had checked for three days.
+Archived verbatim at `archive/worker-v12.3.js`. It does not run today: its Kalshi leg reads
+pre-migration field names and would silently record zeros. See `archive/WORKER-V12.3-RECOVERY.md`.
+**"Unrecoverable" was true of the sandboxes and false of the world.**
 
 Subrequest ceiling 50 per invocation, worst measured cycle 22 — exceeding it silently
 kills scheduled runs and once looked exactly like a broken cron trigger. KV writes ~288/day
