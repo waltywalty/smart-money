@@ -93,3 +93,48 @@ One check worth adding to each census: fetch `/historical/cutoff` alongside the 
 it. Today its `market_settled_ts` reads 2026-06-14 against an observed `close_time` floor of
 2026-06-08 — consistent, since markets settle after they close, but worth watching as a pair
 rather than assuming they track.
+
+---
+
+## Amendment — 2026-08-14: the purpose of this census has narrowed
+
+**Appended, not edited.** Nothing above is changed.
+
+This panel was set up while the project believed Kalshi *deleted* settled-market history and that a
+sliding floor was destroying data on a four-day clock. That framing is wrong and was retracted the
+same day: Kalshi deletes nothing. There is a **live** set and a **historical** set, split at a
+queryable boundary (`GET /historical/cutoff`), and `/historical/markets` returns markets from 2021
+with their settlement results.
+
+B1 has now put a number on it: **7,269,014 settled markets across 6,703 series, back to
+2021-07-01**, all of it reachable today
+(`registry/historical/B1-COLLECTION-2026-08-14.md`).
+
+**So the live floor's motion is a curiosity about the live/historical boundary, not a constraint on
+data availability.** No study is racing it. Nothing is lost when it advances.
+
+### It is still worth finishing, and for one specific reason
+
+The floor advances one day per day. `/historical/cutoff.market_settled_ts` has read
+**2026-06-14T00:00:00Z** across every session that has looked. Those two facts cannot both continue
+indefinitely: on **2026-08-14** the floor sat at **2026-06-08**, six days below the cutoff, and if
+nothing changes they meet on or about **2026-08-20**.
+
+After that the live floor passes the cutoff and a **reachability gap** opens — markets too old for
+`/markets` and too new for `/historical`, on neither path — widening by a day per day. The likely
+resolution is that historical ingestion is batched and the cutoff jumps forward, in which case
+nothing happens. But the failure mode is asymmetric, and the check is two HTTP requests.
+
+This is parked as **P9**. The census is the instrument that answers it, and the answer arrives on
+its own schedule whichever way it goes.
+
+**What each remaining run should record**, in addition to the existing panel:
+
+- `GET /historical/cutoff` — all four timestamps, verbatim.
+- The live `close_time` floor for at least two unrelated series, each paged to **cursor
+  exhaustion** (a single page gives a false floor — `KXMLBGAME` reads 2026-07-05 on one page of
+  1,000 rows and 2026-06-08 fully paged).
+- The HTTP status of every call, and an impossible control series on each pass.
+
+**No conclusion before the tenth file.** That rule stands, and it is the reason this panel exists
+rather than another single-day reading.
