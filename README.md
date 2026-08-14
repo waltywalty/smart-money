@@ -146,9 +146,23 @@ This replaces an earlier warning that production ran **v11.5** and that this fil
 behind. **No evidence of a v11.5 deployment was found**, and the claim had never been checked
 against the endpoint that answers it. See `DEPLOY.md`.
 
-A **v12.3** existed and was lost in a container rollback on 2026-08-10. It is unrecoverable *from
-any sandbox* — Cloudflare keeps its own version history, and that list has still not been checked.
-That is the one open question about what this worker has ever run.
+A **v12.3** existed and was lost in a container rollback on 2026-08-10. It was **recovered on
+2026-08-13 from Cloudflare's own version history** and is archived verbatim at
+`archive/worker-v12.3.js` (sha256 `db26c93b…`, 115,115 bytes); see `archive/WORKER-V12.3-RECOVERY.md`.
+**It does not run today** — its Kalshi leg reads pre-migration field names (`yes_bid`, `yes_ask`,
+`volume`) that no longer exist and would silently record zeros.
+
+Two operational claims in this file were wrong, and both were wrong the same way — confident,
+never measured, and used as a constraint:
+
+- **"Production runs v11.5."** There is no v11.5. Live is v11.4 and this repo matched all along.
+  The claim stood until **2026-08-13**, when a single `GET /` against the worker settled it. A
+  version number that never existed generated a standing warning here for weeks.
+- **"v12.3 is unrecoverable from any sandbox."** True as written and misleading in effect. It was
+  recoverable — from Cloudflare, which nobody checked for three days — and the qualifier stopped
+  nobody reading it as gone. **"Unrecoverable" was true of the sandboxes and false of the world.**
+
+The registry records its own errors. So does this file now.
 
 Operational notes:
 
