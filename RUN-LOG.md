@@ -32,3 +32,30 @@ Part 1 (all eleven rules, including 10 and 11 added on 2026-08-14).
 **Next action:** A1 — establish Kalshi's fee rounding rule from documentation
 (per order / per fill / per contract), find and reproduce a worked example, then build
 `analysis/fees/fee-model.py`.
+
+**Completed this session (A1):**
+- **A1 done.** Fee rounding established from Kalshi documentation, not inference. Trade fee
+  rounds up to a **centicent per fill**, not a whole cent; whole-cent behaviour comes from a
+  separate balance-precision rounding fee that a **per-order accumulator** rebates. All three
+  documented worked examples reproduce exactly.
+- **Fragmentation does not destroy amortisation** — 100 contracts at p=0.97 cost 0.2100¢ each
+  whether filled in 1, 5 or 20 pieces. **Size does matter, and only at the extremes**: 1 contract
+  is 1.0000¢ at any price above 0.9, against 0.2100¢ at 100 contracts (p=0.97) and 0.0700¢
+  (p=0.99). At p=0.50 the ratio is 1.14×.
+- Delivered `analysis/fees/fee_model.py` (rounding regime a parameter, documented examples as
+  unit tests) and `registry/fees/A1-FEE-ROUNDING-2026-08-15.md`.
+- Base fee formula **could not be established** — the docs example gives \$0.0085 for 1 contract
+  at \$0.055 against \$0.003638 from `0.07·p·(1−p)`. `rate` left a parameter everywhere.
+
+**Parked this session:** P1–P5 → `PARKED.md`.
+
+**STOP conditions hit:**
+- **STOP 1** — A1 contradicts `docs/INFRA.md` ("rounded up on order total"). Both versions
+  recorded, neither built on, INFRA.md unchanged.
+- **STOP 2** — A1 overturns H64's stated fee conclusion. H64's verdict and figures untouched;
+  its result does not depend on the fee.
+
+**Next action:** A2 — depth-probe `/historical` per series for the earliest reachable settled
+market, re-derive the 2026-06-07→06-11 window from `/historical` and compare against the live
+path's 4,787 events, check field parity (`fee_multiplier` especially), and candlestick reach.
+Deliver `registry/historical/REACH-2026-08-15.md`.
