@@ -92,6 +92,15 @@ Base `https://api.elections.kalshi.com/trade-api/v2`, no auth for public market 
   floor ≤ actual ≤ cap; `greater` wins when actual > floor. **Read strike fields, never
   titles.**
 
+- **`ticker=` is not a filter.** `GET /markets?ticker=X` and `GET /historical/markets?ticker=X`
+  both **silently ignore** the parameter and return the unfiltered head of the collection — which
+  begins with the `KXMVE*` machine-generated flood, closing at `2026-06-14T23:45:00Z`. Verified
+  2026-08-14 with an impossible control key: `?ticker=KX-IMPOSSIBLE-CONTROL-19990101` returns
+  **HTTP 200 with 5 markets** on both paths, while `?series_ticker=` and `?event_ticker=` controls
+  correctly return 0 rows. This produced six different quarter-hour crypto markets all reporting
+  the *same* close time, and only the control exposed it. **Filter by `event_ticker`; read a single
+  market from `/markets/{ticker}` (path segment, not query), whose control returns 404.**
+
 ### Kalshi retention — there is none. There is a live/historical split.
 
 Measured and documented 2026-08-14. Every backward-looking Kalshi study in this project
