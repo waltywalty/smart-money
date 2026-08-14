@@ -37,16 +37,26 @@ def get(path, params, gap=0.55, tries=5):
 lock=threading.Lock()
 ST=json.load(open(STATE)) if os.path.exists(STATE) else {}
 SER=json.load(open('/root/work/series.json'))
+# an http_* stop is an instrument failure, not exhaustion - always retry it
+_retry=[k for k,v in ST.items() if str(v.get('stop','')).startswith('http_')]
+for k in _retry: ST[k]['stop']=None
+if _retry: print('retrying %d series that stopped on a status code: %s'%(len(_retry),_retry[:5]))
 BUDGET=float(sys.argv[1]) if len(sys.argv)>1 else 46.0
 T0=time.time()
+PAGE_CAP=int(sys.argv[2]) if len(sys.argv)>2 else 40
+HARD_CAP=int(sys.argv[3]) if len(sys.argv)>3 else 150
 def work(s):
     cur=ST.get(s)
-    if cur and cur.get('stop') in ('cursor_exhausted','empty_page'): return None
+    if cur and cur.get('stop'): return None
     cur=cur or {'cursor':None,'pages':0,'rows':0,'kxmve':0,'stop':None,'codes':{}}
     fh=open(os.path.join(OUT,s+'.ndjson'),'a')
+    p0=cur['pages']
     try:
         while cur['stop'] is None:
             if time.time()-T0>BUDGET: break
+            if cur['pages'] >= HARD_CAP:
+                cur['stop']='budget_cap_%d'%HARD_CAP; break
+            if cur['pages']-p0 >= PAGE_CAP: break   # defer: no single series eats one call's budget
             p={'series_ticker':s,'limit':1000}
             if cur['cursor']: p['cursor']=cur['cursor']
             code,j=get('/historical/markets',p)
@@ -72,8 +82,10 @@ def work(s):
         fh.close()
         with lock: ST[s]=cur
     return s
-todo=[s for s in SER if not (ST.get(s) or {}).get('stop') in ('cursor_exhausted','empty_page')]
-with ThreadPoolExecutor(max_workers=3) as ex:
+todo=[s for s in SER if not (ST.get(s) or {}).get('stop')]
+# shallow-first: finish the long tail before spending a whole budget on one mega-series
+todo.sort(key=lambda s: (ST.get(s) or {}).get('pages',0))
+with ThreadPoolExecutor(max_workers=4) as ex:
     list(ex.map(work, todo))
 json.dump(ST, open(STATE,'w'))
 done=sum(1 for v in ST.values() if v.get('stop') in ('cursor_exhausted','empty_page'))
