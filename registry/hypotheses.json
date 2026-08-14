@@ -597,5 +597,12 @@
     "the_one_real_effect": "Mean reversion on Kalshi is real in BOTH quotes and executed prices. Quotes: -0.1896 [-0.2147,-0.1650] over 90 markets and 87,315 hourly candles (H62). Executed trades, same-side conditioned: -0.2560 [-0.2858,-0.2247] over 36 markets and 45,964 trades, negative in 36 of 36 (H63). Mechanism settled; it is price movement, not quote flicker.",
     "and_still": "Expected reversion 0.146c against a 1.3c spread at best. Roughly 9x short. The signal is real, the mechanism is understood, and the spread is an order of magnitude bigger.",
     "open_caveats_remaining_on_H50": "None. the_honest_caveat is closed by H63."
+  },
+  "_gaps_partial_recovery_2026_08_13": {
+    "what": "worker v12.3 was recovered from Cloudflare's own version history on 2026-08-13 and is archived at archive/worker-v12.3.js. _gaps is left as written; this is additive.",
+    "why_it_matters_for_the_gaps": "v12.3 contains a full implementation of H23 (forecast vs market) with its reasoning intact, and H23 is inside the H22-H27 block _gaps records as lost and unreconstructable. The RESULT is still lost. The METHOD is not.",
+    "the_H23_method_that_survives": "IEM archives NWS MOS guidance BY STATION AND RUN TIME, and its station identifiers are the exact gauges Kalshi settles against (KNYC is Central Park). Kalshi archives settled outcomes and hourly candles. The two join on the settlement station, so the forecast-vs-market question is testable on history rather than needing a month of forward recording. v12.3 records that IEM daily maxima matched Kalshi expiration_value exactly on every day checked.",
+    "the_correction_to_the_record": "'Unrecoverable' was asserted on 2026-08-10 about sandboxes and then written down as a fact about the world. Cloudflare had it the whole time and nobody looked for three days. Check every store that could hold a thing before recording it as lost.",
+    "do_not_deploy_it": "v12.3's Kalshi tape leg reads yes_bid / yes_ask / volume, which the migrated schema no longer returns. Its px() normaliser maps the resulting undefined to 0, so it would write a complete 60-day Kalshi tape of zeros and report no error. Measured against the live API 2026-08-13, not inferred."
   }
 }
