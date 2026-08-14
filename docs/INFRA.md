@@ -131,6 +131,42 @@ traps sit next to it:
   and 2026-06-08 fully paged; `KXBTC15M` reads 2026-08-03 against 2026-06-08. **Follow the cursor
   to exhaustion before reading a floor off anything.**
 
+**How far `/events` outruns `/markets` — measured 2026-08-14 (A3).** Ten series, both
+endpoints paged to **cursor exhaustion** on every row, distinct `event_ticker` counted in
+code. `stop_reason` recorded per series; all twenty pagings terminated on an empty cursor,
+none on a page cap and none on a non-200.
+
+| series | `/events` | `/markets` | gap | ratio |
+|---|---:|---:|---:|---:|
+| KXBTC15M     | 22,999 | 6,449 | **16,550** | 3.6× |
+| KXETH15M     | 22,986 | 6,449 | **16,537** | 3.6× |
+| KXSOL15M     | 20,622 | 6,449 | **14,173** | 3.2× |
+| KXXRP15M     | 17,403 | 6,449 | 10,954 | 2.7× |
+| KXBNB15M     | 14,020 | 6,450 |  7,570 | 2.2× |
+| KXHYPE15M    | 14,019 | 6,449 |  7,570 | 2.2× |
+| KXDOGE15M    | 14,019 | 6,451 |  7,568 | 2.2× |
+| KXNCAABBGAME |  7,272 |    17 |  7,255 | **428×** |
+| KXITFMATCH   | 14,649 | 7,750 |  6,899 | 1.9× |
+| KXITFWMATCH  | 13,362 | 6,730 |  6,632 | 2.0× |
+
+The three largest absolute gaps are **KXBTC15M, KXETH15M and KXSOL15M**. The largest
+*ratio* is **KXNCAABBGAME at 428×** — college basketball is out of season, so its live
+market presence has collapsed to 17 events while 7,272 event shells remain listed. Ratio
+and gap rank differently and neither alone describes the endpoint.
+
+**The `/markets` counts independently confirm the sliding floor.** Seven unrelated
+15-minute crypto series all exhaust at 6,449–6,451 distinct events. A 15-minute series
+produces 96 events/day; 2026-06-08 → 2026-08-14 is 67 days, and 67 × 96 = 6,432. The floor
+measured off weather and baseball series predicts the crypto counts to within 0.3%. Three
+unrelated product families, one boundary.
+
+**A non-200 mid-pagination is not the end of the data.** `/events?series_ticker=KXMLBGAME`
+was read as 1,400 events on 2026-08-14 by a loop that broke on `st != 200`; a 429 arrived
+on page 7 and was silently recorded as exhaustion. Paged again with the 429 retried, the
+same query returns **4,083**. Every pagination must record *why* it stopped —
+`cursor_exhausted`, `empty_page`, `http_<code>`, or `page_cap` — and only the first two may
+be read as a complete answer. This is the same failure shape as reading a 403 as a 404.
+
 **What this means for study design.** Historical depth is not a constraint — design the sample
 the question wants, then route each market to the right endpoint by comparing its settlement time
 to `/historical/cutoff`. Do not build a collector to beat a deadline; there isn't one. The
