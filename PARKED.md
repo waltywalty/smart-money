@@ -277,3 +277,32 @@ not transfer without checking. This is flagged as a question, not as a finding.
 exist, which would settle it without any arithmetic.
 
 **Recommendation:** (a), then (c) if the depth is not there. Low priority.
+
+---
+
+## P13 — PHASE D: the hurdle re-measured at size. Parked, which is the correct outcome.
+
+**Blocks:** nothing. This is a study design held back deliberately.
+
+The packet permits a new study only under **all four** of its conditions. Checked one at a time:
+
+| condition | status |
+|---|---|
+| 1. Gate 1 answered every question affirmatively | **FAILS.** Four of five are answered. The fee question is answered only in its structural half — the ceiling is per fill — and its numerical half is explicitly *could not establish*: Kalshi's own worked example gives \$0.0085 for one contract at \$0.055 against \$0.003638 from `0.07·p·(1−p)`. |
+| 2. The instrument is fully characterised, no open questions of any kind | **FAILS.** `open_interest_fp` disagrees between paths (**P8**); the live/historical boundary may open a gap on ~2026-08-20 (**P9**); authenticated reach is untested; 4.1% of archive snapshot rows are unbracketable. |
+| 3. Pre-registration sealed and committed in its own commit before any outcome is touched | Not started. Achievable, but conditions 1 and 2 already fail. |
+| 4. Does not require reviving a parked entry | **FAILS.** The study *is* **P11** — determining what size H56's hurdle assumed. |
+
+**Three of four fail.** The design is therefore parked rather than run, exactly as the packet
+anticipated: *"Realistically: expect to park this. That is the correct outcome."*
+
+**What the design would be, recorded so it is not re-derived from scratch.** Re-measure the
+cost of crossing at an explicit size ladder — 1 / 10 / 100 / 1,000 contracts — across the price
+range, using `analysis/fees/fee_model.py` with `rate` a visible parameter and
+`target_precision` set for both direct and non-direct membership, over B1's 7.27M-market
+universe. Report the hurdle as a **function of size and price**, not a scalar. Every kill in the
+registry currently calibrates against a scalar.
+
+**Unblocking it needs, in order:** A1's base-rate gap closed (the docs' worked example
+reconciled), P11 answered by reading `analysis/h56/`, and P8 resolved or the field excluded.
+None requires new collection.
