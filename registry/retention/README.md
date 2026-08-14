@@ -73,3 +73,23 @@ same story at 2026-07-31. Their floors will *not* advance, and that is not evide
 rolling window. The seasonal series (`KXNBAGAME`, `KXNHLGAME`, `KXTONYAWARDS`) have the mirror
 problem: their newest event is old, so their floor is pinned by inactivity. **Only the sixteen
 series flooring at 2026-06-08 carry the test.**
+
+---
+
+## Amended same day — the stakes changed, the census did not
+
+Kalshi does not delete anything. There is a **live** set and a **historical** set split at a
+queryable boundary (`GET /historical/cutoff`), and `/historical/markets` returns markets,
+settlement results and candlesticks for events as old as 2021. See
+`FINDINGS-2026-08-14.md`.
+
+**The prediction above stands exactly as written** — the named tickers should still disappear
+from `/markets`, because the live set really is sliding. What changes is what their
+disappearance *means*: migration to `/historical`, not loss. So the census now measures **where
+the boundary sits and how fast it moves**, which is how you know which endpoint to query. It is
+no longer measuring whether history survives. It does.
+
+One check worth adding to each census: fetch `/historical/cutoff` alongside the panel and record
+it. Today its `market_settled_ts` reads 2026-06-14 against an observed `close_time` floor of
+2026-06-08 — consistent, since markets settle after they close, but worth watching as a pair
+rather than assuming they track.

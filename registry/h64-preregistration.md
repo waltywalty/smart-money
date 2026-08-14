@@ -237,3 +237,63 @@ The claim, the entry rule, the fee formula, the unit of observation, the 150-eve
 leave-one-series-out requirement, the staleness filter and the outcome meanings are unchanged.
 
 **Still unseen at the time of this amendment:** band population, hit rate, and every settlement.
+
+---
+
+# AMENDMENT 3 — 2026-08-14, before any settlement was examined
+
+**There is no deadline. There never was one. Kalshi deletes nothing.**
+
+Amendments 1 and 2 argued about *when* the H64 window expires. Both were arguing about a
+premise that is false. Kalshi splits its data into a **live** set and a **historical** set at a
+documented, queryable boundary, and serves the historical set from a parallel endpoint family.
+Nothing is discarded; it moves.
+
+```
+GET /trade-api/v2/historical/cutoff
+  {"market_settled_ts":"2026-06-14T00:00:00Z", ...}
+
+GET /historical/markets?event_ticker=KXHIGHNY-26JUN03   200, 6 markets, results {yes:1, no:5}
+GET /historical/markets?event_ticker=KXHIGHNY-25DEC15   200, 6 markets, results {yes:1, no:5}
+GET /historical/markets?event_ticker=HIGHNY-21AUG06     200, 1 market,  result  yes    (2021)
+GET /historical/markets/KXHIGHNY-26JUN03-T83/candlesticks   200, 9 candles
+GET /series/KXHIGHNY/markets/KXHIGHNY-26JUN03-T83/candlesticks   404   <- the live path
+```
+
+Every one of those events returns **zero markets** from `/markets`. The same events return full
+market rows, settlement results and minute candlesticks from `/historical/markets`. **Five years
+of history, with outcomes, one endpoint away.**
+
+Kalshi documents this plainly. `GET /historical/cutoff` — *"Returns the cutoff timestamps that
+define the boundary between **live** and **historical** data."* And on the live candlesticks
+endpoint: *"Candlesticks for markets that settled before the historical cutoff are only available
+via `GET /historical/markets/{ticker}/candlesticks`."*
+
+## What this changes
+
+- **The 2026-08-17 deadline is void.** H64 can be run at any time, on any window, for as far back
+  as Kalshi has existed.
+- **The five-day window is no longer forced by anything.** The sealed universe stays the primary
+  sample so the seal means something, but the pre-committed extension in Amendment 1 is now
+  unbounded rather than capped by retention — and the "five consecutive days is one regime"
+  weakness can be removed outright rather than caveated.
+- **`archive.pmxt.dev` was never needed.** Kalshi has its own complete history, with settlement
+  attached, which the archive does not.
+- **Collection switches to `/historical/markets/{ticker}/candlesticks`** for any market whose
+  settlement precedes the cutoff, and the live path for the rest. The cutoff is queryable, so
+  which path applies is a lookup rather than a guess.
+
+## How this was missed, which is the part worth keeping
+
+The prior-art rule added to `CLAUDE.md` on 2026-08-13 says to check the current API surface
+before building. I did not read Kalshi's documentation. I inferred a retention policy from
+response shapes, built two collectors against that inference, exhausted a VM's memory twice,
+declared a four-day deadline, and re-ordered a collection to race it. **One documentation page
+would have prevented all of it**, and the packet that prompted this asked for exactly that check
+in T5, which I ran last instead of first.
+
+The measurement that produced the "67-day floor" was not wrong — the live set really does end
+there, uniformly, and really does advance a day per day. The error was concluding *deletion* from
+*absence in one endpoint*, without asking whether another endpoint held it.
+
+**Still unseen at the time of this amendment:** band population, hit rate, and every settlement.

@@ -203,3 +203,18 @@ Three specifics in this note need correcting:
   markets are gone is an active trap.
 - **The H55/H64 deadline of ~2026-08-17 stands.** A later amendment to the H64 pre-registration
   briefly claimed candlesticks escaped it. They do not — see that file's Amendment 2.
+
+## 3. And the retention framing itself is wrong — Kalshi deletes nothing
+
+Later on 2026-08-14, after the amendment above was written: Kalshi splits data into a **live**
+set and a **historical** set at a documented, queryable boundary (`GET /historical/cutoff`), and
+serves the historical set from `/historical/*`. `HIGHNY-21AUG06` — an event from 2021 — returns
+its market and its settlement result from `/historical/markets`. Nothing expires.
+
+So this note's central claim, that Kalshi's window slides and old data is lost, is **wrong**. The
+live set does slide, exactly as measured. The data does not go anywhere. Both the 9-month and the
+corrected 4-month self-collection figures are moot, the H55/H64 deadline is void, and
+`archive.pmxt.dev` was never the only route to this history — Kalshi's own is deeper and carries
+settlement.
+
+Full correction in `registry/retention/FINDINGS-2026-08-14.md`.

@@ -6,38 +6,247 @@
   "exchange_wide_floor": "2026-06-08",
   "floor_yesterday_2026_08_13": "2026-06-07",
   "panel": {
-    "KXHIGHNY":   {"floor": "2026-06-08", "newest": "2026-08-13", "events_in_window": 67,   "events_listed_by_events_endpoint": 1829, "events_cursor_exhausted": true,  "earliest_event": "HIGHNY-21AUG06"},
-    "KXHIGHCHI":  {"floor": "2026-06-08", "newest": "2026-08-13", "events_in_window": 67,   "events_listed_by_events_endpoint": 1817, "events_cursor_exhausted": true,  "earliest_event": "HIGHCHI-2-24FEB28"},
-    "KXHIGHDEN":  {"floor": "2026-06-08", "newest": "2026-08-13", "events_in_window": 67,   "events_listed_by_events_endpoint": 631,  "events_cursor_exhausted": true,  "earliest_event": "KXHIGHDEN-24DEC01"},
-    "KXMLBGAME":  {"floor": "2026-06-08", "newest": "2026-08-14", "events_in_window": 852,  "events_listed_by_events_endpoint": 3000, "events_cursor_exhausted": false, "earliest_event": "KXMLBGAME-25AUG01ARIATH"},
-    "KXMLBTOTAL": {"floor": "2026-06-08", "newest": "2026-08-14", "events_in_window": 853,  "events_listed_by_events_endpoint": 1874, "events_cursor_exhausted": true,  "earliest_event": "KXMLBTOTAL-25NOV01LADTOR"},
-    "KXMLBKS":    {"floor": "2026-06-08", "newest": "2026-08-14", "events_in_window": 847,  "events_listed_by_events_endpoint": 1825, "events_cursor_exhausted": true,  "earliest_event": "KXMLBKS-26APR011215ATHATL"},
-    "KXMLBSPREAD":{"floor": "2026-06-08", "newest": "2026-08-14", "events_in_window": 853,  "events_listed_by_events_endpoint": 1874, "events_cursor_exhausted": true,  "earliest_event": "KXMLBSPREAD-25NOV01LADTOR"},
-    "KXMLBTEAMTOTAL": {"floor": "2026-06-08", "newest": "2026-08-14", "events_in_window": 852, "events_listed_by_events_endpoint": 1772, "events_cursor_exhausted": true, "earliest_event": "KXMLBTEAMTOTAL-26APR011215ATHATL"},
-    "KXBTC15M":   {"floor": "2026-06-08", "newest": "2026-08-14", "events_in_window": 6348, "events_listed_by_events_endpoint": 3000, "events_cursor_exhausted": false, "earliest_event": "KXBTC15M-26AUG010000"},
-    "KXETH15M":   {"floor": "2026-06-08", "newest": "2026-08-14", "events_in_window": 6348, "events_listed_by_events_endpoint": 3000, "events_cursor_exhausted": false, "earliest_event": "KXETH15M-26AUG010000"},
-    "KXCS2MAP":   {"floor": "2026-06-08", "newest": "2026-08-14", "events_in_window": 2894, "events_listed_by_events_endpoint": 3000, "events_cursor_exhausted": false, "earliest_event": "KXCS2MAP-26AUG010400DEPPHANTOMACADEMY-1"},
-    "KXLOLMAP":   {"floor": "2026-06-08", "newest": "2026-08-14", "events_in_window": 1206, "events_listed_by_events_endpoint": 3000, "events_cursor_exhausted": false, "earliest_event": "KXLOLMAP-26APR011100FSKOA-1"},
-    "KXATPCHALLENGERMATCH": {"floor": "2026-06-08", "newest": "2026-08-14", "events_in_window": 2395, "events_listed_by_events_endpoint": 3000, "events_cursor_exhausted": false, "earliest_event": "KXATPCHALLENGERMATCH-26AUG01CHOGOM"},
-    "KXCS2GAME":  {"floor": "2026-06-08", "newest": "2026-08-14", "events_in_window": 1759, "events_listed_by_events_endpoint": 3000, "events_cursor_exhausted": false, "earliest_event": "KXCS2GAME-26APR010400AABAM"},
-    "KXTONYAWARDS": {"floor": "2026-06-08", "newest": "2026-06-08", "events_in_window": 25, "events_listed_by_events_endpoint": 25,   "events_cursor_exhausted": true,  "earliest_event": "KXTONYAWARDS-26BACT"},
-    "KXCAPRIMARY":{"floor": "2026-06-08", "newest": "2026-07-11", "events_in_window": 65,   "events_listed_by_events_endpoint": 95,   "events_cursor_exhausted": true,  "earliest_event": "KXCAPRIMARY-0126"},
-    "KXNBAGAME":  {"floor": "2026-06-09", "newest": "2026-06-14", "events_in_window": 3,    "events_listed_by_events_endpoint": 1448, "events_cursor_exhausted": true,  "earliest_event": "KXNBAGAME-25APR15ATLORL", "note": "season ended"},
-    "KXNHLGAME":  {"floor": "2026-06-10", "newest": "2026-06-15", "events_in_window": 3,    "events_listed_by_events_endpoint": 1538, "events_cursor_exhausted": true,  "earliest_event": "KXNHLGAME-25APR19COLDAL", "note": "season ended"},
-    "KXCPIYOY":   {"floor": "2026-06-10", "newest": "2026-08-12", "events_in_window": 3,    "events_listed_by_events_endpoint": 45,   "events_cursor_exhausted": true,  "earliest_event": "CPIYOY-22DEC", "note": "monthly series, 3 prints in 67 days"},
-    "KXEGGS":     {"floor": "2026-06-10", "newest": "2026-08-12", "events_in_window": 3,    "events_listed_by_events_endpoint": 18,   "events_cursor_exhausted": true,  "earliest_event": "KXEGGS-APR", "note": "monthly series"},
-    "KXFED":      {"floor": "2026-06-17", "newest": "2026-07-29", "events_in_window": 2,    "events_listed_by_events_endpoint": 40,   "events_cursor_exhausted": true,  "earliest_event": "FED-21DEC", "note": "6-weekly series, 2 meetings in 67 days"},
-    "KXPAYROLLS": {"floor": "2026-07-02", "newest": "2026-08-07", "events_in_window": 2,    "events_listed_by_events_endpoint": 41,   "events_cursor_exhausted": true,  "earliest_event": "KXPAYROLLS-24DEC", "note": "monthly series"},
-    "KXRAIN":     {"floor": "2026-07-16", "newest": "2026-08-13", "events_in_window": 24,   "events_listed_by_events_endpoint": 24,   "events_cursor_exhausted": true,  "earliest_event": "KXRAIN-26AUG01", "note": "YOUNG SERIES - floor is where its history begins, not retention"},
-    "KXWTI15M":   {"floor": "2026-07-31", "newest": "2026-08-14", "events_in_window": 899,  "events_listed_by_events_endpoint": 899,  "events_cursor_exhausted": true,  "earliest_event": "KXWTI15M-26AUG010000", "note": "YOUNG SERIES"},
-    "KXGOLD15M":  {"floor": "2026-07-31", "newest": "2026-08-14", "events_in_window": 899,  "events_listed_by_events_endpoint": 899,  "events_cursor_exhausted": true,  "earliest_event": "KXGOLD15M-26AUG010000", "note": "YOUNG SERIES"}
+    "KXHIGHNY": {
+      "floor": "2026-06-08",
+      "newest": "2026-08-13",
+      "events_in_window": 67,
+      "events_listed_by_events_endpoint": 1829,
+      "events_cursor_exhausted": true,
+      "earliest_event": "HIGHNY-21AUG06"
+    },
+    "KXHIGHCHI": {
+      "floor": "2026-06-08",
+      "newest": "2026-08-13",
+      "events_in_window": 67,
+      "events_listed_by_events_endpoint": 1817,
+      "events_cursor_exhausted": true,
+      "earliest_event": "HIGHCHI-2-24FEB28"
+    },
+    "KXHIGHDEN": {
+      "floor": "2026-06-08",
+      "newest": "2026-08-13",
+      "events_in_window": 67,
+      "events_listed_by_events_endpoint": 631,
+      "events_cursor_exhausted": true,
+      "earliest_event": "KXHIGHDEN-24DEC01"
+    },
+    "KXMLBGAME": {
+      "floor": "2026-06-08",
+      "newest": "2026-08-14",
+      "events_in_window": 852,
+      "events_listed_by_events_endpoint": 3000,
+      "events_cursor_exhausted": false,
+      "earliest_event": "KXMLBGAME-25AUG01ARIATH"
+    },
+    "KXMLBTOTAL": {
+      "floor": "2026-06-08",
+      "newest": "2026-08-14",
+      "events_in_window": 853,
+      "events_listed_by_events_endpoint": 1874,
+      "events_cursor_exhausted": true,
+      "earliest_event": "KXMLBTOTAL-25NOV01LADTOR"
+    },
+    "KXMLBKS": {
+      "floor": "2026-06-08",
+      "newest": "2026-08-14",
+      "events_in_window": 847,
+      "events_listed_by_events_endpoint": 1825,
+      "events_cursor_exhausted": true,
+      "earliest_event": "KXMLBKS-26APR011215ATHATL"
+    },
+    "KXMLBSPREAD": {
+      "floor": "2026-06-08",
+      "newest": "2026-08-14",
+      "events_in_window": 853,
+      "events_listed_by_events_endpoint": 1874,
+      "events_cursor_exhausted": true,
+      "earliest_event": "KXMLBSPREAD-25NOV01LADTOR"
+    },
+    "KXMLBTEAMTOTAL": {
+      "floor": "2026-06-08",
+      "newest": "2026-08-14",
+      "events_in_window": 852,
+      "events_listed_by_events_endpoint": 1772,
+      "events_cursor_exhausted": true,
+      "earliest_event": "KXMLBTEAMTOTAL-26APR011215ATHATL"
+    },
+    "KXBTC15M": {
+      "floor": "2026-06-08",
+      "newest": "2026-08-14",
+      "events_in_window": 6348,
+      "events_listed_by_events_endpoint": 3000,
+      "events_cursor_exhausted": false,
+      "earliest_event": "KXBTC15M-26AUG010000"
+    },
+    "KXETH15M": {
+      "floor": "2026-06-08",
+      "newest": "2026-08-14",
+      "events_in_window": 6348,
+      "events_listed_by_events_endpoint": 3000,
+      "events_cursor_exhausted": false,
+      "earliest_event": "KXETH15M-26AUG010000"
+    },
+    "KXCS2MAP": {
+      "floor": "2026-06-08",
+      "newest": "2026-08-14",
+      "events_in_window": 2894,
+      "events_listed_by_events_endpoint": 3000,
+      "events_cursor_exhausted": false,
+      "earliest_event": "KXCS2MAP-26AUG010400DEPPHANTOMACADEMY-1"
+    },
+    "KXLOLMAP": {
+      "floor": "2026-06-08",
+      "newest": "2026-08-14",
+      "events_in_window": 1206,
+      "events_listed_by_events_endpoint": 3000,
+      "events_cursor_exhausted": false,
+      "earliest_event": "KXLOLMAP-26APR011100FSKOA-1"
+    },
+    "KXATPCHALLENGERMATCH": {
+      "floor": "2026-06-08",
+      "newest": "2026-08-14",
+      "events_in_window": 2395,
+      "events_listed_by_events_endpoint": 3000,
+      "events_cursor_exhausted": false,
+      "earliest_event": "KXATPCHALLENGERMATCH-26AUG01CHOGOM"
+    },
+    "KXCS2GAME": {
+      "floor": "2026-06-08",
+      "newest": "2026-08-14",
+      "events_in_window": 1759,
+      "events_listed_by_events_endpoint": 3000,
+      "events_cursor_exhausted": false,
+      "earliest_event": "KXCS2GAME-26APR010400AABAM"
+    },
+    "KXTONYAWARDS": {
+      "floor": "2026-06-08",
+      "newest": "2026-06-08",
+      "events_in_window": 25,
+      "events_listed_by_events_endpoint": 25,
+      "events_cursor_exhausted": true,
+      "earliest_event": "KXTONYAWARDS-26BACT"
+    },
+    "KXCAPRIMARY": {
+      "floor": "2026-06-08",
+      "newest": "2026-07-11",
+      "events_in_window": 65,
+      "events_listed_by_events_endpoint": 95,
+      "events_cursor_exhausted": true,
+      "earliest_event": "KXCAPRIMARY-0126"
+    },
+    "KXNBAGAME": {
+      "floor": "2026-06-09",
+      "newest": "2026-06-14",
+      "events_in_window": 3,
+      "events_listed_by_events_endpoint": 1448,
+      "events_cursor_exhausted": true,
+      "earliest_event": "KXNBAGAME-25APR15ATLORL",
+      "note": "season ended"
+    },
+    "KXNHLGAME": {
+      "floor": "2026-06-10",
+      "newest": "2026-06-15",
+      "events_in_window": 3,
+      "events_listed_by_events_endpoint": 1538,
+      "events_cursor_exhausted": true,
+      "earliest_event": "KXNHLGAME-25APR19COLDAL",
+      "note": "season ended"
+    },
+    "KXCPIYOY": {
+      "floor": "2026-06-10",
+      "newest": "2026-08-12",
+      "events_in_window": 3,
+      "events_listed_by_events_endpoint": 45,
+      "events_cursor_exhausted": true,
+      "earliest_event": "CPIYOY-22DEC",
+      "note": "monthly series, 3 prints in 67 days"
+    },
+    "KXEGGS": {
+      "floor": "2026-06-10",
+      "newest": "2026-08-12",
+      "events_in_window": 3,
+      "events_listed_by_events_endpoint": 18,
+      "events_cursor_exhausted": true,
+      "earliest_event": "KXEGGS-APR",
+      "note": "monthly series"
+    },
+    "KXFED": {
+      "floor": "2026-06-17",
+      "newest": "2026-07-29",
+      "events_in_window": 2,
+      "events_listed_by_events_endpoint": 40,
+      "events_cursor_exhausted": true,
+      "earliest_event": "FED-21DEC",
+      "note": "6-weekly series, 2 meetings in 67 days"
+    },
+    "KXPAYROLLS": {
+      "floor": "2026-07-02",
+      "newest": "2026-08-07",
+      "events_in_window": 2,
+      "events_listed_by_events_endpoint": 41,
+      "events_cursor_exhausted": true,
+      "earliest_event": "KXPAYROLLS-24DEC",
+      "note": "monthly series"
+    },
+    "KXRAIN": {
+      "floor": "2026-07-16",
+      "newest": "2026-08-13",
+      "events_in_window": 24,
+      "events_listed_by_events_endpoint": 24,
+      "events_cursor_exhausted": true,
+      "earliest_event": "KXRAIN-26AUG01",
+      "note": "YOUNG SERIES - floor is where its history begins, not retention"
+    },
+    "KXWTI15M": {
+      "floor": "2026-07-31",
+      "newest": "2026-08-14",
+      "events_in_window": 899,
+      "events_listed_by_events_endpoint": 899,
+      "events_cursor_exhausted": true,
+      "earliest_event": "KXWTI15M-26AUG010000",
+      "note": "YOUNG SERIES"
+    },
+    "KXGOLD15M": {
+      "floor": "2026-07-31",
+      "newest": "2026-08-14",
+      "events_in_window": 899,
+      "events_listed_by_events_endpoint": 899,
+      "events_cursor_exhausted": true,
+      "earliest_event": "KXGOLD15M-26AUG010000",
+      "note": "YOUNG SERIES"
+    }
   },
   "named_tickers_predicted_to_vanish": {
-    "KXHIGHNY-26JUN07": {"earliest_close_in_it": "2026-06-08", "predicted_absent_by": "2026-08-15"},
-    "KXHIGHCHI-26JUN07": {"earliest_close_in_it": "2026-06-08", "predicted_absent_by": "2026-08-15"},
-    "KXHIGHNY-26JUN08": {"earliest_close_in_it": "2026-06-09", "predicted_absent_by": "2026-08-16"},
-    "KXHIGHCHI-26JUN08": {"earliest_close_in_it": "2026-06-09", "predicted_absent_by": "2026-08-16"},
-    "KXHIGHNY-26JUN09": {"earliest_close_in_it": "2026-06-10", "predicted_absent_by": "2026-08-17"},
-    "KXHIGHNY-26JUN10": {"earliest_close_in_it": "2026-06-11", "predicted_absent_by": "2026-08-18"}
+    "KXHIGHNY-26JUN07": {
+      "earliest_close_in_it": "2026-06-08",
+      "predicted_absent_by": "2026-08-15"
+    },
+    "KXHIGHCHI-26JUN07": {
+      "earliest_close_in_it": "2026-06-08",
+      "predicted_absent_by": "2026-08-15"
+    },
+    "KXHIGHNY-26JUN08": {
+      "earliest_close_in_it": "2026-06-09",
+      "predicted_absent_by": "2026-08-16"
+    },
+    "KXHIGHCHI-26JUN08": {
+      "earliest_close_in_it": "2026-06-09",
+      "predicted_absent_by": "2026-08-16"
+    },
+    "KXHIGHNY-26JUN09": {
+      "earliest_close_in_it": "2026-06-10",
+      "predicted_absent_by": "2026-08-17"
+    },
+    "KXHIGHNY-26JUN10": {
+      "earliest_close_in_it": "2026-06-11",
+      "predicted_absent_by": "2026-08-18"
+    }
+  },
+  "_correction_same_day": "Kalshi does not delete. /historical/cutoff market_settled_ts = 2026-06-14T00:00:00Z, and /historical/markets returns markets+results+candlesticks for events back to 2021 (HIGHNY-21AUG06). The floors below describe the LIVE set only. The named predictions still stand, but disappearance means migration to /historical, not loss.",
+  "historical_cutoff_2026_08_14": {
+    "market_settled_ts": "2026-06-14T00:00:00Z",
+    "market_positions_last_updated_ts": "2026-06-14T00:00:00Z",
+    "orders_updated_ts": "2026-06-14T00:00:00Z",
+    "trades_created_ts": "2026-06-14T00:00:00Z"
   }
 }
