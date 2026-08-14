@@ -92,6 +92,53 @@ Base `https://api.elections.kalshi.com/trade-api/v2`, no auth for public market 
   floor ≤ actual ≤ cap; `greater` wins when actual > floor. **Read strike fields, never
   titles.**
 
+### Kalshi retention — there is none. There is a live/historical split.
+
+Measured and documented 2026-08-14. Every backward-looking Kalshi study in this project
+is shaped by this, so it lives here rather than in a dated note.
+
+**Kalshi deletes nothing.** Data sits in a **live** set or a **historical** set, split at a
+boundary you can query:
+
+```
+GET /trade-api/v2/historical/cutoff
+  {"market_settled_ts":"2026-06-14T00:00:00Z", "trades_created_ts":"...", ...}
+```
+
+Markets settling before that timestamp are served by a **parallel endpoint family**, not by the
+normal one:
+
+| live | historical |
+|---|---|
+| `/markets?…` | `/historical/markets?…` |
+| `/series/{s}/markets/{t}/candlesticks` | `/historical/markets/{t}/candlesticks` |
+| `/trades`, `/portfolio/fills`, `/portfolio/orders` | `/historical/trades`, `/historical/fills`, `/historical/orders`, `/historical/positions` |
+
+`/historical/markets?event_ticker=HIGHNY-21AUG06` returns a market from **2021** with its
+settlement result. The same event returns **zero rows** from `/markets` under every status
+filter. Kalshi's docs state it: *"Candlesticks for markets that settled before the historical
+cutoff are only available via `GET /historical/markets/{ticker}/candlesticks`."*
+
+**The live set slides.** Its floor by `close_time` was uniform at 2026-06-08 on 2026-08-14 across
+sixteen series carrying between 25 and 6,348 events, and advanced exactly one day from the day
+before. Uniform across three orders of magnitude of volume rules out count-based expiry. Two
+traps sit next to it:
+
+- **`/events` outruns `/markets`.** `/events?series_ticker=…&status=settled` lists events back
+  years; `/markets?event_ticker=` for those events returns nothing. Event metadata is not
+  evidence the market data is reachable *on that endpoint*.
+- **A single page gives a false floor.** `KXMLBGAME` reads 2026-07-05 on one page of 1,000 rows
+  and 2026-06-08 fully paged; `KXBTC15M` reads 2026-08-03 against 2026-06-08. **Follow the cursor
+  to exhaustion before reading a floor off anything.**
+
+**What this means for study design.** Historical depth is not a constraint — design the sample
+the question wants, then route each market to the right endpoint by comparing its settlement time
+to `/historical/cutoff`. Do not build a collector to beat a deadline; there isn't one. The
+2026-08-13 coverage note concluded the opposite from absence in one endpoint without checking
+whether another held it, and that error produced a false four-day deadline, two out-of-memory
+collector failures and a nine-month self-collection proposal. **Read the API docs before
+inferring a policy from response shapes.**
+
 ### Polymarket
 
 `gamma-api.polymarket.com/markets|/events`, `clob.polymarket.com/book|/midpoint|/prices-history`,
