@@ -35,6 +35,24 @@
       },
       "tradeability": "WORSE than H50 estimated. Mean absolute hourly move 0.77c against a mean quoted spread of 13.18c; expected reversion 0.146c; 90.5x AGAINST, versus H50's 11.7x. The difference is the universe - macro markets are illiquid and quote wide. Applying the tightest spread measured anywhere on 2026-08-13 (1.3c on liquid sports, H60) still leaves the effect about 9x short of covering a single crossing. That gap is arithmetic, not execution skill and not a data problem.",
       "status": "CONFIRMED. The first confirmed effect in 62 hypotheses."
+    },
+    {
+      "id": "H63",
+      "claim": "Does the mean reversion confirmed by H62 appear in EXECUTED PRICES, or only in quotes? H50 named executed trades as the discriminating test and in 62 hypotheses it had never been pulled.",
+      "preregistration": "sha256 ccd1743b874c1106208d25c9b998bdc3c28cccb6dd6a712c81fd91fdea5c2f43, sealed before any trade was fetched. The bid-ask-bounce trap and the required same-side conditioning were both named in advance, as was the control.",
+      "why_it_was_needed": "H62's separate bid-only and ask-only tests ruled out ASYMMETRIC staleness only. H50's actual caveat is that bid and ask flicker TOGETHER when the whole book is re-quoted, and if both sides move in step, testing them separately returns the same coefficient by construction. Quotes cannot answer this. Trades can.",
+      "result": "Lag-1 autocorrelation of price changes between CONSECUTIVE SAME-SIDE executed trades: -0.2560, 95% bootstrap over markets [-0.2858, -0.2247], n=36 markets clearing a 100-same-side-pair gate, from 45,964 executed trades across 45 macro markets. NEGATIVE IN 36 OF 36 MARKETS.",
+      "the_conditioning_and_why_it_matters": "Raw trade-price autocorrelation is worthless here: alternating buys at the ask and sells at the bid manufacture strong negative autocorrelation with no information content, a LARGER artifact than the effect under investigation. The statistic is therefore computed only between consecutive trades sharing the same taker_side, so both prices sit on the same side of the book.",
+      "the_control": "Naive all-trades autocorrelation -0.3048 [-0.3381,-0.2715] n=36, reported as a CONTROL and not a result. It is more negative than the conditioned figure, exactly as it should be - conditioning strips the bounce component out. What remains after stripping it is -0.2560 and still excludes zero by a wide margin. Had the control come back weak, neither number would have meant anything.",
+      "robustness": {
+        "leave_one_market_out": "-0.2623 to -0.2497. Stable.",
+        "leave_one_series_out": "without KXCPIYOY -0.2523 [-0.3005,-0.2025] n=18; without KXFED -0.2428 [-0.2732,-0.2108] n=30; without KXPAYROLLS -0.2752 [-0.3121,-0.2392] n=24. All still significant.",
+        "completeness_gate": "H52 recorded that Kalshi's trade feed can be short by 27-42% with the cursor exhausted. 14 of 45 markets here reconciled more than 10% below reported volume. Restricting to complete feeds only gives -0.2596 [-0.2920,-0.2251] n=26 against -0.2560 [-0.2858,-0.2247] n=36 for all markets. Essentially unchanged; the suspect feeds are not carrying the result.",
+        "gate_failures": "9 of 45 markets failed the 100-same-side-pair requirement and were excluded before any statistic was computed."
+      },
+      "what_it_settles": "The MECHANISM. The reversion is real price movement reverting, not market-maker quote flicker. It survives on executed trades, conditioned to remove the dominant artifact, in every market tested, and it does not depend on the incomplete feeds.",
+      "what_it_does_not_change": "TRADEABILITY. Expected reversion is still 0.146c against a 1.3c spread at the very best measured anywhere on the exchange - roughly 9x short of covering a single crossing, and 90.5x short in the macro markets where the effect is measurable. Knowing why a sub-spread effect exists does not make it larger.",
+      "status": "CONFIRMED."
     }
   ],
   "killed": [
@@ -248,6 +266,13 @@
     },
     {
       "id": "H46",
+      "external_evidence": {
+        "corroboration": "Independent corroboration: Oddpool reports ~1/3 settlement-fungibility on 250 matched cross-venue events, with divergence recorded rather than assumed away. Same finding, larger n, disinterested party. Retrieved 2026-08-13.",
+        "source": "https://www.oddpool.com/institutional",
+        "retrieved": "2026-08-13",
+        "verified_quote": "Fetched raw over HTTP from the Kernel VM on 2026-08-13 and read verbatim from the page, not taken on report: \"On a sample of 250 matched events, only about a third are settlement-fungible across both venues. The rest carry a real settlement difference, recorded explicitly so it isn\u2019t mistaken for a clean spread.\" The page breaks the remainder out as Identical 34%, Settlement window 33%, Settlement universe 33%.",
+        "the_magnitude_does_not_match_and_that_is_worth_recording": "The DIRECTION agrees - most cross-listed pairs are not settlement-fungible - but the levels differ by roughly 5x. H46 found 1 of 16 pairs identical (6.3%); Oddpool reports 34% identical on n=250. Both cannot be a estimate of the same quantity. The likely cause is sample construction: H46 matched on the underlying fact across macro, election and named-entity events, while Oddpool matches through its own canonical symbology and may admit pairs H46 would not have called cross-listed. Cite the corroboration for the direction, never for the rate."
+      },
       "claim": "For cross-listed events the two venues' settlement CRITERIA diverge, so a cross-venue box does not pay exactly $1 \u2014 it can pay $2 or $0.",
       "blind_classification": "16 pairs classified with a hard bar on reading any price. BOTH 7, DIV-DOWN 6, DIV-UP 2, IDENTICAL 1. ONE of sixteen is identical.",
       "it_corrects_H16": "H16 killed cross-venue arbitrage on a 2.46c gap vs a 4.83c round trip. Its unstated premise was that exactly one leg pays. That is FALSE for 15 of 16 pairs \u2014 the trade is an unhedged bet on settlement criteria that looks riskless.",
@@ -301,7 +326,7 @@
       "THE_EFFECT_IS_REAL": "Lag-1 autocorrelation of hourly mid changes: mean -0.2472, 95% bootstrap interval over MARKETS (not hours) of [-0.3471, -0.1416] \u2014 EXCLUDING ZERO. Negative in 18 of 19 markets. 22 markets, 6 series, 2,398 hourly candles. This is MEAN REVERSION, and it is the first statistically significant non-zero effect this project has found.",
       "and_it_survived_the_microstructure_test": "A stale mid bouncing between bid and ask manufactures spurious negative autocorrelation. It did not happen here: the sign holds and the magnitude does not collapse across mid (-0.2472), bid (-0.2773) and ask (-0.2455). Robustness held under six further specifications \u2014 dropping the last 3 candles (-0.2235), strictly contiguous pairs (-0.2510), volume-bearing candles only (-0.2368), and 3h/6h subsampling (-0.1905/-0.2352).",
       "and_it_is_STILL_not_a_trade": "The reversion is entirely SUB-SPREAD. Mean absolute hourly move is 0.69c against a mean quoted spread of 2.00c, so the expected reversion after a typical move is 0.2472 x 0.69 = 0.17c against a 2.00c cost to cross. That is 11.7x against. Breakeven needs a prior hourly move above 8.1c before the expected reversion covers one spread crossing \u2014 against a mean move of 0.69c, with 62% of hourly changes exactly zero.",
-      "the_honest_caveat": "Bid and ask flicker TOGETHER (the whole book is re-quoted), which the mid/bid/ask comparison cannot distinguish from genuine signal. The executed-trade series would be the cleaner discriminator and was not pulled. Two of the largest negative markets are in-play endgame whipsaws. UPDATE 2026-08-13 (H62): the bid-only and ask-only series were tested separately at n=87 and n=85 and are each independently negative with intervals excluding zero, which rules out asymmetric staleness. The coordinated-re-quote concern above STANDS - separate tests cannot detect it - and the executed-trade series is still not pulled. Interpretation is therefore still open; tradeability is not, at 90.5x against.",
+      "the_honest_caveat": "Bid and ask flicker TOGETHER (the whole book is re-quoted), which the mid/bid/ask comparison cannot distinguish from genuine signal. The executed-trade series would be the cleaner discriminator and was not pulled. Two of the largest negative markets are in-play endgame whipsaws. UPDATE 2026-08-13 (H62): the bid-only and ask-only series were tested separately at n=87 and n=85 and are each independently negative with intervals excluding zero, which rules out asymmetric staleness. The coordinated-re-quote concern above STANDS - separate tests cannot detect it - and the executed-trade series is still not pulled. Interpretation is therefore still open; tradeability is not, at 90.5x against. RESOLVED 2026-08-13 (H63): the discriminating test H50 itself named - executed trades rather than quotes - was finally pulled. Lag-1 autocorrelation between consecutive SAME-SIDE executed trades is -0.2560 [-0.2858,-0.2247] across 36 markets and 45,964 trades, negative in 36 of 36, stable under leave-one-market-out and leave-one-series-out, and unchanged when markets with incomplete trade feeds are excluded. The naive unconditioned control came back at -0.3048, confirming the method detects bid-ask bounce when it is present. The coordinated-re-quote explanation is ruled out: this is real price movement reverting. The caveat is closed. Tradeability is unaffected and remains sub-spread.",
       "status": "KILLED. The purest statement of this project's finding: the signal is REAL, significant and robust \u2014 and the spread is twelve times bigger.",
       "was": "UNVERIFIED, downgraded on 2026-08-13 after H59 failed to replicate it.",
       "now": "CONFIRMED, restored the same day by H62 on a larger clean-path measurement.",
@@ -512,7 +537,8 @@
   "mechanisms_added": [
     "Where the price is attractive, the market is not there - now four independent routes. Far-OTM tails carry no bid (H34), cheap rungs never win (H53), near-certainties are not quoted at the horizon you would enter (H55), and short-horizon favourites reprice away faster than a polling architecture can act (H61).",
     "The cost of crossing is a FUNCTION of horizon, not a constant. It halves between 24 hours and 10 minutes as the spread collapses from 5.01c to ~1.3c, and the saving passes through to the taker in full (H60).",
-    "Fee schedules vary by instrument. KXMLBGAME carries fee_multiplier 0.5 where the code assumed 1.0 everywhere. Read the multiplier, never assume it."
+    "Fee schedules vary by instrument. KXMLBGAME carries fee_multiplier 0.5 where the code assumed 1.0 everywhere. Read the multiplier, never assume it.",
+    "The mechanism question and the money question are independent. H63 settled WHY prices revert; it moved the tradeability arithmetic by exactly zero. A sub-spread effect with a known cause is still sub-spread. Do not treat mechanistic understanding as progress toward an edge."
   ],
   "scope_correction": {
     "what": "-4.39c must no longer be quoted as a universal constant.",
@@ -565,5 +591,11 @@
     "the_one_real_effect": "Hourly mean reversion on Kalshi: -0.1896 [-0.2147,-0.1650] over 90 markets and 87,315 candles, confirmed on a data path that cannot fabricate, robust to leaving out any single market or any single series, and present independently in the bid and the ask. Expected reversion 0.146c against a spread of 1.3c at best. Real, significant, robust, and an order of magnitude too small to trade.",
     "the_summary_sentence": "The signal is real and the spread is bigger."
   },
-  "_gaps": "H22-H27, H32 and H45 were lost in the 2026-08-10 container rollback and could not be honestly reconstructed after the fact. Their absence is recorded rather than papered over. Five pre-registrations (H29, H30, H32, H33, H34) were lost the same way; the three that survive are in registry/."
+  "_gaps": "H22-H27, H32 and H45 were lost in the 2026-08-10 container rollback and could not be honestly reconstructed after the fact. Their absence is recorded rather than papered over. Five pre-registrations (H29, H30, H32, H33, H34) were lost the same way; the three that survive are in registry/.",
+  "state_of_play_2026_08_13_H63": {
+    "counts": "45 killed, 4 corrected, 3 confirmed (H60, H62, H63), 1 open (H58), 2 could-not-establish (H55, H57)",
+    "the_one_real_effect": "Mean reversion on Kalshi is real in BOTH quotes and executed prices. Quotes: -0.1896 [-0.2147,-0.1650] over 90 markets and 87,315 hourly candles (H62). Executed trades, same-side conditioned: -0.2560 [-0.2858,-0.2247] over 36 markets and 45,964 trades, negative in 36 of 36 (H63). Mechanism settled; it is price movement, not quote flicker.",
+    "and_still": "Expected reversion 0.146c against a 1.3c spread at best. Roughly 9x short. The signal is real, the mechanism is understood, and the spread is an order of magnitude bigger.",
+    "open_caveats_remaining_on_H50": "None. the_honest_caveat is closed by H63."
+  }
 }

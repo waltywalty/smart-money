@@ -50,95 +50,8 @@ to cross in bottom out at −2.50¢; nothing across 21 series is positive.
 **Fee multipliers vary by series — read them, never assume.** `KXMLBGAME` carries
 `fee_multiplier: 0.5` where the code assumed 1.0 everywhere.
 
-## 3. Infrastructure — the part that keeps getting relearned
-
-### Raw HTTP works, and it is the whole game
-
-The **Kernel MCP browser VM** (`mcp__Kernel__manage_browsers` → `create`, then
-`mcp__Kernel__exec_command`) has unproxied internet. `curl` and `urllib` reach
-`api.elections.kalshi.com` and all Polymarket hosts directly, returning **raw bytes**,
-real HTTP status codes, real exit codes. Python 3.10 is present; **git is not**.
-
-This matters more than any single result. For most of this project's life every fetch
-went through a summarising layer that **invented values**: a quote returned as
-`0.29/0.30` where the book said `0.05/0.06`; `limit=100` silently returning 34 rows;
-an empty book reported as `0.0000/1.0000`, injecting a phantom 50¢ midpoint; the *same
-wrong answer* reproduced across two independent fetches. Every false positive in this
-project traces to it. **Do all measurement through Kernel. Never through WebFetch.**
-
-Verified clean on 2026-08-12: `limit=100` → exactly 100 rows / 400,039 bytes; six pages
-→ 1,200 rows, 1,200 unique tickers, zero gaps; list quotes vs order book agreed exactly
-on 15 of 18 liquid markets (other three: empty-book convention, and one 1¢ tick on a BTC
-market between sequential calls); Polymarket's gamma `outcomePrices`, `/midpoint` and raw
-`/book` agreed to 0.0000.
-
-### Sandboxes are not storage
-
-The Cowork sandbox **rolled back three times on 2026-08-10 and 2026-08-12**, each time
-destroying analysis directories and reverting the registry. Kernel VMs expire on their
-own timeout. **Nothing that matters may live only in a sandbox.** Deliver results to
-Walton and get them into this repo as you go, not at the end.
-
-### Getting work into this repo
-
-- The **Cowork sandbox cannot push.** Its git proxy refuses any repo outside the
-  session's authorized set — it strips your credential and won't inject its own. Reads
-  and `git clone` work (public repo); writes return 403. A GitHub PAT does not help.
-  `api.github.com` is also proxied and 403s from Cowork; **from Kernel it works fine.**
-- **Claude Code can push, but only to its own branch** — sandbox push protection, not a
-  permissions problem, not fixable with a token. It must open a PR.
-- `.github/workflows/automerge.yml` auto-merges PRs from `claude/*` branches by the repo
-  owner, so that PR lands by itself.
-- **Never use GitHub's web "Upload files" button for folders** — it flattens every path.
-  On 2026-08-12 that put 84 files in the repo root and silently destroyed
-  `analysis/h50/analyse.py` (same basename as `analysis/h56/analyse.py`; one overwrote
-  the other with no error). "Create new file" with a slashed path is safe.
-
-### Kalshi API
-
-Base `https://api.elections.kalshi.com/trade-api/v2`, no auth for public market data.
-
-- **Schema migrated.** Fields are `yes_bid_dollars` / `yes_ask_dollars` / `volume_fp` /
-  `volume_24h_fp` / `open_interest_fp` / `liquidity_dollars`. Order book is
-  `orderbook_fp` with `yes_dollars` / `no_dollars` as `[price, size]` string pairs.
-  Old names return undefined. `liquidity_dollars` reads `0.0000` even on a market with
-  236k volume — treat as dead.
-- **Candlesticks unchanged**: `yes_ask.close_dollars`, `yes_bid.close_dollars`, and
-  `end_period_ts` is the **inclusive end** of the bucket.
-- **Outcomes must come from `?status=settled`.** Both `/events?with_nested_markets=true`
-  and the single-market endpoint serve stale `active`/blank results for long-settled
-  markets.
-- **Rate limit is real and returns 429.** Sustainable: **3 threads, 0.55s sleep**
-  (~13% rejection, all retried). 4 threads at 0.4s bounces 42%. Always resume from a
-  checkpoint; always retry with backoff.
-- `?status=settled` unfiltered is flooded with `KXMVE*` machine-generated combinatorial
-  markets — 2,000 of the first 2,000 rows. **Exclude `KXMVE*` a priori.**
-- Fees: taker `ceil(M·0.07·p·(1−p))`, maker `ceil(M·0.0175·p·(1−p))`, rounded up on
-  order total. A few series carry `fee_multiplier: 0` but have zero settled markets.
-- Band semantics: `less` with cap C wins when actual < C; `between` wins when
-  floor ≤ actual ≤ cap; `greater` wins when actual > floor. **Read strike fields, never
-  titles.**
-
-### Polymarket
-
-`gamma-api.polymarket.com/markets|/events`, `clob.polymarket.com/book|/midpoint|/prices-history`,
-`data-api.polymarket.com/trades`. `clobTokenIds[0]` is the YES token. Winner source is
-`clob.polymarket.com/markets/{cid}` → `tokens[].winner`, **only** — a summariser once
-defaulted every `winnerIndex` to 1 and nearly logged two fake reversals.
-
-`worker.js` calls **Polymarket only** (clob ×8, gamma ×4, data-api ×4, plus ntfy.sh).
-Zero Kalshi endpoints — Kalshi schema changes do not affect production.
-
-### The worker
-
-Live is **v11.5**. The file in this repo is **v11.4**. **v12.3 existed and was lost** to
-a container rollback on 2026-08-10; it is not recoverable from any sandbox — only
-Cloudflare's version history might still have it. Do not deploy the repo copy without
-checking that first.
-
-Subrequest ceiling 50 per invocation, worst measured cycle 22 — exceeding it silently
-kills scheduled runs and once looked exactly like a broken cron trigger. KV writes ~288/day
-against a ~1k/day free tier.
+## 3. Infrastructure
+@docs/INFRA.md
 
 ## 4. Method — non-negotiable
 
@@ -186,38 +99,15 @@ pre-registrations are in `registry/`.
 Say **"could not establish"** when the instrument failed. That is a different claim from a
 null, and recording an instrument failure as a finding is worse than either.
 
+**Rebuild `registry/INDEX.md` whenever a verdict changes** — `python scripts/build_index.py`.
+The index is generated and `registry/hypotheses.json` stays authoritative; read the index
+to answer "has this been tried?", not the whole registry.
+
+**Search for prior art before building any collector, client, or parser.**
+Someone has usually already hit the endpoint quirk. Check GitHub topics,
+awesome-lists, and HuggingFace datasets first; record what was found and why it
+was or wasn't used. A free hourly Polymarket/Kalshi orderbook archive existed
+throughout the period this project built its own recorder.
+
 ## 5. State of play
-
-- **45 killed, 4 corrected, 2 confirmed, 1 open, 2 could-not-establish.** Numbering gaps at
-  H22–H27, H32, H45 were lost to a rollback and are recorded as lost, not reconstructed.
-- **The one confirmed effect.** Hourly prices mean-revert on Kalshi: lag-1 autocorrelation
-  **−0.1896, 95% CI [−0.2147, −0.1650]**, over 90 markets and 87,315 candles, measured on a
-  raw-HTTP path that cannot fabricate (H62). Negative in 88 of 90 markets, stable under
-  leave-one-market-out and leave-one-series-out, and present independently in the bid and the
-  ask. It is **not tradeable**: expected reversion is 0.146¢ against a spread of 1.3¢ at the
-  very best — roughly 9× short of covering a single crossing. Scope is Kalshi at an hourly
-  horizon; it is absent on Polymarket at 5 minutes (H59).
-- **H50 is restored to CONFIRMED**, having spent part of 2026-08-13 wrongly marked UNVERIFIED.
-  Cite H62's figures, never the original −0.2472 [−0.3471, −0.1416] on n=19 — that stands as
-  the first observation, superseded in precision. H59 is a scope limit, not a refutation.
-- **H60 is the other confirmed result.** The cost of crossing is horizon-dependent, roughly
-  halving between a 24-hour and a 10-minute lead — a property of the exchange, not an edge.
-- **H61 is the sharpest lesson**: a real, out-of-sample-replicated ~5¢ effect that is
-  unobtainable, needing sub-60-second detect-to-fill against a 5-minute cron. Walton decided
-  on 2026-08-13 not to invest in latency infrastructure; the line stays closed.
-- **H58 is the only open lead** — H40's calibration curve re-run on the clean path.
-  H55 and H57 are could-not-establish: their samples do not exist, which is a calendar
-  problem rather than a compute one. Neither may be carried as a live lead.
-- Fifteen mechanisms explain all the kills — see `state_of_play_*.the_mechanisms` in the
-  registry. Read them before proposing anything; most new ideas are one of them renamed.
-
-## 6. Two external doors, still unopened
-
-- A **MADIS data application** (free form) — the one demonstrated timing edge needs it.
-- An **SEC / Dune bulk pull**.
-
-## 7. Housekeeping
-
-Scheduled tasks exist including `Smart Money autonomous` (`3 */3 * * *`) and a weekly deep
-dive. An hourly whale/insider scan and several stale one-shot reminders are also live and
-could be cleaned up. A trigger for an H32 tornado-count re-check fires 2026-09-02T14:00Z.
+@docs/STATE.md

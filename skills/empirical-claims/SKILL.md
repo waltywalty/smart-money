@@ -1,6 +1,14 @@
 ---
 name: empirical-claims
-description: Use when measuring anything from a live API and reporting a number that someone might act on — market data, prices, rates, counts, correlations, backtests, A/B results. Enforces a data-integrity protocol against fabricating fetch layers and a verification gate against false positives. Triggers on "measure", "backtest", "scan", "is X profitable", "what's the rate", "correlation", "does this predict", or any request whose answer is a number with a decision attached.
+description: >
+  Use whenever a numerical result is produced, checked, replicated, or
+  questioned — including casual phrasings like "is this real", "sanity check
+  this", "does this hold up", "I got X, check it", "why is this so good", or
+  "too good to be true". Also use before writing any pre-registration, before
+  promoting or downgrading a hypothesis verdict, and whenever a result looks
+  unexpectedly strong. Covers unit-of-observation errors, selection effects,
+  lookahead, series composition behind a bucket, leave-one-out stability, and
+  the distinction between statistical validity and obtainability.
 ---
 
 # Empirical claims
