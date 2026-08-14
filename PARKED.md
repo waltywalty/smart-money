@@ -200,3 +200,80 @@ collection decision.
 **Recommendation:** (a) plus a cheap insurance policy — the daily census now records
 `/historical/cutoff` and one series' live floor, so the answer exists by 2026-08-20 whichever way
 it goes. (b) is a resource commitment and is Walton's call.
+
+---
+
+## P10 — where the B1 dataset lives, and whether it should live in the repo
+
+**Blocks:** every Phase B and Phase D study that would use it. Right now the data exists only in an
+ephemeral Kernel VM.
+
+**Evidence.** B1 collected **7,269,014 markets** across 6,703 series — about **1 GB** gzipped in the
+projected 24-field form, roughly 3.4 GB raw. The packet's instruction is explicit: *"If the volume
+is too large for the repo, collect anyway, write the manifest and summary statistics into the repo,
+and park the storage question. Do not silently drop rows. Do not commit gigabytes without asking."*
+That is what was done: `data/historical/MANIFEST.json` carries per-series row counts, unique-ticker
+counts, unique-event counts, date coverage and **sha256 per file**; the data itself is not
+committed.
+
+**The exposure.** The VM is reclaimed after inactivity. When it goes, the 7.27M rows go with it.
+What survives is the manifest, `scripts/b1_collect.py`, and the collector state — enough to
+reproduce the pull in about 90 minutes of active VM time, not enough to reproduce it *identically*
+if Kalshi's cutoff has advanced by then.
+
+**Options.** (a) Commit it, gzipped, ~1 GB across 6,703 files — a large repository, and the packet
+says not without asking. (b) Git LFS. (c) An external object store (R2/S3) with the manifest's
+sha256 list as the integrity record. (d) Do not store it; re-run the collector when a study needs
+it, accepting that the boundary will have moved. (e) Store only the series a study actually needs
+— weather, macro and sports are 1.33M rows, about 18% of the total.
+
+**Recommendation:** (e) now and (c) if it recurs. Two-thirds of the volume is intraday crypto and
+FX strike ladders that no entry in this registry studies. **But this is a resource commitment and
+it is Walton's call.**
+
+---
+
+## P11 — H56's hurdle was computed with a size-free cost model
+
+**Blocks:** the calibration of every kill in the registry. This is the highest-leverage parked item.
+
+**Evidence.** C1 (`registry/FEE-CEILING-AUDIT.md`) swept every entry whose verdict rests on an
+extreme band and found that **not one states the order size its cost model assumed** — because every
+cost model in this project is the per-contract continuous function `0.07·p·(1−p)`, which has no size
+parameter. A1 showed the real schedule has a **$0.01 balance-precision floor per fill** for a
+non-direct member, which at p=0.99 is **14.29×** the continuous fee at one contract and vanishes by
+a hundred.
+
+H56's −4.03¢ / −4.39¢ is the bar every other idea is measured against. If it was priced at the
+continuous fee it is the **size-infinite** hurdle, and ideas killed against it were killed against a
+bar a one-contract trader can never reach. If it was priced implicitly at one contract, the bar is
+too high at size. **Which is true was not determined** — it needs H56's estimator read, not its
+registry entry.
+
+**Options.** (a) Read `analysis/h56/` and state the assumed size; cheap, and settles the question of
+*which* hurdle exists today. (b) Re-measure the hurdle at an explicit size ladder (1 / 10 / 100 /
+1000 contracts) on B1's data — this is the Phase D candidate the packet names. (c) Leave it.
+
+**Recommendation:** (a) unconditionally, since it changes no figure and answers half the question.
+(b) is a new study and needs a sealed pre-registration.
+
+---
+
+## P12 — H15's negRisk gap sits between the small-size and large-size fee
+
+**Blocks:** nothing operational. A verdict whose size-dependence is undetermined.
+
+**Evidence.** H15 was killed on a negRisk set summing to **0.9970** — a 0.30¢ gross gap. Under A1's
+schedule the per-leg fee is **1.00¢ at one contract** (the gap is then hopeless) and about
+**0.07¢ at a hundred** (the gap then exceeds the fee). The kill is safe at one contract and
+**undetermined at size**, and nothing in the entry states which it assumed.
+
+**Caveat that may dissolve it:** a negRisk set has several legs, so the fee is paid several times
+while the gap is earned once, and Polymarket's fee schedule is not Kalshi's — A1's arithmetic does
+not transfer without checking. This is flagged as a question, not as a finding.
+
+**Options.** (a) Read H15's cost model and state its assumed size and venue. (b) Re-measure at size.
+(c) Leave it — negRisk sets that sum below \$1 are rare and the depth to trade them at size may not
+exist, which would settle it without any arithmetic.
+
+**Recommendation:** (a), then (c) if the depth is not there. Low priority.
