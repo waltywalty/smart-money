@@ -136,3 +136,48 @@ changed. `worker.js` untouched. No trade, no deployment.
 **Next action:** A4 — characterise `archive.pmxt.dev`'s `timestamp_received` receipt lag:
 the distribution of gaps within a market, stability across markets and hours, and whether it
 can be bounded. Then GATE 1 → `registry/historical/GATE1.md`.
+
+### Session 2 continued — Phases B, C, D, E
+
+**GATE 1** → `registry/historical/GATE1.md` (`92b4d89`). Four of five questions answered with
+measurements; the fee question answered structurally and explicitly could-not-establish
+numerically. B1, B2 and B3 licensed with carried conditions.
+
+**B1 done** → `registry/historical/B1-COLLECTION-2026-08-14.md` (`f0170de`),
+`data/historical/MANIFEST.json` (`c4a3638`), `scripts/b1_collect.py` (`11c5e38`),
+`scripts/b1_manifest.py` (`ce16c19`), `scripts/b1_gate3_refetch.py` (`a5427df`).
+**7,269,014 markets / 351,653 events / 6,703 series, back to 2021-07-01**, in 19,483 requests
+with **zero 429s**. Row count equals unique-ticker count exactly. Two-thirds of the exchange's
+settled history by row count is intraday crypto and FX. Nine crypto series were stopped by
+budget and are marked incomplete with their cursors retained. The data is ~1 GB and is **not**
+committed — parked as **P10**.
+
+**Phase C:** C1 → `registry/FEE-CEILING-AUDIT.md` (`84601ad`) — **no registry entry states an
+assumed order size**, because every cost model in the project is a size-free continuous
+function. That reverses the packet's expected failure mode. C2 (rule) → `CLAUDE.md` (`9bdfded`).
+C3 → `README.md` (`45ceb3a`). C4 → audit note appended to `registry/H64-RESULT.md` (`ea65c44`),
+splitting it into an answered quote-level null and a could-not-establish fill-level gate, and
+reconciling 6.22% against 4,081 usable of 13,832. C5 → `registry/REVIVAL-CANDIDATES.md`
+(`55b7cf2`). C6 → 36 passing tests in `tests/` (`6e69f21`, `7d7ee30`, `cfee248`, `fc76eab`).
+
+**Phase D parked** as **P13**. Three of its four conditions fail.
+
+**Phase E:** `registry/retention/README.md` amended (`4d85f1e`) — purpose narrowed, and the P9
+cutoff check added to each remaining run. The scheduled task's prompt was updated to match.
+
+**A fourth error caught this session:** the Gate 3 re-fetch check counted four HTTP 429
+responses as **data mismatches**. A status code is not a disagreement. Fixed by separating
+`http_*` outcomes from field comparisons and retrying them. That is the third time in this run a
+status code was nearly read as data, after the 429-as-exhaustion and the ignored `ticker=`
+filter.
+
+**One deviation from the packet, recorded:** B1 ran on 4 workers rather than 3 after request
+13,457. The packet's "3 threads at 0.55s" targets ~5.45 req/s by its own arithmetic; latency held
+3 threads to 4.06. Zero 429s across all 19,483 requests, backoff never disabled.
+
+**No STOP conditions hit.** No registry verdict, figure or `revive_if` changed. `worker.js`
+untouched. No trade, no deployment.
+
+**Not completed:** C2's full measured/asserted tagging pass across `CLAUDE.md`, `docs/INFRA.md`
+and `docs/STATE.md` — the rule was added, the tagging was not done. Time limit, not instrument
+failure. B2 and B3 not started.
