@@ -33,3 +33,51 @@ which the packet correctly names as repeating the failure exactly.
 never enters a VM or a chat. The narrowed census is the pilot: if two requests a day run cleanly
 from a runner — including against Kalshi's rate limiting on shared runner IPs — that is the
 migration path for everything credential-dependent.
+
+---
+
+# Update — 2026-08-17, after credentials arrived
+
+**Appended, not rewritten.** The assessment above was made with no PAT and no R2 endpoint. Both
+arrived; three of the four lines have moved.
+
+| # | question | answer now |
+|---|---|---|
+| 1 | Does the token survive VM destruction and retrieval? | **NO ROUTE — unchanged, and now a settled design decision.** Kernel's credential store cannot return a value to a script; measured with a dummy, probe deleted. Walton ruled per-session paste, and made loss cheap instead. Recorded in `PARKED.md` and here so it is not re-attempted. |
+| 2 | Does `gh_commit.py check` fail correctly on a read-only token? | **PASS, live, twice, on two different VMs.** `201 wrote / 200 read back unauthenticated: CONTENT MATCHES / 200 deleted / exit=0`. `permissions.push` appears nowhere outside the docstring explaining why. 11 stubbed tests cover write-rejected, read-back-404, content-mismatch, cleanup-failure, litter-after-failure and path-collision. A genuinely read-only token has still not been issued, so **that specific path remains stub-tested only.** |
+| 3 | Does R2 round-trip a file from a fresh VM? | **PASS, both halves.** 1 MB: `PUT 200 / GET 200 / sha256 MATCH / listable / DELETE 204 / control key 404`. And the half that matters: an object written by a VM that was then **destroyed** read back **byte-identical** (`sha256 931eb01d…`) from a fresh VM in a different metro. **The dataset now outlives the VM.** |
+| 4 | Are the stranded patches on `main`? | **Census: still no.** Its two runs fell back to delivering patches, as instructed when `$GH_TOKEN` is absent. **P9's substance is committed** via `ARCHIVE-LAG-2026-08-14.md` Amendment 1. |
+
+## Verdict: Gate 0 passes on the two lines that gate Phase 1
+
+Line 3 was the blocker and it is closed. **Phase 1 may collect into R2.** Line 1 is a permanent
+property of the platform rather than a failure, and line 4 is a delivery-mode artifact, not a data
+loss.
+
+## Two platform facts found while closing line 3, both worth more than the gate
+
+**boto3 cannot write to R2 from a Kernel VM.** LIST succeeds; `curl -X PUT` returns a real R2 error
+in 0.15s; `put_object` hangs silently until timeout — with the system CA bundle supplied and
+checksum calculation forced to `when_required`. Replaced with ~40 lines of SigV4 over curl
+(`scripts/r2sig.py`). **A hang nobody can explain is a larger dependency than a signature.**
+
+**Python networking works on some Kernel VMs and not others.** Some export
+`HTTPS_PROXY=https://ns.internal:3129` — a proxy that speaks **TLS on the proxy leg**. curl handles
+it; Python's `urllib` opens a plain socket, sends `CONNECT`, and the proxy closes on it
+(`RemoteDisconnected`). Other VMs export an `http://` proxy and urllib is fine. **`gh_commit.py
+check` failed on a fresh VM for exactly this reason, on a token that was perfectly good.** Both
+clients now use curl as transport. This retroactively explains a class of intermittent failure
+this project has hit and never diagnosed.
+
+## What this establishes about durability, for the close-out
+
+**Data durability: solved.** R2 round-trips, survives VM destruction, and the client is committed.
+
+**Credential durability: not solved, and now known to be unsolvable on this platform.** Per-session
+paste is the design. What changed is the blast radius: `check` fails in under two seconds on a bad
+token instead of after an hour of collection, and every artifact is committed as it is produced.
+**The Cowork sandbox rolled back mid-session and destroyed a fully prepared patch — and nothing was
+lost**, because the rebuilt files went to `main` one at a time.
+
+**The one remaining durable route is GitHub Actions**, where the secret lives in GitHub's store and
+never enters a VM. The narrowed census is the pilot.
