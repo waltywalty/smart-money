@@ -257,3 +257,32 @@ random sample of snapshots.
 over the healthy period, and the usable quote window still ends at 2026-06-11 while it ends in
 practice on 2026-06-10 once the degraded hours are excluded. That interacts with P9's closing
 overlap band and belongs in GATE 1, not here.
+
+---
+
+## Amendment 1 — 2026-08-17, appended after commit `17a752d`
+
+**No figure above is changed.** Every number was measured on the five shards this document names
+and stands as measured. What changes is what those numbers were taken to represent.
+
+**1. The 95.9% bracketable figure is one shard, not a property of the archive.** Across 15 hours
+the range is **0.00% to 99.69%** — see `DEPTH-ANSWERABLE-2026-08-17.md`. Carrying 95.9% forward
+would be wrong by a factor of twenty at the bottom of that range.
+
+**2. Degradation is intermittent, not terminal.** This document places the degraded regime on
+2026-06-10 and the dead one on 2026-06-11. **Two of the four worst hours in a 15-hour sample are
+on 06-07 and 06-08** — `2026-06-07T18` at **12.45%** bracketable and `2026-06-08T18` at **4.13%**,
+both between healthy neighbours. There is no date boundary. **Shards must be classified
+individually.**
+
+**3. A third severity tier exists between DEGRADED and DEAD.** `2026-06-11T00`: 92.08% snapshots,
+**0.8 minutes** of exchange time in a 60-minute file, 48.55% bracketable. It has a clock; half its
+snapshots still cannot be placed.
+
+**4. Shard health is a selection variable.** Healthy shards are the **quiet** hours — bracketable %
+against Kalshi-sourced trades/sec gives pearson **−0.631**, leave-one-out **[−0.698, −0.594]**, and
+the degraded tier trades **1.45–1.80x** harder. **Any depth figure from this archive describes
+quiet hours, not the exchange.** Full working in `A1-SHARD-SELECTION-2026-08-17.md`.
+
+**5. The archive has not resumed.** `kalshi_orderbook_2026-08-16T12.parquet` → **404** on
+2026-08-17, control `1999-01-01T00` → 404, live keys → 206. Coverage still ends `2026-06-11T03`.
