@@ -121,3 +121,58 @@ hundred.** H9 comes closest and fails for an unrelated reason. The packet antici
 `revive_if`s come due; the honest answer is that the registry's cost models were size-free, so the
 failure mode it was looking for could not have been introduced in the first place — and the
 opposite failure mode, pricing at a fee only reachable at size, is the one now on the table.
+
+---
+
+## Correction — 2026-08-17 (Addendum B4). C1's mechanism was wrong. Its conclusion was not.
+
+**Appended, not rewritten. No verdict, figure or `revive_if` above is changed.**
+
+### What this document claimed
+
+> *"every cost model in this project is a **per-contract continuous function**,
+> `0.07·p·(1−p)`, which has no size parameter at all"* — and therefore that the registry has
+> been pricing at the **hundred-contract** fee, the cheapest reachable one.
+
+### What is actually in the source
+
+T2.1 read `analysis/h56/analyse.py`. Line 31:
+
+    fee = math.ceil(0.07 * (a / 100) * (1 - a / 100) * 100)     # Kalshi taker
+
+**A whole-cent ceiling, applied per contract, with no `contracts` term anywhere in the file.**
+That is `effective_per_contract(1, p, regime='inherited')` — **the one-contract price**, the
+*dearest* point on the size axis, not the cheapest.
+
+### The full chain, recorded because the chain is the lesson
+
+| stage | claim | status |
+|---|---|---|
+| Packet 3 | entries killed at one contract might survive at a hundred | **right in direction** |
+| C1 (this document) | every model is size-free, therefore the hundred-contract price | **wrong** |
+| Conversation | C1's correction accepted | **premature — neither party had read the source** |
+| Packet 4, "one note, not a task" | the true retail hurdle is *higher* than what kills calibrate against | **inverted, built on C1** |
+| T2.1 | `math.ceil(…)`, one contract | **measured, from the source** |
+
+**Neither side had read `analysis/h56/` when the claim was stated as settled.** C1 itself flagged
+the gap — *"in scope by consequence … not determined here, because it requires reading H56's
+estimator rather than its registry entry"* — and parked it as **P11**. The error was not in
+noticing the gap; it was in asserting the mechanism while the gap was open.
+
+### What survives, and what moves
+
+**Survives:** the conclusion. **No entry killed at one contract revives at a hundred.** Measured
+across the size axis, the hurdle runs −4.39¢ at 1 contract to −3.86¢ at 100 and −3.85¢
+continuous — a **0.53¢** span, and every interval excludes zero. The verdict does not move at any
+size. The registry's calibration is safe.
+
+**Moves:** the reason, and the direction. The registry has been pricing at the **most expensive**
+fee, not the cheapest. Sizing up makes the bar *easier*, by about 12%. And **fee rounding is not
+the dominant term in the hurdle — spread is** (Addendum B1).
+
+**This belongs on the right-for-the-wrong-reason list**, which now has seven members. Packet 4's
+ordering was correct and its priority on P11 was correct; both were arrived at through a mechanism
+that was backwards. The next study builds on the reason, not on the ordering, which is why this is
+worth a correction rather than a footnote.
+
+Full working: `registry/FEE-MODEL-T2.1.md`.
