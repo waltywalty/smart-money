@@ -55,6 +55,71 @@ def request(method, key="", body=b"", query=None, timeout=120):
     return _send(method, url, hdrs, body, timeout)
 
 
+def sha256_file(path, chunk=1 << 20):
+    """Stream a file's sha256. A 977 MiB VM cannot load a 256 MB object to sign it -
+    measured 2026-08-17, the in-memory path is OOM-killed between 64 MB and 256 MB."""
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        while True:
+            b = f.read(chunk)
+            if not b:
+                break
+            h.update(b)
+    return h.hexdigest()
+
+
+RETRY_CODES = (408, 429, 500, 502, 503, 504)
+
+
+def request_file(method, key, path=None, out=None, timeout=1800, tries=5):
+    """Streaming variant: the body never enters memory, and 4xx/5xx are retried.
+
+    Phase 1 uses this. `request()` holds the whole body in RAM and must not be used
+    above ~64 MB on a 1 GiB VM.
+    """
+    ep, bucket, ak, sk, region = _cfg()
+    host = urllib.parse.urlparse(ep).netloc
+    cpath = urllib.parse.quote("/" + bucket + "/" + key.lstrip("/"), safe="/~")
+    ph = sha256_file(path) if path else hashlib.sha256(b"").hexdigest()
+    now = dt.datetime.now(dt.timezone.utc)
+    amzdate = now.strftime("%Y%m%dT%H%M%SZ"); datestamp = now.strftime("%Y%m%d")
+    hh = {"host": host, "x-amz-content-sha256": ph, "x-amz-date": amzdate}
+    signed = ";".join(sorted(hh))
+    ch = "".join("%s:%s\n" % (k, hh[k]) for k in sorted(hh))
+    canon = "%s\n%s\n\n%s\n%s\n%s" % (method, cpath, ch, signed, ph)
+    scope = "%s/%s/%s/aws4_request" % (datestamp, region, SERVICE)
+    sts = "%s\n%s\n%s\n%s" % (ALGO, amzdate, scope, hashlib.sha256(canon.encode()).hexdigest())
+    k = _sign(("AWS4" + sk).encode(), datestamp)
+    k = _sign(k, region); k = _sign(k, SERVICE); k = _sign(k, "aws4_request")
+    sig = hmac.new(k, sts.encode(), hashlib.sha256).hexdigest()
+    hdrs = {"x-amz-content-sha256": ph, "x-amz-date": amzdate,
+            "Authorization": "%s Credential=%s/%s, SignedHeaders=%s, Signature=%s"
+                             % (ALGO, ak, scope, signed, sig),
+            "User-Agent": "smart-money-research/1.0"}
+    import subprocess, tempfile, time as _t
+    dest = out or tempfile.NamedTemporaryFile(delete=False).name
+    last = -1
+    for attempt in range(tries):
+        cmd = ["curl", "-sS", "-o", dest, "-w", "%{http_code}",
+               "--max-time", str(timeout), "-H", "Expect:"]
+        for kk, vv in hdrs.items():
+            cmd += ["-H", "%s: %s" % (kk, vv)]
+        if path:
+            cmd += ["--upload-file", path]      # implies PUT, streams from disk
+        else:
+            cmd += ["-X", method]
+        cmd.append(ep + cpath)
+        r = subprocess.run(cmd, capture_output=True, text=True)
+        try:
+            last = int(r.stdout.strip() or -1)
+        except ValueError:
+            last = -1
+        if last >= 200 and last not in RETRY_CODES:
+            return last, ph
+        _t.sleep(min(30, 1.5 * (2 ** attempt)))
+    return last, ph
+
+
 def _send(method, url, hdrs, body, timeout):
     """curl, not urllib.
 
