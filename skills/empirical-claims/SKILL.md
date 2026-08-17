@@ -84,9 +84,27 @@ Observed, repeatedly, in production:
     `series_ticker=` is the reverse. An ignored filter returns a full, plausible,
     wrong result set - six different crypto markets once arrived reporting the
     same close time. Record the verification per endpoint, not per parameter.
+14. **The general form of rules 10-13: a status, a count or a body may have been
+    produced by a layer other than the resource. Name the layer before you believe
+    the number.** Four instances, all in this project, all silent, all in the
+    direction of a plausible wrong answer:
 
-Each of those was caught by disagreement between two methods, not by inspection. None of them
-announced itself.
+    | what was read | what produced it | how it presented |
+    |---|---|---|
+    | a quote of `0.29/0.30` where the book said `0.05/0.06` | the summarising fetch layer | a confident, specific, invented value |
+    | `http=200` for six keys that do not exist | the **CONNECT tunnel** (`HTTP/1.1 200 Connection Established`) | `curl -D - \| head -1` on every request, present or absent |
+    | "file absent" across a whole sweep | a **TLS failure on the proxy leg** - some VMs export `HTTPS_PROXY=https://…`, which `urllib` cannot use | a generic exception a `try/except` maps to absence |
+    | `http=100` after 120 s on a 16 MB PUT | an **unanswered `Expect: 100-continue`** | an interim 1xx returned as if it were final |
+
+    The defences are the same each time and they are cheap: **read the status of the
+    resource specifically** (`-w '%{http_code}'`, not the first header line); **an
+    interim 1xx is never a success**; **an exception is not evidence of absence**
+    until you have shown the request reached the resource; and **a control that
+    must fail, run in the same pass**, because every one of these was caught by a
+    control disagreeing and none by inspection.
+
+Every one of those was caught by disagreement between two methods, not by inspection. None of
+them announced itself, and none of them looked like a failure at the moment it happened.
 
 ## Part 2 — the verification gate
 
