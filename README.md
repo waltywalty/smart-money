@@ -22,9 +22,16 @@ The headline result is a cost, not an edge.
 
 ## The registry is the point
 
-`registry/hypotheses.json` holds **55 entries — 45 killed, 4 corrected, 3 confirmed, 1 open, 2
-could-not-establish.** It exists because a killed idea has a habit of coming back wearing a new name,
-and because a project that only records its wins learns nothing.
+`registry/hypotheses.json` holds **56 entries — 45 killed, 4 corrected, 3 confirmed, 3
+could-not-establish, 1 open.** It exists because a killed idea has a habit of coming back wearing a
+new name, and because a project that only records its wins learns nothing.
+
+`registry/INDEX.md` carries **64 rows**: the 56 entries plus **8 `LOST` placeholders** — H22–H27,
+H32 and H45, the gaps left by the 2026-08-10 container rollback. The index is generated; where it
+and the JSON disagree, the JSON is authoritative.
+
+*(Counted in code from `registry/hypotheses.json` on 2026-08-17, not read off a previous count.
+This paragraph said 55 and 2 could-not-establish until then — it had missed H64.)*
 
 Every entry carries a `revive_if` field: the specific evidence that would reopen it. A verdict
 without one is an opinion.
@@ -128,7 +135,8 @@ registry says so rather than quietly keeping the correct answer.
 | `registry/hypotheses.json` | **The main artifact** |
 | `registry/h*-preregistration.md` | Pre-registrations written *before* looking at outcomes |
 | `skills/empirical-claims/SKILL.md` | The anti-fabrication + verification protocol |
-| `tests/wtest*.js` | 16 regression tests |
+| `tests/wtest*.js` | 16 worker regression tests (Node) |
+| `tests/test_*.py` | **47 regression tests (Python)** — fee model, historical paging contract, index generator, `gh_commit` write-proof. `python3 -m unittest discover -s tests -t .` |
 | `analysis/h50/` | Lag-1 autocorrelation study |
 | `analysis/h53/` | Far-OTM rung study |
 | `analysis/mm/` | Market-making / adverse-selection study |
