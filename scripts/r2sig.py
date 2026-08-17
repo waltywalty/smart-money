@@ -49,20 +49,43 @@ def request(method, key="", body=b"", query=None, timeout=120):
     auth = f"{ALGO} Credential={ak}/{scope}, SignedHeaders={signed}, Signature={sig}"
 
     url = ep + cpath + ("?" + cquery if cquery else "")
-    req = urllib.request.Request(url, data=body if body else None, method=method)
-    for h, v in headers.items():
-        if h != "host":
-            req.add_header(h, v)
-    req.add_header("Authorization", auth)
-    req.add_header("User-Agent", "smart-money-research/1.0")
+    hdrs = {k: v for k, v in headers.items() if k != "host"}
+    hdrs["Authorization"] = auth
+    hdrs["User-Agent"] = "smart-money-research/1.0"
+    return _send(method, url, hdrs, body, timeout)
+
+
+def _send(method, url, hdrs, body, timeout):
+    """curl, not urllib.
+
+    Measured 2026-08-17: some Kernel VMs export HTTPS_PROXY=https://ns.internal:3129
+    - a proxy that speaks TLS on the proxy leg. curl handles that; Python's urllib
+    does NOT - it opens a plain socket, sends CONNECT, and the proxy closes on it
+    (`RemoteDisconnected`). Other VMs export an http:// proxy and urllib is fine.
+    Whether Python networking works therefore varies VM to VM. curl works in both,
+    so curl is the transport.
+    """
+    import subprocess, tempfile
+    with tempfile.NamedTemporaryFile(delete=False) as bf:
+        bf.write(body or b"")
+        bpath = bf.name
+    out = tempfile.NamedTemporaryFile(delete=False).name
+    cmd = ["curl", "-sS", "-X", method, "-o", out, "-w", "%{http_code}",
+           "--max-time", str(timeout)]
+    for k, v in hdrs.items():
+        cmd += ["-H", f"{k}: {v}"]
+    if body:
+        cmd += ["--data-binary", "@" + bpath]
+    cmd.append(url)
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:
-            return r.status, dict(r.headers), r.read()
-    except urllib.error.HTTPError as e:
-        b = b""
-        try:
-            b = e.read()
-        except Exception:
-            pass
-        e.close()
-        return e.code, {}, b
+        r = subprocess.run(cmd, capture_output=True, text=True)
+        code = int(r.stdout.strip() or -1)
+        with open(out, "rb") as f:
+            rb = f.read()
+        return code, {}, rb
+    finally:
+        for f in (bpath, out):
+            try:
+                os.remove(f)
+            except OSError:
+                pass
