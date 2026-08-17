@@ -181,3 +181,75 @@ untouched. No trade, no deployment.
 **Not completed:** C2's full measured/asserted tagging pass across `CLAUDE.md`, `docs/INFRA.md`
 and `docs/STATE.md` — the rule was added, the tagging was not done. Time limit, not instrument
 failure. B2 and B3 not started.
+
+---
+
+## Session 3 — 2026-08-17 (packet 4 + Addendum A)
+
+**Constitution re-read** before any work, from the tree at `7374215` fetched as a tarball —
+deliberately a different path from the contents API, which is rule 12 applied to the re-read.
+
+**GATE 0 does not pass** → `docs/GATE0.md` (`101e8eb`). The R2 endpoint arrived as the literal
+string `<paste>`, and Kernel's credential store has **no route** to hand a secret to a script —
+measured with a dummy value before the real PAT was requested, probe credential and probe VM both
+deleted. Per Addendum A's corrected fallback, **Phase 1 did not start; Phases 2 and 3 ran instead.**
+
+**T0.2 done and live** → `scripts/gh_commit.py` (`de75d97`), `tests/test_gh_commit.py` (`972c482`).
+`check()` no longer reads `permissions.push` — zero references remain outside the docstring
+explaining why. Against the real token: `201 wrote / 200 read back unauthenticated: CONTENT MATCHES
+/ 200 deleted / PASS / exit=0`. **11 stubbed regression tests**; full suite **47, all passing**.
+
+**T2.1 done** → `registry/FEE-MODEL-T2.1.md` (`db44da9`). `analysis/h56/analyse.py` line 31 is
+`math.ceil(0.07*p*(1-p)*100)` with **no `contracts` term** — **the one-contract charge**, the
+dearest point on the size axis. **Packet 4 and my own C1 both had this backwards.** The hurdle is
+−4.39c at 1 contract, **−3.86c at 100**, −3.85c continuous — at size the bar is *easier*, not
+harder. Published statistic reproduced first as a control (−4.39c [−5.21, −3.66] against
+[−5.20, −3.67]). **Verdict unchanged at every size.** The effect is small because H56's asks are
+median 18.7c, nowhere near where the ceiling bites; it says nothing about the 93–98c band.
+
+**T3.1 done** → **P14**. Three independent signatures, all clear. **No committed code has ever used
+`ticker=` as a filter**; the only three committed HTTP callers use `series_ticker=` or the
+path-segment form, so **H56 is clean**. Addendum A3's third signature checked **7,075 rows across
+50 files against their intended tickers — zero mismatches**. Five studies are permanently
+unauditable because their collectors were never committed; listed per hypothesis.
+
+**T3.2 done** → `DEPTH-ANSWERABLE-2026-08-17.md` (`fa625d3`) and Amendment 1 to
+`ARCHIVE-LAG-2026-08-14.md` (`6035bf5`). A4 bounded the lag correctly and the method generalises,
+but its **95.9% bracketable was one shard** — across 15 hours the range is **0.00% to 99.69%**.
+**Degradation is intermittent, not terminal**: two of the four worst hours are 06-07 and 06-08, the
+earliest days tested.
+
+**T3.3 done** → `README.md` (`81036c8`). Counted in code: **56** entries, **3** could-not-establish
+— it said 55 and 2, having missed H64. Added the INDEX reconciliation (64 rows = 56 + 8 `LOST`) and
+the Python suite. **The v11.5 warning needed no fixing — C3 corrected it on 2026-08-14.**
+
+**Addendum A1 done** → `A1-SHARD-SELECTION-2026-08-17.md` (`9ed33b3`). **Shard health IS a
+selection variable.** Bracketable % against Kalshi-sourced trades/sec: pearson **−0.631**,
+leave-one-out **[−0.698, −0.594]** — never near zero. Degraded shards trade **1.45–1.80x** harder
+while covering the same breadth of tickers and series. **Outcome 2 of the three written down in
+advance: depth is measurable only on quiet hours, and no depth figure may be stated as a property
+of the exchange.** Phase 4 gains a precondition that was not in its original list.
+
+**Addendum A2 done** → `skills/empirical-claims/SKILL.md` (`cbed16d`). **`HEAD` never misbehaved.**
+Read at the resource layer, `HEAD` on the impossible 1999 control returns **404** and on a real key
+**200**; ranged GET gives 404 and 206. Packet 2's "HEAD returns 200 for keys that do not exist" was
+reading `HTTP/1.1 200 Connection Established` — the CONNECT tunnel's status, identical for every
+request regardless of method. **The rule stands, the mechanism was wrong.** Rule 11 gains the layer
+clause; **rule 12 is in**.
+
+### A new API fact, and it inverts the market endpoints
+
+| endpoint | `ticker=` | `series_ticker=` | `min_ts`/`max_ts` |
+|---|---|---|---|
+| `/markets` | IGNORED | honoured | honoured |
+| `/historical/markets` | IGNORED | honoured | **IGNORED** |
+| `/historical/trades` | **honoured** | **IGNORED** | **honoured** |
+
+Each verified with an impossible control. **Filter honouring is per-endpoint and not guessable.**
+
+**No STOP conditions hit.** No registry verdict, figure or `revive_if` changed. `worker.js`
+untouched. No trade, no deployment. **The Cowork sandbox rolled back mid-session and destroyed a
+prepared patch; nothing was lost**, because every rebuilt artifact went to `main` as it was
+produced — Walton's ruling working as intended.
+
+**Next action:** the R2 endpoint, then Gate 0 line 3, then Phase 1.
