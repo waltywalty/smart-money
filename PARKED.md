@@ -306,3 +306,60 @@ registry currently calibrates against a scalar.
 **Unblocking it needs, in order:** A1's base-rate gap closed (the docs' worked example
 reconciled), P11 answered by reading `analysis/h56/`, and P8 resolved or the field excluded.
 None requires new collection.
+
+---
+
+## P14 — the `ticker=` audit clears every committed collector, on three independent signatures
+
+**Blocks:** nothing directly. It bounds how far the `ticker=` defect can have propagated.
+
+**Signature 1 — source (T3.1).** All 127 committed files scanned for `?ticker=` / `&ticker=` in a
+URL, `{'ticker': …}` in a params dict, and any bare `ticker=`; every hit read by eye. **No
+committed code has ever used `ticker=` as an API filter.** Only three committed files make HTTP
+calls at all: `scripts/b1_collect.py` (`series_ticker=`, honoured), `analysis/h56/grab.py`
+(ticker as a **path segment** — `/series/{s}/markets/{ticker}/candlesticks` — which is honoured,
+so **H56, the hurdle, is clean**), and `scripts/gh_commit.py` (GitHub, not Kalshi). Everything
+else is documentation of the defect, a test that models it, a JS property comparison, or an
+f-string column header.
+
+**Signature 2 — junk rows.** No committed data file contains a `KXMVE` market row, and no study's
+data shows the repeated-timestamp pattern a filtered-to-the-head pull would leave. The closest
+look-alikes (`h53/markets_raw.txt`, 126 tickers over 15 timestamps) are mutually-exclusive ladders
+sharing one event `close_time` by construction.
+
+**Signature 3 — ticker mismatch (Addendum A3).** Signatures 1 and 2 both fail if a dead collector
+fetched the unfiltered head and applied the standing `KXMVE*` exclusion afterwards. This one does
+not. For every committed data file whose intended ticker is recoverable, every row was checked
+against it:
+
+| study | files | rows checked | **mismatches** | intended set from |
+|---|---|---|---|---|
+| H50 (`analysis/h50/data`) | 22 | 2,398 | **0** | filename |
+| market-making (`analysis/mm`) | 20 | 4,497 | **0** | filename |
+| H53 (`urls.txt`) | 108 | 108 | **0** | URL vs label |
+| H53 (`urls2.txt`) | 72 | 72 | **0** | URL vs label |
+| **total** | | **7,075** | **0** | |
+
+Every H53 URL requests `/series/{s}/markets/{ticker}/candlesticks` — the path-segment form. None
+used a query filter.
+
+**Where the intended set cannot be recovered, per hypothesis:**
+
+| study | why |
+|---|---|
+| H55, H57, H58 | collector `/tmp/h5x/collect.py` never committed; only summary statistics survive |
+| H64 | `/tmp/h64/cand2.py` and `rows.json` never committed; its events are not enumerated in the repo |
+| H56 | `rows.json` not committed — `events.csv` has event tickers but not per-rung market tickers |
+| H52 | trade-level pull never committed |
+| H1, H2, H3, H44 | Polymarket wallet and tape studies — no Kalshi tickers at all |
+
+**Affected hypothesis IDs: none identified. A negative result from an incomplete instrument.**
+That phrasing is kept deliberately: three signatures agree, and none of them can reach the
+collectors that no longer exist.
+
+**Options.** (a) Accept the bound and record that uncommitted collectors are permanently
+unauditable. (b) A standing rule that a collector is committed **before** its results are, so the
+hole cannot reopen. (c) Re-derive the highest-stakes results from a rebuilt dataset.
+
+**Recommendation:** (b) unconditionally — free, and the actual lesson. Then (c) for H56 and H64.
+**No verdict is changed by this entry.**
