@@ -77,6 +77,13 @@ Observed, repeatedly, in production:
     pages and the writing process itself are all the same instrument as each other in the ways
     that matter. Read back through the API, unauthenticated where the resource is public. A count
     that matches the pre-write state is evidence *for* a stale read, not against it.
+13. **Never assume a query parameter is honoured. Verify it with an impossible
+    control, on every endpoint you use it on.** Filter honouring is per-endpoint
+    and does not generalise: `ticker=` works on `/historical/trades` and is
+    silently ignored on `/markets` and `/historical/markets`, while
+    `series_ticker=` is the reverse. An ignored filter returns a full, plausible,
+    wrong result set - six different crypto markets once arrived reporting the
+    same close time. Record the verification per endpoint, not per parameter.
 
 Each of those was caught by disagreement between two methods, not by inspection. None of them
 announced itself.
