@@ -253,3 +253,54 @@ credential has it in neither its environment nor its filesystem; no Kernel-inter
 routable from inside the VM. Tested with a dummy value, probe deleted. **Do not re-attempt this.**
 Credentials are pasted per session; the mitigation is to make their loss cheap, not to make them
 durable.
+
+---
+
+## Amendment, 2026-08-17 - rate limiting re-measured (T1.2)
+
+Appended, not edited. The paragraph above beginning *"Rate limit is real and returns 429"*
+stands as the record of what was observed; these are the parameters that reproduce.
+
+Fifteen arms, one variable at a time, same VM, same afternoon (`data/phase1/GATES.json`):
+
+| request rate | rejection |
+|---|---|
+| 1.2 - 5.9 req/s, either endpoint | **0% in 550 requests** |
+| ~11 req/s | 0.8% |
+| ~28 req/s | 16.2% |
+| 62 - 73 req/s | **0% to 53%, depending on what ran before it** |
+
+Three corrections:
+
+1. **`3 threads / 0.55s` is 3.6 req/s and does not reject.** 0 of 240, both endpoints. The
+   ~13% figure recorded beside those parameters belongs to a much higher rate; ~28 req/s
+   measures 16.2%. The observation was real; the parameters written next to it are not the
+   ones that produce it.
+2. **`4 threads / 0.4s` did not bounce 42%.** It measured 0 of 120.
+3. **The limiter is shared across endpoints and has memory.** `/historical/markets` at 69
+   req/s measured 0% on its first burst, then 32.5% and 44.1% on identical repeats minutes
+   later. There is no `/historical` exemption - the first burst simply arrived with the
+   bucket full. **A single ordering of arms is not a control.**
+
+Practical rule, unchanged in direction and corrected in reason: **stay at or below ~6 req/s.**
+Not because three threads is a magic number, but because that is the band measured clean even
+immediately after a burst that was being rejected at 44%.
+
+## Amendment, 2026-08-17 - `/historical/markets` reports `finalized`, never `settled`
+
+The rule *"outcomes must come from `?status=settled`"* above is about the **live** `/markets`
+list. On `/historical/markets` the same markets report `status: finalized` on **100%** of rows
+and `settled` on **0%**, with `result` populated on 100%. Measured on 2,000 rows across
+`KXHIGHNY` and `KXMLBGAME`, cross-checked on `GET /markets/{ticker}` and
+`GET /historical/markets/{ticker}`.
+
+A collector that carries `status == "settled"` over to the historical path filters away every
+row and reports an empty dataset as an honest zero.
+
+Related: **`result` is not binary.** `KXMLBGAME` page 1 returns `no` 495, `yes` 495, `scalar` 10.
+
+## Amendment, 2026-08-17 - restricted collection is 30x smaller than the full pull
+
+Scope derived in `data/SCOPE.md` from `registry/hypotheses.json` and `analysis/`: **30 series,
+110,836 rows, 241 MB raw, 10.1 MB gzipped** against the prior full-exchange 7.27 GB. 130 pages,
+all HTTP 200, no retries. Four of the 30 have **zero** settled history, `KXRAIN` among them.
