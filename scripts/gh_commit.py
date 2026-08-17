@@ -32,25 +32,57 @@ def _token():
     return t
 
 
-def _request(url, method="GET", payload=None):
-    """Return (status, parsed_body). Raises on non-2xx except 404."""
-    body = json.dumps(payload).encode() if payload is not None else None
-    req = urllib.request.Request(url, data=body, method=method, headers={
-        "Authorization": f"Bearer {_token()}",
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-        "Content-Type": "application/json",
-        "User-Agent": UA,
-    })
+def _curl(method, url, headers, body=None, timeout=120):
+    """curl, not urllib.
+
+    Measured 2026-08-17: some Kernel VMs export HTTPS_PROXY=https://ns.internal:3129,
+    a proxy that speaks TLS on the proxy leg. curl handles that; Python's urllib does
+    NOT - it opens a plain socket, sends CONNECT, and the proxy closes on it
+    (RemoteDisconnected). Other VMs export an http:// proxy and urllib is fine, which
+    is why this only shows up on some VMs. curl works in both cases.
+    """
+    import subprocess, tempfile
+    bpath = None
+    if body is not None:
+        with tempfile.NamedTemporaryFile(delete=False) as f:
+            f.write(body)
+            bpath = f.name
+    out = tempfile.NamedTemporaryFile(delete=False).name
+    cmd = ["curl", "-sS", "-X", method, "-o", out, "-w", "%{http_code}",
+           "--max-time", str(timeout)]
+    for k, v in headers.items():
+        cmd += ["-H", "%s: %s" % (k, v)]
+    if bpath:
+        cmd += ["--data-binary", "@" + bpath]
+    cmd.append(url)
     try:
-        with urllib.request.urlopen(req) as r:
-            return r.status, json.loads(r.read() or b"{}")
-    except urllib.error.HTTPError as e:
-        if e.code == 404:
-            return 404, None
-        # Report the status. Never let an exception be read as "absent".
-        sys.stderr.write(f"HTTP {e.code} on {method} {url}\n{e.read()[:400]}\n")
-        raise
+        r = subprocess.run(cmd, capture_output=True, text=True)
+        code = int(r.stdout.strip() or -1)
+        with open(out, "rb") as f:
+            raw = f.read()
+        try:
+            return code, (json.loads(raw) if raw else None)
+        except Exception:
+            return code, None
+    finally:
+        for f in (bpath, out):
+            if f:
+                try:
+                    os.remove(f)
+                except OSError:
+                    pass
+
+
+def _request(url, method="GET", payload=None):
+    h = {"Authorization": "Bearer " + _token(),
+         "Accept": "application/vnd.github+json",
+         "User-Agent": UA,
+         "X-GitHub-Api-Version": "2022-11-28"}
+    body = None
+    if payload is not None:
+        body = json.dumps(payload).encode()
+        h["Content-Type"] = "application/json"
+    return _curl(method, url, h, body)
 
 
 def _request_unauth(url, tries=6, delay=1.5):
@@ -65,28 +97,17 @@ def _request_unauth(url, tries=6, delay=1.5):
 
     Retries are bounded and a timeout is a failure, never a pass.
     """
-    req = urllib.request.Request(url, method="GET")
-    req.add_header("User-Agent", UA)
-    req.add_header("Accept", "application/vnd.github+json")
+    h = {"User-Agent": UA, "Accept": "application/vnd.github+json"}
     last = None
     for attempt in range(tries):
-        try:
-            with urllib.request.urlopen(req, timeout=30) as r:
-                return r.status, json.loads(r.read())
-        except urllib.error.HTTPError as e:
-            try:
-                e.read()
-            except Exception:
-                pass
-            e.close()
-            last = (e.code, None)
-            if e.code == 404:          # propagation delay, not absence - bounded
-                time.sleep(delay * (attempt + 1))
-                continue
-            return last
-        except Exception as ex:
-            last = (-1, {"exc": type(ex).__name__})
+        code, body = _curl("GET", url, h, None, 30)
+        if code == 200:
+            return code, body
+        last = (code, None)
+        if code == 404:                # propagation delay, not absence - bounded
             time.sleep(delay * (attempt + 1))
+            continue
+        return last
     return last
 
 
