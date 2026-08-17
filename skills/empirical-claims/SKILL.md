@@ -55,15 +55,30 @@ Observed, repeatedly, in production:
    progress. Use `with urlopen(...) as r:` or a pooled session. Add a heartbeat file and treat a stale
    heartbeat as a stall, because this failure is silent by construction.
 10. **Probe object stores with a ranged `GET`, never `HEAD`, and always include an impossible
-    control key.** `HEAD` on `r2kalshi.pmxt.dev` returns `200` for keys that do not exist — a
-    control dated 1999-01-01 passed. A coverage sweep built on `HEAD` reported an archive complete
-    through August that ends in June.
+    control key.** A coverage sweep built on `HEAD` reported an archive complete through August
+    that ends in June. **Corrected 2026-08-17 — right rule, wrong mechanism.** This said `HEAD`
+    returns `200` for keys that do not exist. It does not. Re-measured with the status read at the
+    resource layer: `HEAD` on the impossible 1999 control returns **404**, ranged `GET` returns
+    **404**, and on a real key they return **200** and **206**. The original `200` was
+    `HTTP/1.1 200 Connection Established` — the CONNECT tunnel's status, printed first by
+    `curl -I` and by `curl -D -` for **every** request through the VM's proxy, HEAD and GET alike
+    (see rule 11). **Keep the rule**: ranged `GET` gives 206-vs-404, a sharper distinction than
+    HEAD's 200-vs-404, and it survives proxies that mangle HEAD. Only the reason was wrong.
 11. **Report status codes, never booleans, and send an explicit User-Agent.** A bare
     `python-urllib` UA is blocked at some edges; the resulting `HTTPError` was mapped by a
     `try/except` to "file absent", and the sweep reported everything missing — including files
     already proven present. A 403 must never be readable as a 404.
+    **And report the status code *of the resource*, knowing which layer produced it.** Through a
+    CONNECT proxy the first header line is the tunnel's `200`, not the object's. A sweep that read
+    it with `head -1` reported `http=200` for six keys that do not exist; `-w '%{http_code}'`
+    returns their real `404`. A code read from the wrong layer is worse than a boolean, because it
+    looks like evidence.
+12. **Verify a write by reading it back through a different path.** Rendered HTML, CDN-fronted
+    pages and the writing process itself are all the same instrument as each other in the ways
+    that matter. Read back through the API, unauthenticated where the resource is public. A count
+    that matches the pre-write state is evidence *for* a stale read, not against it.
 
-Both of those were caught by disagreement between two methods, not by inspection. Neither
+Each of those was caught by disagreement between two methods, not by inspection. None of them
 announced itself.
 
 ## Part 2 — the verification gate
