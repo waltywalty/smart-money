@@ -210,3 +210,46 @@ pre-migration field names and would silently record zeros. See `archive/WORKER-V
 Subrequest ceiling 50 per invocation, worst measured cycle 22 — exceeding it silently
 kills scheduled runs and once looked exactly like a broken cron trigger. KV writes ~288/day
 against a ~1k/day free tier.
+
+### R2 object store, and three ceilings found before Phase 1 ran
+
+Bucket `smart-money-data`, endpoint `https://<account>.r2.cloudflarestorage.com`, region `auto`.
+Credentials are per-session environment variables — `R2_ENDPOINT`, `R2_BUCKET`,
+`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` — never committed. Client: `scripts/r2.py` over
+`scripts/r2sig.py`. Gate: `python3 scripts/r2.py roundtrip 1`.
+
+**[measured 2026-08-17] The data outlives the VM.** An object written from one VM read back
+byte-identical (sha256 `931eb01d…`) from a fresh VM in a different metro after the first was
+destroyed. That is the packet-3 failure closed.
+
+**Ceiling 1 — `Expect: 100-continue` is never answered.** curl sends it on any body over ~1 KB.
+Neither the Kernel egress proxy nor R2 responds to the interim, so curl reports **`http=100`** as
+the status and blocks until `--max-time`: a 16 MB PUT took **120 s and returned 100**. With
+`-H 'Expect:'` the same PUT takes **2.6 s**. **This is almost certainly what made boto3's
+`put_object` hang** — LIST worked, `curl -X PUT` worked, `put_object` hung, all through the same
+proxy with the same credentials. Any HTTP client used here must disable Expect, and **an interim
+1xx must never be treated as success.**
+
+**Ceiling 2 — memory.** The in-memory path (`request()`) is **OOM-killed between 64 MB and
+256 MB** on a 977 MiB VM. 64 MB passes at 12.8 MB/s; 256 MB is killed. Use `request_file()`,
+which streams from disk and never loads the body: **128 MB streams at 9.3 MB/s with a sha256
+match and RAM flat.**
+
+**Ceiling 3 — VM disk varies, and can be small.** One VM had 9.8 GB; another had **783 MB total,
+352 MB free**. A collector that accumulates before uploading will die on the small ones.
+**Phase 1 must write one series file, upload it, delete it locally, then move on.**
+
+**[measured 2026-08-17] Python networking is not portable across Kernel VMs.** Some export
+`HTTPS_PROXY=https://ns.internal:3129` — a proxy that speaks **TLS on the proxy leg**. curl handles
+it; Python's `urllib` opens a plain socket, sends `CONNECT`, and the proxy closes on it
+(`RemoteDisconnected`). Other VMs export an `http://` proxy and urllib is fine. **`gh_commit.py
+check` failed on a fresh VM for this reason, on a perfectly good token.** Both `gh_commit.py` and
+`r2sig.py` therefore shell out to curl. This retroactively explains a class of intermittent
+failure this project has hit and never diagnosed.
+
+**[measured 2026-08-17] Kernel's credential store cannot return a secret to a script.** `create`
+reports `has_values: true`; `get` returns metadata and key *names* only; a VM created after the
+credential has it in neither its environment nor its filesystem; no Kernel-internal endpoint is
+routable from inside the VM. Tested with a dummy value, probe deleted. **Do not re-attempt this.**
+Credentials are pasted per session; the mitigation is to make their loss cheap, not to make them
+durable.
