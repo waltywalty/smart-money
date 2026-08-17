@@ -71,7 +71,13 @@ def _send(method, url, hdrs, body, timeout):
         bpath = bf.name
     out = tempfile.NamedTemporaryFile(delete=False).name
     cmd = ["curl", "-sS", "-X", method, "-o", out, "-w", "%{http_code}",
-           "--max-time", str(timeout)]
+           "--max-time", str(timeout),
+           # curl sends `Expect: 100-continue` on a body over ~1 KB. Neither this
+           # proxy nor R2 answers it: curl reports the interim 100 as the status and
+           # blocks until --max-time. Measured 2026-08-17 - a 16 MB PUT returned
+           # http=100 after 120s, and this is almost certainly what made boto3's
+           # put_object hang too. An interim 1xx is never a success.
+           "-H", "Expect:"]
     for k, v in hdrs.items():
         cmd += ["-H", f"{k}: {v}"]
     if body:
