@@ -1,0 +1,1080 @@
+{
+ "collection_histogram": {
+  "http_200": 130,
+  "r2_list_200": 30,
+  "r2_put_200": 30
+ },
+ "gate1": {
+  "KXAGENCYELIM": {
+   "ok": true,
+   "rows": 0,
+   "unique": 0
+  },
+  "KXATPCHALLENGERMATCH": {
+   "events": 5617,
+   "manifest_rows": 11234,
+   "ok": true,
+   "rows": 11234,
+   "sha256_matches_manifest": true,
+   "unique": 11234
+  },
+  "KXATPMATCH": {
+   "events": 3432,
+   "manifest_rows": 6864,
+   "ok": true,
+   "rows": 6864,
+   "sha256_matches_manifest": true,
+   "unique": 6864
+  },
+  "KXATPSETWINNER": {
+   "events": 3268,
+   "manifest_rows": 6536,
+   "ok": true,
+   "rows": 6536,
+   "sha256_matches_manifest": true,
+   "unique": 6536
+  },
+  "KXBNB15M": {
+   "events": 8519,
+   "manifest_rows": 8519,
+   "ok": true,
+   "rows": 8519,
+   "sha256_matches_manifest": true,
+   "unique": 8519
+  },
+  "KXCPIYOY": {
+   "events": 43,
+   "manifest_rows": 582,
+   "ok": true,
+   "rows": 582,
+   "sha256_matches_manifest": true,
+   "unique": 582
+  },
+  "KXCS2GAME": {
+   "events": 2583,
+   "manifest_rows": 5166,
+   "ok": true,
+   "rows": 5166,
+   "sha256_matches_manifest": true,
+   "unique": 5166
+  },
+  "KXCS2MAP": {
+   "events": 4429,
+   "manifest_rows": 8858,
+   "ok": true,
+   "rows": 8858,
+   "sha256_matches_manifest": true,
+   "unique": 8858
+  },
+  "KXEGGS": {
+   "events": 16,
+   "manifest_rows": 16,
+   "ok": true,
+   "rows": 16,
+   "sha256_matches_manifest": true,
+   "unique": 16
+  },
+  "KXEUEXITCOUNTRY": {
+   "ok": true,
+   "rows": 0,
+   "unique": 0
+  },
+  "KXEUREF": {
+   "ok": true,
+   "rows": 0,
+   "unique": 0
+  },
+  "KXFED": {
+   "events": 39,
+   "manifest_rows": 391,
+   "ok": true,
+   "rows": 391,
+   "sha256_matches_manifest": true,
+   "unique": 391
+  },
+  "KXGDP": {
+   "events": 20,
+   "manifest_rows": 174,
+   "ok": true,
+   "rows": 174,
+   "sha256_matches_manifest": true,
+   "unique": 174
+  },
+  "KXHIGHAUS": {
+   "events": 1129,
+   "manifest_rows": 6771,
+   "ok": true,
+   "rows": 6771,
+   "sha256_matches_manifest": true,
+   "unique": 6771
+  },
+  "KXHIGHCHI": {
+   "events": 1760,
+   "manifest_rows": 9019,
+   "ok": true,
+   "rows": 9019,
+   "sha256_matches_manifest": true,
+   "unique": 9019
+  },
+  "KXHIGHDEN": {
+   "events": 574,
+   "manifest_rows": 3444,
+   "ok": true,
+   "rows": 3444,
+   "sha256_matches_manifest": true,
+   "unique": 3444
+  },
+  "KXHIGHLAX": {
+   "events": 528,
+   "manifest_rows": 3168,
+   "ok": true,
+   "rows": 3168,
+   "sha256_matches_manifest": true,
+   "unique": 3168
+  },
+  "KXHIGHMIA": {
+   "events": 1132,
+   "manifest_rows": 6790,
+   "ok": true,
+   "rows": 6790,
+   "sha256_matches_manifest": true,
+   "unique": 6790
+  },
+  "KXHIGHNY": {
+   "events": 1772,
+   "manifest_rows": 9022,
+   "ok": true,
+   "rows": 9022,
+   "sha256_matches_manifest": true,
+   "unique": 9022
+  },
+  "KXHIGHPHIL": {
+   "events": 574,
+   "manifest_rows": 3444,
+   "ok": true,
+   "rows": 3444,
+   "sha256_matches_manifest": true,
+   "unique": 3444
+  },
+  "KXMLBGAME": {
+   "events": 3321,
+   "manifest_rows": 6642,
+   "ok": true,
+   "rows": 6642,
+   "sha256_matches_manifest": true,
+   "unique": 6642
+  },
+  "KXNBAGAME": {
+   "events": 1449,
+   "manifest_rows": 2898,
+   "ok": true,
+   "rows": 2898,
+   "sha256_matches_manifest": true,
+   "unique": 2898
+  },
+  "KXNFLGAME": {
+   "events": 333,
+   "manifest_rows": 666,
+   "ok": true,
+   "rows": 666,
+   "sha256_matches_manifest": true,
+   "unique": 666
+  },
+  "KXNHLGAME": {
+   "events": 1538,
+   "manifest_rows": 3076,
+   "ok": true,
+   "rows": 3076,
+   "sha256_matches_manifest": true,
+   "unique": 3076
+  },
+  "KXNOBELPEACE": {
+   "events": 1,
+   "manifest_rows": 24,
+   "ok": true,
+   "rows": 24,
+   "sha256_matches_manifest": true,
+   "unique": 24
+  },
+  "KXPAYROLLS": {
+   "events": 39,
+   "manifest_rows": 336,
+   "ok": true,
+   "rows": 336,
+   "sha256_matches_manifest": true,
+   "unique": 336
+  },
+  "KXRAIN": {
+   "ok": true,
+   "rows": 0,
+   "unique": 0
+  },
+  "KXUCLGAME": {
+   "events": 193,
+   "manifest_rows": 579,
+   "ok": true,
+   "rows": 579,
+   "sha256_matches_manifest": true,
+   "unique": 579
+  },
+  "KXUSAEXPANDTERRITORY": {
+   "events": 1,
+   "manifest_rows": 1,
+   "ok": true,
+   "rows": 1,
+   "sha256_matches_manifest": true,
+   "unique": 1
+  },
+  "KXWTAMATCH": {
+   "events": 3308,
+   "manifest_rows": 6616,
+   "ok": true,
+   "rows": 6616,
+   "sha256_matches_manifest": true,
+   "unique": 6616
+  }
+ },
+ "gate2": {
+  "KXAGENCYELIM": {
+   "skip": "no rows"
+  },
+  "KXATPCHALLENGERMATCH": {
+   "coverage_pct": 100.0,
+   "days_present": 156,
+   "first": "2026-01-13",
+   "largest_gaps": [],
+   "last": "2026-06-17",
+   "n_gaps": 0,
+   "span_days": 156,
+   "total_missing_days": 0
+  },
+  "KXATPMATCH": {
+   "coverage_pct": 83.3,
+   "days_present": 304,
+   "first": "2025-06-18",
+   "largest_gaps": [
+    {
+     "after": "2025-11-16",
+     "before": "2025-12-17",
+     "missing_days": 30
+    },
+    {
+     "after": "2025-12-20",
+     "before": "2026-01-03",
+     "missing_days": 13
+    },
+    {
+     "after": "2025-09-06",
+     "before": "2025-09-17",
+     "missing_days": 10
+    }
+   ],
+   "last": "2026-06-17",
+   "n_gaps": 10,
+   "span_days": 365,
+   "total_missing_days": 61
+  },
+  "KXATPSETWINNER": {
+   "coverage_pct": 85.9,
+   "days_present": 128,
+   "first": "2026-01-20",
+   "largest_gaps": [
+    {
+     "after": "2026-02-01",
+     "before": "2026-02-19",
+     "missing_days": 17
+    },
+    {
+     "after": "2026-01-28",
+     "before": "2026-01-30",
+     "missing_days": 1
+    },
+    {
+     "after": "2026-01-30",
+     "before": "2026-02-01",
+     "missing_days": 1
+    }
+   ],
+   "last": "2026-06-17",
+   "n_gaps": 5,
+   "span_days": 149,
+   "total_missing_days": 21
+  },
+  "KXBNB15M": {
+   "coverage_pct": 90.3,
+   "days_present": 93,
+   "first": "2026-03-07",
+   "largest_gaps": [
+    {
+     "after": "2026-03-07",
+     "before": "2026-03-18",
+     "missing_days": 10
+    }
+   ],
+   "last": "2026-06-17",
+   "n_gaps": 1,
+   "span_days": 103,
+   "total_missing_days": 10
+  },
+  "KXCPIYOY": {
+   "coverage_pct": 3.4,
+   "days_present": 43,
+   "first": "2022-12-13",
+   "largest_gaps": [
+    {
+     "after": "2024-04-10",
+     "before": "2024-05-15",
+     "missing_days": 34
+    },
+    {
+     "after": "2024-12-11",
+     "before": "2025-01-15",
+     "missing_days": 34
+    },
+    {
+     "after": "2025-11-13",
+     "before": "2025-12-18",
+     "missing_days": 34
+    }
+   ],
+   "last": "2026-06-10",
+   "n_gaps": 42,
+   "span_days": 1276,
+   "total_missing_days": 1233
+  },
+  "KXCS2GAME": {
+   "coverage_pct": 95.6,
+   "days_present": 152,
+   "first": "2026-01-10",
+   "largest_gaps": [
+    {
+     "after": "2026-01-18",
+     "before": "2026-01-21",
+     "missing_days": 2
+    },
+    {
+     "after": "2026-01-25",
+     "before": "2026-01-28",
+     "missing_days": 2
+    },
+    {
+     "after": "2026-02-03",
+     "before": "2026-02-06",
+     "missing_days": 2
+    }
+   ],
+   "last": "2026-06-17",
+   "n_gaps": 4,
+   "span_days": 159,
+   "total_missing_days": 7
+  },
+  "KXCS2MAP": {
+   "coverage_pct": 69.3,
+   "days_present": 156,
+   "first": "2025-11-05",
+   "largest_gaps": [
+    {
+     "after": "2025-12-12",
+     "before": "2026-01-13",
+     "missing_days": 31
+    },
+    {
+     "after": "2025-11-14",
+     "before": "2025-12-12",
+     "missing_days": 27
+    },
+    {
+     "after": "2025-11-09",
+     "before": "2025-11-13",
+     "missing_days": 3
+    }
+   ],
+   "last": "2026-06-17",
+   "n_gaps": 8,
+   "span_days": 225,
+   "total_missing_days": 69
+  },
+  "KXEGGS": {
+   "coverage_pct": 3.5,
+   "days_present": 16,
+   "first": "2025-03-12",
+   "largest_gaps": [
+    {
+     "after": "2025-11-13",
+     "before": "2025-12-18",
+     "missing_days": 34
+    },
+    {
+     "after": "2025-06-11",
+     "before": "2025-07-15",
+     "missing_days": 33
+    },
+    {
+     "after": "2025-09-11",
+     "before": "2025-10-15",
+     "missing_days": 33
+    }
+   ],
+   "last": "2026-06-10",
+   "n_gaps": 15,
+   "span_days": 456,
+   "total_missing_days": 440
+  },
+  "KXEUEXITCOUNTRY": {
+   "skip": "no rows"
+  },
+  "KXEUREF": {
+   "skip": "no rows"
+  },
+  "KXFED": {
+   "coverage_pct": 2.2,
+   "days_present": 39,
+   "first": "2021-07-26",
+   "largest_gaps": [
+    {
+     "after": "2021-09-20",
+     "before": "2021-12-14",
+     "missing_days": 84
+    },
+    {
+     "after": "2021-07-26",
+     "before": "2021-09-20",
+     "missing_days": 55
+    },
+    {
+     "after": "2022-07-27",
+     "before": "2022-09-21",
+     "missing_days": 55
+    }
+   ],
+   "last": "2026-06-17",
+   "n_gaps": 38,
+   "span_days": 1788,
+   "total_missing_days": 1749
+  },
+  "KXGDP": {
+   "coverage_pct": 1.2,
+   "days_present": 20,
+   "first": "2021-07-28",
+   "largest_gaps": [
+    {
+     "after": "2025-10-30",
+     "before": "2026-02-20",
+     "missing_days": 112
+    },
+    {
+     "after": "2024-07-25",
+     "before": "2024-10-30",
+     "missing_days": 96
+    },
+    {
+     "after": "2021-10-27",
+     "before": "2022-01-27",
+     "missing_days": 91
+    }
+   ],
+   "last": "2026-04-30",
+   "n_gaps": 19,
+   "span_days": 1738,
+   "total_missing_days": 1718
+  },
+  "KXHIGHAUS": {
+   "coverage_pct": 99.6,
+   "days_present": 1129,
+   "first": "2023-05-12",
+   "largest_gaps": [
+    {
+     "after": "2023-08-27",
+     "before": "2023-08-29",
+     "missing_days": 1
+    },
+    {
+     "after": "2023-11-19",
+     "before": "2023-11-21",
+     "missing_days": 1
+    },
+    {
+     "after": "2023-12-24",
+     "before": "2023-12-26",
+     "missing_days": 1
+    }
+   ],
+   "last": "2026-06-17",
+   "n_gaps": 4,
+   "span_days": 1133,
+   "total_missing_days": 4
+  },
+  "KXHIGHCHI": {
+   "coverage_pct": 99.7,
+   "days_present": 1758,
+   "first": "2021-08-20",
+   "largest_gaps": [
+    {
+     "after": "2021-12-26",
+     "before": "2021-12-29",
+     "missing_days": 2
+    },
+    {
+     "after": "2021-09-20",
+     "before": "2021-09-22",
+     "missing_days": 1
+    },
+    {
+     "after": "2021-11-27",
+     "before": "2021-11-29",
+     "missing_days": 1
+    }
+   ],
+   "last": "2026-06-17",
+   "n_gaps": 4,
+   "span_days": 1763,
+   "total_missing_days": 5
+  },
+  "KXHIGHDEN": {
+   "coverage_pct": 100.0,
+   "days_present": 574,
+   "first": "2024-11-21",
+   "largest_gaps": [],
+   "last": "2026-06-17",
+   "n_gaps": 0,
+   "span_days": 574,
+   "total_missing_days": 0
+  },
+  "KXHIGHLAX": {
+   "coverage_pct": 100.0,
+   "days_present": 528,
+   "first": "2025-01-06",
+   "largest_gaps": [],
+   "last": "2026-06-17",
+   "n_gaps": 0,
+   "span_days": 528,
+   "total_missing_days": 0
+  },
+  "KXHIGHMIA": {
+   "coverage_pct": 99.9,
+   "days_present": 1132,
+   "first": "2023-05-12",
+   "largest_gaps": [
+    {
+     "after": "2023-12-24",
+     "before": "2023-12-26",
+     "missing_days": 1
+    }
+   ],
+   "last": "2026-06-17",
+   "n_gaps": 1,
+   "span_days": 1133,
+   "total_missing_days": 1
+  },
+  "KXHIGHNY": {
+   "coverage_pct": 99.7,
+   "days_present": 1771,
+   "first": "2021-08-07",
+   "largest_gaps": [
+    {
+     "after": "2021-12-26",
+     "before": "2021-12-29",
+     "missing_days": 2
+    },
+    {
+     "after": "2021-08-19",
+     "before": "2021-08-21",
+     "missing_days": 1
+    },
+    {
+     "after": "2021-11-27",
+     "before": "2021-11-29",
+     "missing_days": 1
+    }
+   ],
+   "last": "2026-06-17",
+   "n_gaps": 4,
+   "span_days": 1776,
+   "total_missing_days": 5
+  },
+  "KXHIGHPHIL": {
+   "coverage_pct": 100.0,
+   "days_present": 574,
+   "first": "2024-11-21",
+   "largest_gaps": [],
+   "last": "2026-06-17",
+   "n_gaps": 0,
+   "span_days": 574,
+   "total_missing_days": 0
+  },
+  "KXMLBGAME": {
+   "coverage_pct": 63.8,
+   "days_present": 273,
+   "first": "2025-04-16",
+   "largest_gaps": [
+    {
+     "after": "2025-11-01",
+     "before": "2026-03-25",
+     "missing_days": 143
+    },
+    {
+     "after": "2025-10-20",
+     "before": "2025-10-25",
+     "missing_days": 4
+    },
+    {
+     "after": "2025-07-14",
+     "before": "2025-07-18",
+     "missing_days": 3
+    }
+   ],
+   "last": "2026-06-17",
+   "n_gaps": 7,
+   "span_days": 428,
+   "total_missing_days": 155
+  },
+  "KXNBAGAME": {
+   "coverage_pct": 62.1,
+   "days_present": 264,
+   "first": "2025-04-16",
+   "largest_gaps": [
+    {
+     "after": "2025-06-20",
+     "before": "2025-10-10",
+     "missing_days": 111
+    },
+    {
+     "after": "2026-02-13",
+     "before": "2026-02-20",
+     "missing_days": 6
+    },
+    {
+     "after": "2025-06-01",
+     "before": "2025-06-06",
+     "missing_days": 4
+    }
+   ],
+   "last": "2026-06-14",
+   "n_gaps": 29,
+   "span_days": 425,
+   "total_missing_days": 161
+  },
+  "KXNFLGAME": {
+   "coverage_pct": 48.9,
+   "days_present": 90,
+   "first": "2025-08-01",
+   "largest_gaps": [
+    {
+     "after": "2025-08-24",
+     "before": "2025-09-05",
+     "missing_days": 11
+    },
+    {
+     "after": "2026-01-19",
+     "before": "2026-01-27",
+     "missing_days": 7
+    },
+    {
+     "after": "2025-08-01",
+     "before": "2025-08-08",
+     "missing_days": 6
+    }
+   ],
+   "last": "2026-01-31",
+   "n_gaps": 42,
+   "span_days": 184,
+   "total_missing_days": 94
+  },
+  "KXNHLGAME": {
+   "coverage_pct": 62.8,
+   "days_present": 265,
+   "first": "2025-04-20",
+   "largest_gaps": [
+    {
+     "after": "2025-06-18",
+     "before": "2025-09-27",
+     "missing_days": 100
+    },
+    {
+     "after": "2026-02-06",
+     "before": "2026-02-26",
+     "missing_days": 19
+    },
+    {
+     "after": "2025-05-30",
+     "before": "2025-06-05",
+     "missing_days": 5
+    }
+   ],
+   "last": "2026-06-15",
+   "n_gaps": 22,
+   "span_days": 422,
+   "total_missing_days": 157
+  },
+  "KXNOBELPEACE": {
+   "coverage_pct": 100.0,
+   "days_present": 1,
+   "first": "2025-10-10",
+   "largest_gaps": [],
+   "last": "2025-10-10",
+   "n_gaps": 0,
+   "span_days": 1,
+   "total_missing_days": 0
+  },
+  "KXPAYROLLS": {
+   "coverage_pct": 3.4,
+   "days_present": 39,
+   "first": "2023-04-07",
+   "largest_gaps": [
+    {
+     "after": "2025-11-07",
+     "before": "2025-12-16",
+     "missing_days": 38
+    },
+    {
+     "after": "2023-06-02",
+     "before": "2023-07-07",
+     "missing_days": 34
+    },
+    {
+     "after": "2023-09-01",
+     "before": "2023-10-06",
+     "missing_days": 34
+    }
+   ],
+   "last": "2026-06-05",
+   "n_gaps": 38,
+   "span_days": 1156,
+   "total_missing_days": 1117
+  },
+  "KXRAIN": {
+   "skip": "no rows"
+  },
+  "KXUCLGAME": {
+   "coverage_pct": 9.3,
+   "days_present": 37,
+   "first": "2025-04-29",
+   "largest_gaps": [
+    {
+     "after": "2025-05-07",
+     "before": "2025-09-16",
+     "missing_days": 131
+    },
+    {
+     "after": "2025-12-10",
+     "before": "2026-01-20",
+     "missing_days": 40
+    },
+    {
+     "after": "2026-05-06",
+     "before": "2026-05-30",
+     "missing_days": 23
+    }
+   ],
+   "last": "2026-05-30",
+   "n_gaps": 18,
+   "span_days": 397,
+   "total_missing_days": 360
+  },
+  "KXUSAEXPANDTERRITORY": {
+   "coverage_pct": 100.0,
+   "days_present": 1,
+   "first": "2026-03-01",
+   "largest_gaps": [],
+   "last": "2026-03-01",
+   "n_gaps": 0,
+   "span_days": 1,
+   "total_missing_days": 0
+  },
+  "KXWTAMATCH": {
+   "coverage_pct": 80.8,
+   "days_present": 295,
+   "first": "2025-06-18",
+   "largest_gaps": [
+    {
+     "after": "2025-11-08",
+     "before": "2026-01-02",
+     "missing_days": 54
+    },
+    {
+     "after": "2025-07-10",
+     "before": "2025-07-14",
+     "missing_days": 3
+    },
+    {
+     "after": "2025-09-05",
+     "before": "2025-09-08",
+     "missing_days": 2
+    }
+   ],
+   "last": "2026-06-17",
+   "n_gaps": 13,
+   "span_days": 365,
+   "total_missing_days": 70
+  }
+ },
+ "gate3": {
+  "endpoint": "/historical/markets/{ticker}",
+  "exact_matches": 1111,
+  "hist": {
+   "http_200": 1111
+  },
+  "n": 1111,
+  "seed": 20260817
+ },
+ "gate4": {
+  "KXBNB15M": {
+   "delta": 0,
+   "distinct_event_tickers_in_collected_data": 8519,
+   "events_endpoint_pre_cutoff": 8519,
+   "events_endpoint_total": 14308,
+   "pages": 72,
+   "pct": 0.0
+  },
+  "KXHIGHNY": {
+   "delta": 0,
+   "distinct_event_tickers_in_collected_data": 1772,
+   "events_endpoint_pre_cutoff": 1772,
+   "events_endpoint_total": 1834,
+   "pages": 10,
+   "pct": 0.0
+  },
+  "KXMLBGAME": {
+   "delta": 4,
+   "distinct_event_tickers_in_collected_data": 3321,
+   "events_endpoint_pre_cutoff": 3317,
+   "events_endpoint_total": 4124,
+   "pages": 21,
+   "pct": 0.12
+  }
+ },
+ "ratelimit_arms": [
+  {
+   "arm": "B: /historical, 3 threads, 0.55s",
+   "codes": {
+    "200": 120
+   },
+   "elapsed_s": 33.4,
+   "endpoint": "/historical/markets",
+   "limit": 100,
+   "n": 120,
+   "p50_ms": 273,
+   "rejection_pct": 0.0,
+   "rps": 3.59,
+   "sleep": 0.55,
+   "threads": 3
+  },
+  {
+   "arm": "C: /markets, 3 threads, 0.55s",
+   "codes": {
+    "200": 120
+   },
+   "elapsed_s": 33.3,
+   "endpoint": "/markets",
+   "limit": 100,
+   "n": 120,
+   "p50_ms": 271,
+   "rejection_pct": 0.0,
+   "rps": 3.6,
+   "sleep": 0.55,
+   "threads": 3
+  },
+  {
+   "arm": "E: /historical, 4 threads, 0.4s",
+   "codes": {
+    "200": 120
+   },
+   "elapsed_s": 20.3,
+   "endpoint": "/historical/markets",
+   "limit": 100,
+   "n": 120,
+   "p50_ms": 255,
+   "rejection_pct": 0.0,
+   "rps": 5.92,
+   "sleep": 0.4,
+   "threads": 4
+  },
+  {
+   "arm": "F: /historical, 8 threads, 0.0s",
+   "codes": {
+    "200": 120
+   },
+   "elapsed_s": 4.1,
+   "endpoint": "/historical/markets",
+   "limit": 100,
+   "n": 120,
+   "p50_ms": 257,
+   "rejection_pct": 0.0,
+   "rps": 29.05,
+   "sleep": 0.0,
+   "threads": 8
+  },
+  {
+   "arm": "G: /historical, 16 threads, 0.0s",
+   "codes": {
+    "200": 160
+   },
+   "elapsed_s": 2.6,
+   "endpoint": "/historical/markets",
+   "limit": 100,
+   "n": 160,
+   "p50_ms": 259,
+   "rejection_pct": 0.0,
+   "rps": 62.0,
+   "sleep": 0.0,
+   "threads": 16
+  },
+  {
+   "arm": "H: /historical, 32 threads, 0.0s",
+   "codes": {
+    "200": 320
+   },
+   "elapsed_s": 4.6,
+   "endpoint": "/historical/markets",
+   "limit": 100,
+   "n": 320,
+   "p50_ms": 348,
+   "rejection_pct": 0.0,
+   "rps": 69.53,
+   "sleep": 0.0,
+   "threads": 32
+  },
+  {
+   "arm": "I: /markets, 32 threads, 0.0s",
+   "codes": {
+    "200": 229,
+    "429": 91
+   },
+   "elapsed_s": 4.6,
+   "endpoint": "/markets",
+   "limit": 100,
+   "n": 320,
+   "p50_ms": 353,
+   "rejection_pct": 28.44,
+   "rps": 69.3,
+   "sleep": 0.0,
+   "threads": 32
+  },
+  {
+   "arm": "J: /markets, 8 threads, 0.0s",
+   "codes": {
+    "200": 134,
+    "429": 26
+   },
+   "elapsed_s": 5.7,
+   "endpoint": "/markets",
+   "limit": 100,
+   "n": 160,
+   "p50_ms": 262,
+   "rejection_pct": 16.25,
+   "rps": 28.17,
+   "sleep": 0.0,
+   "threads": 8
+  },
+  {
+   "arm": "K: /markets, 16 threads, 0.0s",
+   "codes": {
+    "200": 320
+   },
+   "elapsed_s": 5.1,
+   "endpoint": "/markets",
+   "limit": 100,
+   "n": 320,
+   "p50_ms": 258,
+   "rejection_pct": 0.0,
+   "rps": 63.2,
+   "sleep": 0.0,
+   "threads": 16
+  },
+  {
+   "arm": "L: /historical, 32 threads, 0.0s (repeat)",
+   "codes": {
+    "200": 216,
+    "429": 104
+   },
+   "elapsed_s": 4.7,
+   "endpoint": "/historical/markets",
+   "limit": 100,
+   "n": 320,
+   "p50_ms": 355,
+   "rejection_pct": 32.5,
+   "rps": 68.31,
+   "sleep": 0.0,
+   "threads": 32
+  },
+  {
+   "arm": "M: /markets, 32 threads, 0.0s (repeat)",
+   "codes": {
+    "200": 149,
+    "429": 171
+   },
+   "elapsed_s": 4.5,
+   "endpoint": "/markets",
+   "limit": 100,
+   "n": 320,
+   "p50_ms": 334,
+   "rejection_pct": 53.44,
+   "rps": 71.67,
+   "sleep": 0.0,
+   "threads": 32
+  },
+  {
+   "arm": "N: /markets, 32 threads, 0.0s, after 45s idle",
+   "codes": {
+    "200": 241,
+    "429": 79
+   },
+   "elapsed_s": 4.5,
+   "endpoint": "/markets",
+   "limit": 100,
+   "n": 320,
+   "p50_ms": 361,
+   "rejection_pct": 24.69,
+   "rps": 71.66,
+   "sleep": 0.0,
+   "threads": 32
+  },
+  {
+   "arm": "P: /historical, 32 threads, 0.0s, immediately after N",
+   "codes": {
+    "200": 179,
+    "429": 141
+   },
+   "elapsed_s": 4.4,
+   "endpoint": "/historical/markets",
+   "limit": 100,
+   "n": 320,
+   "p50_ms": 331,
+   "rejection_pct": 44.06,
+   "rps": 73.01,
+   "sleep": 0.0,
+   "threads": 32
+  },
+  {
+   "arm": "Q: /historical, 1 thread, 0.55s, immediately after a saturating burst",
+   "codes": {
+    "200": 60
+   },
+   "elapsed_s": 51.1,
+   "endpoint": "/historical/markets",
+   "limit": 100,
+   "n": 60,
+   "p50_ms": 285,
+   "rejection_pct": 0.0,
+   "rps": 1.17,
+   "sleep": 0.55,
+   "threads": 1
+  },
+  {
+   "arm": "R: /historical, 3 threads, 0.0s (~11 rps)",
+   "codes": {
+    "200": 119,
+    "429": 1
+   },
+   "elapsed_s": 10.9,
+   "endpoint": "/historical/markets",
+   "limit": 100,
+   "n": 120,
+   "p50_ms": 253,
+   "rejection_pct": 0.83,
+   "rps": 10.99,
+   "sleep": 0.0,
+   "threads": 3
+  }
+ ]
+}
