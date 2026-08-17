@@ -106,6 +106,29 @@ Observed, repeatedly, in production:
 Every one of those was caught by disagreement between two methods, not by inspection. None of
 them announced itself, and none of them looked like a failure at the moment it happened.
 
+### A single ordering of arms is not a control
+
+When an experiment varies one factor and the arms run in sequence, **elapsed history is a
+second factor and it was not randomised.** Repeat the decisive arm after that history has
+changed. If the effect does not repeat, the factor you varied was not the cause.
+
+> **2026-08-17, T1.2.** Testing whether `/historical/markets` is rate-limited differently from
+> `/markets`. Three arms on `/historical` at up to 69 req/s: **0% rejection**. One arm on
+> `/markets` at 69 req/s, seconds later, same VM, same concurrency, same page size:
+> **28.4% rejection**. One variable differed. The conclusion wrote itself, and it answered
+> exactly the question the packet had asked.
+>
+> It was wrong. Repeating the `/historical` arm gave **32.5%**, and again **44.1%**. The
+> limiter is shared and it has memory; `/historical` had simply been measured first, with the
+> bucket full. The apparent property of the endpoint was a property of the running order.
+>
+> Stopping at the confirming arm would have published a false infrastructure fact backed by a
+> real, reproducible-looking measurement. Nothing about the numbers was wrong. The **design**
+> was: one ordering, no repeat.
+
+The cost of the defence is one extra arm. Run it especially when the result is the one you
+wanted, because that is when the sequence stops early.
+
 ## Part 2 — the verification gate
 
 Run every candidate finding through these before it is reported. Each one caught a real false
