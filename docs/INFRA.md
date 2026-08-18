@@ -304,3 +304,47 @@ Related: **`result` is not binary.** `KXMLBGAME` page 1 returns `no` 495, `yes` 
 Scope derived in `data/SCOPE.md` from `registry/hypotheses.json` and `analysis/`: **30 series,
 110,836 rows, 241 MB raw, 10.1 MB gzipped** against the prior full-exchange 7.27 GB. 130 pages,
 all HTTP 200, no retries. Four of the 30 have **zero** settled history, `KXRAIN` among them.
+
+## Amendment, 2026-08-17 (second) - the 13% figure is FALSIFIED, and the knee is unbracketed
+
+This corrects the amendment immediately above, written 90 minutes earlier. That one reported the
+measured rates as though they were properties of the API. They are not.
+
+**1. The "~13% rejection at 3 threads / 0.55s" figure is falsified, not merely unreproduced.**
+That configuration is **3.6 req/s** and returned **0 rejections in 240 requests**, on both
+endpoints, including immediately after a burst that was being rejected at 44%. Nothing about
+"3 threads / 0.55s" produces 13%. The number is not a description of that setting and should not
+be cited as one. Whatever produced 13% was running faster than the label says - most likely far
+faster, since ~28 req/s measures 16.2%.
+
+Anything that cited "13% at 3 threads" as a reason to run slowly was **right to run slowly for
+the wrong reason**. The direction survives; the mechanism does not.
+
+**2. The knee is UNBRACKETED between 5.9 and ~28 req/s.**
+
+| req/s | rejection | status |
+|---|---|---|
+| 1.2 - 5.9 | 0% in 550 requests | measured |
+| **5.9 - 28** | **unknown** | **never measured - the knee is somewhere in here** |
+| ~11 | 0.8% | one arm only, single ordering |
+| ~28 | 16.2% | measured |
+| 62 - 73 | 0% to 53% | measured, order-dependent |
+
+The ~11 req/s point sits inside the unbracketed band but was run once, in one position, so it
+brackets nothing on its own. **Do not quote a threshold. Quote the clean band: at or below ~6
+req/s, nothing has ever been rejected.**
+
+**3. The rejection curve is a property of (endpoint, SOURCE, recent history) - not of the API.**
+Re-running the arms from a different Kernel VM in a different metro: **3,200 requests at up to 64
+threads, zero 429s**, where the first VM began rejecting after roughly 600 requests in a burst.
+Same endpoints, same page size, same afternoon. So:
+
+- A rate figure measured on one VM does not transfer to another.
+- Two arms run from two machines are **not an A/B**.
+- Depletion could not be induced at all from the second VM, so any experiment needing a drained
+  bucket must first demonstrate the bucket is drained rather than assume a burst drained it.
+
+**4. Method requirement, now standing.** Every endpoint A/B in this project must be
+**counterbalanced** - each arm run in both positions, both orderings reported - or **washed out**,
+with a baseline arm shown returning to its clean value before the next arm starts. See
+`skills/empirical-claims/SKILL.md`, *"A single ordering of arms is not a control"*.
