@@ -111,3 +111,34 @@ on 2026-08-18 across three metros (`jfk` collected, `iad` and `yul` verified).
 fresh machine except a paste. The data outlives every machine; the *ability to verify it* does not
 travel. The mitigation chosen is not a credential store but making loss cheap - **commit every
 artefact as it is produced**, and stage to R2 when no token is present.
+
+---
+
+## Amendment, 2026-08-18 - section 4's known limit is lifted for scheduled work
+
+Section 4 above says *"the credential has no route into a fresh machine except a paste ... the data
+outlives every machine; the ability to verify it does not travel."* That stands for **interactive**
+sessions on a fresh VM. **For scheduled work it is no longer true**, and the asset list gains an
+entry.
+
+### 5. The unattended measurement path
+
+| | |
+|---|---|
+| **What** | A GitHub Actions workflow that probes an external venue, carries both an impossible control and a known-present positive control in the same pass, appends one line to a log, and commits it |
+| **Where** | `.github/workflows/census.yml`; output at `registry/retention/CI-CENSUS-LOG.md` |
+| **Credential** | the platform-issued `GITHUB_TOKEN`. **No PAT, no paste, no human** |
+| **Proven** | run #1, `2026-08-18T06:01:34Z`, success; commit `bc2c8bf` authored and committed by `github-actions[bot]` |
+| **Rebuild cost** | ~1h. It is 70 lines of YAML |
+| **Repoint cost** | **near zero.** Nothing in it is Kalshi-specific except three URLs and the names of the two control keys |
+
+**Why it is an asset and not a chore.** It is the only part of this project that keeps working when
+nobody is watching. Section 2b of `CLOSEOUT-2026-08-18.md` describes a class of question that closed
+permanently because an external archive stopped and nobody noticed for two months. A scheduled probe
+with controls is the cheapest defence against that happening again - not because it prevents the
+stop, but because it **dates** it.
+
+**The limit, carried forward:** seven requests per run. This establishes reachability and the write
+path, not a rate-limit regime. A GitHub-hosted runner IP is shared and its bucket history is set by
+strangers, so the ~6 req/s clean band measured from a Kernel VM must be **re-measured on Actions**,
+counterbalanced, before any bulk pull moves there. **Census-scale: established. Bulk: unmeasured.**
