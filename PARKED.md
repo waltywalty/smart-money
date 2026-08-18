@@ -363,3 +363,50 @@ hole cannot reopen. (c) Re-derive the highest-stakes results from a rebuilt data
 
 **Recommendation:** (b) unconditionally — free, and the actual lesson. Then (c) for H56 and H64.
 **No verdict is changed by this entry.**
+
+---
+
+## P15 — the CI write path is blocked by a token permission, not by anything technical
+
+**Blocks:** the durable, human-free write path. Everything this project writes today needs a human
+to paste a credential into a fresh VM.
+
+**Status: could not establish.** `PUT .github/workflows/census.yml` returns **403**. The per-session
+fine-grained PAT carries `Contents: write` but not `Workflows: write` — GitHub treats them as
+separate permissions, and every other write in the same session with the same token succeeded.
+
+**What is therefore untested, and must not be reported as working:** whether a GitHub Actions runner
+reaches `api.elections.kalshi.com` cleanly, what status codes it sees, and whether the built-in
+`GITHUB_TOKEN` commits without any paste. **No census workflow has ever run.** The repository's only
+workflows are `automerge.yml` and GitHub's own pages build.
+
+**The workflow is written and committed out of the way** at `.github/CENSUS-WORKFLOW-PENDING.md` so
+it is not rebuilt from memory: `workflow_dispatch` plus a daily cron, probing `/historical/cutoff`
+and the live floor with **both** an impossible control and a known-present positive control, then
+appending one line to `registry/retention/CI-CENSUS-LOG.md` and committing with `GITHUB_TOKEN`.
+
+**Unblocked by either:** a PAT with the Workflows permission, or one manual commit of that file
+through the web UI — after which it runs on schedule with no paste at all, forever.
+
+**revive_if:** either unblock happens. Then the first run answers three questions at once —
+reachability, status codes, and whether the project can write without a human.
+
+---
+
+## P16 — a two-hour hole in Kalshi's settled trade history, 2026-06-11T07–T08
+
+**Blocks:** nothing currently, but it silently corrupts any per-hour activity measure over 11 June.
+
+`/historical/trades` returns **13 trades for `T07`, all inside the first 0.26 seconds**, and **zero
+for `T08`**, while `T06` and `T09` and the same hours on neighbouring days all hit the 1,000-row cap.
+Reproduced on a second direct probe with clean window boundaries.
+
+**Why it matters:** a collector reads those hours as **quiet**, not as **missing**. In Check 1,
+excluding them moved a diurnal-matched comparison from **+3.6% to +10.6%** — the outage was doing a
+quarter of the work of the headline number.
+
+**Not diagnosed:** whether it is an exchange outage, a history-backfill gap, or an API artefact. It
+sits four hours after the `archive.pmxt.dev` collector stopped at `2026-06-11T03`, which is
+suggestive and cannot be followed up — there is no shard left to compare against.
+
+**revive_if:** any study uses 11 June 2026 at hourly resolution.
