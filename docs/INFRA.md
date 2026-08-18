@@ -348,3 +348,68 @@ Same endpoints, same page size, same afternoon. So:
 **counterbalanced** - each arm run in both positions, both orderings reported - or **washed out**,
 with a baseline arm shown returning to its clean value before the next arm starts. See
 `skills/empirical-claims/SKILL.md`, *"A single ordering of arms is not a control"*.
+
+## Amendment, 2026-08-18 - a two-hour hole in Kalshi's own settled trade history
+
+**Any study touching 11 June 2026 needs this.** `/historical/trades` over a one-hour window,
+newest-first, capped at 1,000:
+
+| hour (UTC) | trades returned | note |
+|---|---|---|
+| `2026-06-11T06` | 1,000 (cap) | full hour, last trade at 06:59:59.97 |
+| **`2026-06-11T07`** | **13** | all thirteen inside the first **0.26 seconds** of the hour, then nothing |
+| **`2026-06-11T08`** | **0** | empty |
+| `2026-06-11T09` | 1,000 (cap) | full hour |
+
+Controls: `2026-06-10T07` and `2026-06-09T08` both return the full 1,000. Re-probed directly on a
+second pass and reproduced exactly; the window boundaries are clean, so it is not a windowing
+artefact.
+
+**A collector reads those two hours as *quiet*, not as *missing*.** Activity measured per hour will
+show a near-zero rate that is an outage, not a market state. Found during Check 1, where excluding
+the two hours moved a diurnal-matched comparison from +3.6% to +10.6%.
+
+## Amendment, 2026-08-18 - the `/events` attribution, and what is NOT claimed
+
+Stated so it does not harden with retelling:
+
+- Packet 2's *"the disagreement is `/events` pagination on high-frequency series"* is **FALSIFIED**.
+  A3, measured the same day, paged both endpoints to cursor exhaustion on ten series and found
+  `/events` **over**-returning by 1.9x to 428x, with the largest multiples precisely on the
+  high-frequency series. The attribution predicts the wrong direction.
+- The replacement - a **429 read as end-of-data** truncating the `/events` pass - is **strongly
+  supported and NOT reproduced.** Same endpoint, same day, 2.9x undercount on `KXMLBGAME` against
+  the observed 2.37x. Ten counterbalanced paging arms on 2026-08-17 all returned 4,124 with
+  `cursor_exhausted` and **zero 429s**; the bug cannot fire without a 429 and none could be induced.
+- The **2,020 figure is unreliable** and should be treated as a failed measurement, not as evidence
+  about `/events` pagination. `4,787` is unaffected - it came from the live path and is separately
+  parked as P7 for a different reason.
+
+**Falsified / replacement supported / not reproduced.** Do not upgrade the middle term.
+
+## Amendment, 2026-08-18 - the CI write path: a pasted PAT cannot create workflows
+
+Packet 5 Phase C asked whether a GitHub Actions runner reaches Kalshi cleanly and can commit
+**without a pasted secret**. That question is **still unanswered**, and the reason is itself the
+finding:
+
+```
+PUT .github/workflows/census.yml  ->  HTTP 403
+```
+
+The fine-grained PAT supplied per session carries **Contents: write** but not **Workflows: write**,
+which GitHub treats as a separate permission. Every other write in this session succeeded with the
+same token; only `.github/workflows/` was refused. So:
+
+- **No census workflow exists and none has ever run.** The repository's only workflows are
+  `automerge.yml` and GitHub's own `pages build and deployment`.
+- The runner's reachability to Kalshi, the status codes it would see, and whether the built-in
+  `GITHUB_TOKEN` can commit **are all untested** - `could not establish`, not a null.
+- **Unblocking it needs one of:** a PAT with the Workflows permission added, or the workflow file
+  committed once by hand through the web UI, after which the built-in token runs it on schedule
+  with no paste at all.
+
+The workflow itself is written and ready (`workflow_dispatch` plus a daily cron, probing
+`/historical/cutoff` and the live floor with both an impossible control and a known-present
+positive control, appending one line to `registry/retention/CI-CENSUS-LOG.md` and committing with
+`GITHUB_TOKEN`). It is held out of the repository only by the 403.
