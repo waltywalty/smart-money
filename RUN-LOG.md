@@ -394,3 +394,23 @@ in its own right rather than a line in a verdict. The depth ceiling is recorded 
 `docs/INFRA.md` (`0205041`) so it is findable without reading footnotes: no public Kalshi book source
 outside 2026-05-14 to 2026-06-11T03 has ever existed, so replication is impossible and
 **unreportable** is the correct word, not pending.
+
+**P15 RESOLVED, 2026-08-18.** Walton added Workflows permission; the census workflow landed and
+**run #1 went green**. Verified from the resources with controls, not from the report: impossible
+commit sha **422**, run #1 **success**, commit **`bc2c8bf`** authored and committed by
+**`github-actions[bot]`**, writing `registry/retention/CI-CENSUS-LOG.md` using the built-in
+`GITHUB_TOKEN` - **no PAT, no paste, no human**. Kalshi from a shared runner IP: cutoff 200, live
+floor 200, impossible control 200/0 rows, positive control 200, both controls in one pass.
+
+**Recorded as the durable write-path finding** in `docs/INFRA.md` (`50227db`), unparked in
+`PARKED.md` (`afaf328`), added to `docs/ASSETS.md` as asset 5 (`5d05e6f`), and folded into the
+close-out (`8973d2e`) - which re-ranks its own parking lot, since the item a person could fix has
+been fixed and **the top item is now the one nobody can**.
+
+**Not over-claimed:** seven requests establish reachability and the write path, not a rate-limit
+regime. A shared runner IP has a bucket history set by strangers, so the ~6 req/s clean band from a
+Kernel VM must be re-measured on Actions before any bulk pull moves there.
+
+**Incidental, from run #1's own data:** `market_settled_ts` 2026-06-18, live floor 2026-06-11T04:59,
+gap ~7 days - unchanged since 08-17, up from 6 on 08-14. P9 remains closed, and the check that
+confirmed it ran without anyone asking.
