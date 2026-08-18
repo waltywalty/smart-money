@@ -410,3 +410,42 @@ sits four hours after the `archive.pmxt.dev` collector stopped at `2026-06-11T03
 suggestive and cannot be followed up — there is no shard left to compare against.
 
 **revive_if:** any study uses 11 June 2026 at hourly resolution.
+
+---
+
+## P17 — T1.4's first-pass statement was certified by a void control. UNVERIFIED.
+
+**Walton's ruling, 2026-08-18.** Recorded as a ruling, not as a measurement.
+
+**The claim:** T1.4's first pass, run from a fresh VM before the collecting VM was destroyed,
+reported that the three sampled R2 objects were **unreadable without credentials**.
+
+**Why it is unverified:** the control that certified it was an unauthenticated probe of a private
+bucket. A **400 meaning "forbidden"** and a **400 meaning "absent"** are indistinguishable, and the
+impossible control key returned exactly the same 400 as the three real objects. The probe could not
+separate the two states, so it established nothing about either.
+
+**Status: probably true, not shown.** The claim is almost certainly correct — a private bucket does
+refuse anonymous reads, and the authenticated pass two hours later found the objects present and
+intact. **That does not retro-certify it.** Walton's ruling states the principle:
+
+> **A claim certified by a void control is unverified even when a later measurement makes it look
+> obvious.**
+
+The later measurement answered a *different* question. "The objects exist and hash correctly when
+authenticated" is not "the objects are unreadable when unauthenticated"; the second is a claim about
+the access boundary, and no probe that can distinguish forbidden from absent has been run against it.
+
+**What is NOT affected.** Every R2 claim resting on the **authenticated 404 control stands** —
+control 404 against real 200, re-verified 2026-08-18. That covers: the T1.4 second pass (3 of 3
+byte-identical), Gate 0 line 3 (data read back from a destroyed VM's write, another metro), the
+Phase 1 per-object LIST verification, the `r2.py` roundtrip gate, and the packet 5 handoff
+re-download. **No verdict, figure or `revive_if` changes.**
+
+**revive_if:** anyone runs an anonymous probe against the bucket that can separate the two states —
+for example an unauthenticated request that is well-formed enough to earn a 403 rather than a 400,
+alongside a public object in the same bucket as a positive control. Until then the access boundary
+is assumed, not measured.
+
+**Why it is parked rather than dropped:** the standing use of R2 assumes the data is not world
+readable. That assumption is now explicitly untested rather than quietly inherited.
