@@ -225,7 +225,16 @@ def put(path, local_path, message, branch="main", allow_update=False):
     if not allow_update and status != 201:
         print("WRITE ABORTED CHECK: expected HTTP 201 (created) for " + path
               + ", got " + str(status) + ".", file=sys.stderr)
-        print("  A 200 here means the path existed after all and has been overwritten.", file=sys.stderr)
+        if status == 200:
+            print("  200 means the path existed after all and has been overwritten.", file=sys.stderr)
+        elif status in (401, 403):
+            print("  " + str(status) + " means the token was refused for this path. Nothing was",
+                  file=sys.stderr)
+            print("  written. A fine-grained PAT needs the Workflows permission to touch", file=sys.stderr)
+            print("  .github/workflows/, separately from Contents.", file=sys.stderr)
+        else:
+            print("  Nothing can be assumed about whether the write landed. Read it back.",
+                  file=sys.stderr)
         raise SystemExit(3)
 
     commit = result["commit"]["sha"][:7]
