@@ -357,3 +357,32 @@ and more than the admission rule. **201 events of 1,086 survive - 15.4% of the t
 `revive_if` changed. `worker.js` untouched. No trade, no deployment.
 
 **Next action:** Walton's ruling on H65.
+
+**H65 ruling applied, 2026-08-18.** Branch one confirmed, with three changes to how it is stated.
+
+**Shape and magnitude separated.** Shape CONFIRMED - negative at every size point, flat 1-10,
+monotonically worse above, spread-dominated at 13.6x the fee arm. **Small-size magnitude NOT
+separated from zero**: the bootstrap CI excludes zero only from 100 contracts up and
+leave-one-series-out only from 50 up. The entry now says plainly *do not quote -3.11c at one
+contract as a measured hurdle*.
+
+**Family dispersion promoted to a finding about the pooled hurdle generally.** At one contract, one
+horizon, one week, the five families span **18.68c** - against 7.23c for the whole size axis and
+1.87c for the whole horizon axis, so **2.05x both measured axes combined**. Every pooled hurdle
+figure in the registry, H56's -4.39c included, is weighted by its family mix at least as much as by
+the variable it names. Same shape as false positive #7 one level down. Folded into
+`registry/KALSHI-PROGRAMME.md` and generalised in `skills/research-method/SKILL.md` as *a cost
+quoted without its composition is not a cost*.
+
+**`KXATPCHALLENGERMATCH` recorded as OBSERVED, NOT REPORTED**, pending branch three. Requirement (b),
+a depth-source replication, **cannot currently be satisfied at all** - `archive.pmxt.dev` is the only
+Kalshi book source that has existed and it stopped at `2026-06-11T03`. So it is not merely unreported,
+it is unreportable with the data that exists, and it is written down so it is not rediscovered as new.
+
+**Phase B updated** rather than rewritten: the synthesis carries a dated amendment superseding its
+own section-1 framing of the size axis, and the method skill gains two rules - composition beside
+every pooled figure, and separate the shape from the magnitude and say which you established.
+
+Commits: `07a8296` H65 entry - `daa6e5f` registry - `5ef44cf` INDEX - `7a70789` synthesis -
+`c57ab2c` method skill. Census remains parked as P15. No other verdict, figure or `revive_if`
+changed. `worker.js` untouched. No trade, no deployment.
