@@ -442,3 +442,64 @@ exists** rather than pending - *pending* invites someone to come back to it, and
 
 **What would lift it:** a new public archive, a commercial book feed, or continuous self-collection
 from today forward - which buys the future and never the past.
+
+## Amendment, 2026-08-18 - THE DURABLE WRITE PATH. A CI runner reaches Kalshi and commits unattended.
+
+**This is the portable result of packet 5.** Everything else in this file is a Kalshi fact. This one
+is about the project's ability to operate without a human, and it transfers to any venue.
+
+**Established end to end, run #1, no pasted secret anywhere in the loop.**
+
+Verified from the resources rather than from a report - the commit API, the runs API and the file
+the runner wrote, each with a control:
+
+| check | result |
+|---|---|
+| control: impossible commit sha | **422** (not 200) |
+| workflow run #1, `Kalshi boundary census` | **completed / success**, `2026-08-18T06:01:34Z` |
+| commit `bc2c8bf` author **and** committer | **`github-actions[bot]`** `<41898282+github-actions[bot]@users.noreply.github.com>` |
+| what it wrote | `registry/retention/CI-CENSUS-LOG.md` (added, +9 lines) |
+| credential used | the built-in `GITHUB_TOKEN`. **No PAT, no paste, no human** |
+
+**Kalshi is reachable from a shared GitHub-hosted runner IP, and returns real status codes:**
+
+| probe | status |
+|---|---|
+| `/historical/cutoff` | **200**, `market_settled_ts` `2026-06-18T00:00:00Z` |
+| live floor, `/markets?series_ticker=KXHIGHNY` paged | **200**, min `close_time` `2026-06-11T04:59:00Z` |
+| impossible-series control | **200 with 0 rows** - the filter is honoured, not ignored |
+| known-present positive control | **200** |
+
+Both controls ran in the same pass, because a control that must fail is only half of one.
+
+**Three things this establishes, in increasing order of what they are worth:**
+
+1. `api.elections.kalshi.com` is not blocked from GitHub's shared runner ranges. Public market data
+   needs no credential, so nothing had to be smuggled onto the runner.
+2. The runner reads **status codes of the resource**, not of a proxy - the impossible control
+   separates from the positive control, which is the only way to know that.
+3. **A scheduled job can measure an external venue and commit the result to the repository with no
+   human present.** That is the thing the project has lacked in every session so far, where every
+   write needed a credential pasted into a fresh VM by hand.
+
+### The limit, stated so it is not over-claimed
+
+**This establishes reachability and the write path at census volume - seven requests - and nothing
+about bulk collection.** The rate-limit amendment above records that the rejection curve is a
+property of *(endpoint, **source**, recent history)*: the same configuration read 0%, 32.5% and
+44.1% on repeat, and a second machine took 3,200 requests at 64 threads with zero rejections where
+the first began rejecting after ~600.
+
+A **GitHub-hosted runner IP is shared with every other user of the platform**, so its recent history
+is not yours and is not observable. A collector moved onto CI would be running from a source whose
+bucket state is set by strangers. **Do not assume the ~6 req/s clean band measured from a Kernel VM
+transfers to a shared runner.** It has to be re-measured there, counterbalanced, before any bulk
+pull runs on Actions.
+
+**Census-scale scheduled measurement: established. Bulk collection from CI: unmeasured.**
+
+### Incidental, from run #1's own data
+
+The boundary is still benign. `market_settled_ts` advanced to `2026-06-18` and the live floor to
+`2026-06-11T04:59`, a gap of **~7 days** - unchanged from 2026-08-17 and up from 6 on 2026-08-14.
+Both edges slide, the gap is stable or widening, and no reachability hole opens. **P9 remains closed.**
