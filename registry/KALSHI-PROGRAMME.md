@@ -288,3 +288,60 @@ get there does not depend on that answer: a pre-registration discipline with sev
 an instrument-failure catalogue no textbook contains, a five-year reachable dataset with a verified
 cold-start recovery path, and a durable write path that survives the machine that used it. All of
 it points at any market. **That is the finding of the programme, and it is not about Kalshi.**
+
+---
+
+# AMENDMENT, 2026-08-18 - H65 closes the size axis, and changes what section 1 should say
+
+This synthesis was written before H65 ran. Section 1 described the size axis as *"size-dependent
+within a bounded 0.53c (T2.1)"*. That sentence stands as written and is **superseded here**: 0.53c
+is the bound on the **fee** arm only, and H65 measured what the **spread** arm does over the same
+axis.
+
+## The hurdle, now measured on both axes
+
+| axis | span | entry |
+|---|---:|---|
+| horizon, 24h to 10 minutes | **1.87c** (-3.81c to -1.94c) | H60, CONFIRMED |
+| size, 1 to 500 contracts | **7.23c** (-2.98c to -10.20c) | H65, CONFIRMED |
+| of which the fee arm | 0.53c | T2.1 |
+| of which the spread arm | **~6.70c, 13.6x the fee arm** | H65 |
+
+**Both axes are negative at every point measured on them.** The size axis is flat from 1 to 10
+contracts and worsens monotonically above; buying 500 contracts moves the average fill **11.87c**
+above the single-contract price. The size axis is closed.
+
+**What H65 does not establish.** Its bootstrap interval excludes zero only from **100 contracts**
+up, and leave-one-series-out only from **50** up. The shape is confirmed; the small-size magnitude
+is not. Do not quote -3.11c at one contract as a measured hurdle - the small-size figure remains
+what H56 and H60 measured by other means.
+
+## The finding that outranks both axes
+
+**Family dispersion exceeds size and horizon combined, by 2.05x.**
+
+At one contract, one horizon, one week, five families: `KXATPCHALLENGERMATCH` **+3.42c** through
+`KXBNB15M` -0.13c to `KXCS2MAP` **-15.26c**. **Span 18.68c**, against 9.10c for both measured axes
+together.
+
+So **every pooled hurdle figure in this programme - H56's -4.39c included - is weighted by its
+family mix at least as much as by the variable it names.** This is the same shape as false positive
+#7 one level down, where a -29.7pp calibration gap turned out to be 62 of 89 markets in a single
+series.
+
+**A hurdle quoted without its family composition is not a hurdle**, in the same way that a price
+without size is not a price. That belongs in section 1 alongside the decomposition, and it is the
+most portable single sentence H65 produced - it is about pooling, not about Kalshi.
+
+## One observation that is not a result
+
+`KXATPCHALLENGERMATCH` reads positive at every size. It is recorded as **observed, not reported**.
+B1's branch three requires leave-one-series-out, a depth-source replication, and an explicit
+quiet-hour check; only the first is done, and **the second cannot currently be satisfied at all** -
+`archive.pmxt.dev` is the only Kalshi book source that has ever existed and it stopped at
+`2026-06-11T03`. The third is decisive anyway: the whole study runs on admitted shards, which A1
+showed are the quiet hours, biased in the direction that flatters a fill.
+
+**The programme's conclusion is unchanged.** Fifty-seven substantive entries, four confirmed, none
+tradeable. H65 closed the last open axis of the cost and found it negative everywhere, which is what
+the pre-registration predicted and why it was worth running.
