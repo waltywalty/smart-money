@@ -6,7 +6,7 @@ bucket hidden instead of marked, or H9 sorting after H10.
 """
 import os, sys, unittest
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, os.path.join(ROOT, 'scripts'))
+sys.path.insert(0, os.path.join(ROOT, 'lib'))
 import build_index as bi
 
 

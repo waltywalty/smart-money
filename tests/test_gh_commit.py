@@ -14,7 +14,7 @@ from unittest import mock
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _spec = importlib.util.spec_from_file_location(
-    "gh_commit", os.path.join(ROOT, "scripts", "gh_commit.py"))
+    "gh_commit", os.path.join(ROOT, "lib", "gh_commit.py"))
 gh = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(gh)
 
@@ -56,7 +56,7 @@ class Harness:
 
 class TestNoPermissionsPush(unittest.TestCase):
     def test_source_does_not_read_permissions_push_as_proof(self):
-        with open(os.path.join(ROOT, "scripts", "gh_commit.py"),
+        with open(os.path.join(ROOT, "lib", "gh_commit.py"),
                   encoding="utf-8") as fh:            # rule 9: close what you open
             src = fh.read()
         code = src.split('"""', 2)[-1]               # strip the module docstring

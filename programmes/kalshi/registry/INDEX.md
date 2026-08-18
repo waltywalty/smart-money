@@ -1,6 +1,6 @@
 # Registry index — GENERATED, do not edit by hand
 
-Rebuild with `python scripts/build_index.py` after any verdict change.
+Rebuild with `python lib/build_index.py` after any verdict change.
 `registry/hypotheses.json` is authoritative; where this disagrees, it is stale.
 Verdict = the JSON bucket. Topic = a hand-authored label in the build script;
 the schema has no mechanism field. LOST = the 2026-08-10 rollback gaps.

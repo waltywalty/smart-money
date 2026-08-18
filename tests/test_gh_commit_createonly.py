@@ -12,7 +12,7 @@ import base64, importlib.util, os, tempfile, unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _spec = importlib.util.spec_from_file_location(
-    "gh_commit_co", os.path.join(ROOT, "scripts", "gh_commit.py"))
+    "gh_commit_co", os.path.join(ROOT, "lib", "gh_commit.py"))
 gh = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(gh)
 

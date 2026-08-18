@@ -6,7 +6,7 @@ so a future edit cannot quietly reintroduce the whole-cent story.
 """
 import math, os, sys, unittest
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, os.path.join(ROOT, 'analysis', 'fees'))
+sys.path.insert(0, os.path.join(ROOT, 'programmes', 'kalshi', 'analysis', 'fees'))
 import fee_model as fm
 
 

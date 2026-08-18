@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Generate registry/INDEX.md from registry/hypotheses.json.
+"""Generate programmes/kalshi/registry/INDEX.md from that programme's hypotheses.json.
 
 The index is generated; hypotheses.json is authoritative.
-Rebuild after ANY verdict change:  python scripts/build_index.py
+Rebuild after ANY verdict change:  python lib/build_index.py
 
 Schema notes (read from the real file on 2026-08-13, not guessed):
 
@@ -33,8 +33,8 @@ import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-SRC = ROOT / "registry" / "hypotheses.json"
-OUT = ROOT / "registry" / "INDEX.md"
+SRC = ROOT / "programmes" / "kalshi" / "registry" / "hypotheses.json"
+OUT = ROOT / "programmes" / "kalshi" / "registry" / "INDEX.md"
 
 # Buckets, in the order their verdicts are printed. The bucket name is the verdict.
 BUCKETS = ["confirmed", "killed", "corrected", "could_not_establish", "open", "parked"]
@@ -84,7 +84,7 @@ W_ID, W_VERDICT, W_TOPIC, W_ONE = 4, 9, 24, 42
 
 HEADER = """# Registry index — GENERATED, do not edit by hand
 
-Rebuild with `python scripts/build_index.py` after any verdict change.
+Rebuild with `python lib/build_index.py` after any verdict change.
 `registry/hypotheses.json` is authoritative; where this disagrees, it is stale.
 Verdict = the JSON bucket. Topic = a hand-authored label in the build script;
 the schema has no mechanism field. LOST = the 2026-08-10 rollback gaps.
