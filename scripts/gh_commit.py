@@ -184,21 +184,50 @@ def get_sha(path, branch="main"):
     return body["sha"]
 
 
-def put(path, local_path, message, branch="main"):
-    """Create or update one file. One call = one commit."""
+def put(path, local_path, message, branch="main", allow_update=False):
+    """Create one file. One call = one commit. CREATE-ONLY by default.
+
+    Why create-only is the default: on 2026-08-17 a `put` that meant to create a
+    new close-out silently UPDATED the existing CLOSEOUT-2026-08-17.md and
+    destroyed packet 3's close-out. Nothing refused, because nothing was asked to.
+    The only signal was the status code - a create answers 201, an overwrite
+    answers 200 - and a status code nobody checks is not a safeguard. That is the
+    second same-name collision to destroy a file in this repository.
+
+    Overwriting is now something the caller has to say out loud: --update.
+    """
     with open(local_path, "rb") as f:
         raw = f.read()
+
+    sha = get_sha(path, branch)
+    if sha and not allow_update:
+        print("REFUSING to write " + path, file=sys.stderr)
+        print("  It already exists (blob " + sha[:7] + ").", file=sys.stderr)
+        print("  This call would OVERWRITE it, not create it.", file=sys.stderr)
+        print("  To replace it:   gh_commit.py put --update <repo_path> <local> <msg>", file=sys.stderr)
+        print("  To add to it:    fetch it, append, then put --update.", file=sys.stderr)
+        print("  For a new doc:   choose a path that does not exist.", file=sys.stderr)
+        raise SystemExit(2)
 
     payload = {
         "message": message,
         "content": base64.b64encode(raw).decode(),
         "branch": branch,
     }
-    sha = get_sha(path, branch)
     if sha:
         payload["sha"] = sha          # required for updates, rejected for new
 
     status, result = _request(f"{API}/contents/{path}", "PUT", payload)
+
+    # 201 means created, 200 means something was already there. If we believed we
+    # were creating and the API says 200, get_sha and the write disagree - treat
+    # that as a failure rather than printing "created" over an overwrite.
+    if not allow_update and status != 201:
+        print("WRITE ABORTED CHECK: expected HTTP 201 (created) for " + path
+              + ", got " + str(status) + ".", file=sys.stderr)
+        print("  A 200 here means the path existed after all and has been overwritten.", file=sys.stderr)
+        raise SystemExit(3)
+
     commit = result["commit"]["sha"][:7]
     print(f"{status} {'updated' if sha else 'created'} {path} "
           f"({len(raw)} bytes) -> {commit}")
@@ -212,9 +241,12 @@ def main():
     if cmd == "check":
         check()
     elif cmd == "put":
-        if len(sys.argv) < 5:
-            sys.exit("usage: gh_commit.py put <repo_path> <local_path> <message> [branch]")
-        put(*sys.argv[2:6])
+        args = sys.argv[2:]
+        allow_update = "--update" in args
+        args = [a for a in args if a != "--update"]
+        if len(args) < 3:
+            sys.exit("usage: gh_commit.py put [--update] <repo_path> <local_path> <message> [branch]")
+        put(args[0], args[1], args[2], args[3] if len(args) > 3 else "main", allow_update)
     else:
         sys.exit(f"unknown command: {cmd}")
 
