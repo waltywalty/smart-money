@@ -503,3 +503,108 @@ pull runs on Actions.
 The boundary is still benign. `market_settled_ts` advanced to `2026-06-18` and the live floor to
 `2026-06-11T04:59`, a gap of **~7 days** - unchanged from 2026-08-17 and up from 6 on 2026-08-14.
 Both edges slide, the gap is stable or widening, and no reachability hole opens. **P9 remains closed.**
+
+## Amendment, 2026-08-18 - A CURSOR IS PRODUCED BY A LAYER AND MAY NOT ADVANCE THE RESOURCE
+
+**The rule this file already carries is not enough.** "Only `cursor_exhausted` or `empty_page` may
+be read as a complete answer" assumes a cursor that eventually does one or the other. Polymarket's
+`gamma-api.polymarket.com/markets/keyset` does neither: it returns a fresh 216-character
+`next_cursor` on every call and **ignores it**. 410,196 rows were pulled from it. They decode to
+**100 distinct `conditionId`** - one page, repeated 4,102 times, at HTTP 200 throughout.
+
+Ten probes on the same page-one cursor, each HTTP 200, none advancing: parameter names `cursor`,
+`next_cursor`, `after`, `page_cursor`, `start_cursor`, each raw and percent-encoded. Identical first
+five conditionIds every time.
+
+> **The rule, stated to generalise: assert that the stream ADVANCES. Count distinct keys per page and
+> stop when a page adds none. A legitimate stop reason is necessary and is not sufficient.** This is
+> the fifth time this project has been misled by an artefact of a layer rather than the resource, and
+> the first where the artefact was a *pagination token* rather than a status code.
+
+An earlier B1 pass reported "116,900 Polymarket open markets". That number was 100 markets counted
+1,169 times. It was never committed as a finding; it is recorded here because the failure mode is
+reusable and the near-miss is the point.
+
+### Polymarket gamma: what is honoured and what is silently ignored
+
+Each verified by an impossible value beside a permissive one, never by a single call.
+
+| parameter | honoured | how it was established |
+|---|---|---|
+| `closed=` | yes | `closed=true` returns `closed:true` rows |
+| `volume_num_min` | yes | `1e18` -> **0 rows**; `0` -> rows |
+| `liquidity_num_min` | yes | `1e18` -> **0 rows**; `50000` -> rows |
+| `end_date_min` | yes | year 3000 -> **0 rows** |
+| `order=` / `ascending=` | yes | desc -> $2.92M top liquidity, asc -> $0, impossible field -> **422** |
+| `active=` | **NO - silently ignored** | `active=false` returns `active:true` rows |
+| `archived=` | **NO - silently ignored** | `archived=true` returns `archived:false` rows |
+| `limit=` above 100 | **NO - silently truncated** | `limit=500` and `limit=1000` both return exactly 100 |
+| `offset` above ~2,000 | **422** | body: `offset too large, use /markets/keyset for deeper pagination` - which points at the endpoint that does not work |
+
+### The working route
+
+**`clob.polymarket.com/markets`** - a different host and a different layer. 1,000 rows a page, a
+cursor that genuinely advances (`aWQ6...` = base64 `id:<n>`), and the fields `active`, `closed`,
+`accepting_orders`, `enable_order_book`, `description`, `end_date_iso`, `tags`, `tokens`. It carries
+**no volume or liquidity**, so enumeration and notional have to come from different places on this
+venue.
+
+Two cautions measured on it: a **malformed cursor returns HTTP 200 with data** rather than an error,
+so a corrupted token silently restarts the stream; and the stream has **gaps** - three consecutive
+full pages of nothing new at 279,803 distinct, then new markets resumed. A stall guard set at 2 pages
+fired falsely. Set it at tens of pages, and treat any enumerated total as a floor.
+
+## Amendment, 2026-08-18 - TWO FIELDS THAT EXIST IN THE SCHEMA AND ARE NEVER POPULATED
+
+- **Kalshi `liquidity_dollars` reads `"0.0000"` on all 84,290 open markets.** Cross-checked on a
+  second endpoint (`/markets/{ticker}`) on the busiest market on the exchange - 23.3M contracts of
+  open interest, `yes_ask_size_fp: 42535.60`, and still `liquidity_dollars: "0.0000"`. There is a
+  book; the field does not report it. **Do not use it as a notional measure.** Use open interest
+  times `notional_value_dollars`, which was read from the API and is exactly `1.0000`.
+- **Polymarket `resolutionSource` appeared empty on every row** the keyset stream returned. It is in
+  fact populated on 28% of money-bearing markets. The zero was a second-order artefact of the inert
+  cursor above - the 100 repeated markets all happen to have it blank. **An artefact in a pager
+  propagates into every field statistic computed downstream of it.**
+
+## Amendment, 2026-08-18 - `orderbook_fp`, not `orderbook`. This does NOT disturb the depth ceiling.
+
+`GET /markets/{ticker}/orderbook?depth=N` returns HTTP 200 with the payload under the key
+**`orderbook_fp`**. Reading `orderbook` yields `{}` - which reads exactly like an authentication
+gate, and was briefly recorded as one before the raw body was printed. The live public book is fully
+populated: five levels a side with sizes on the market checked, unauthenticated.
+
+**This is a live-book fact and the depth-ceiling amendment above is a historical-book claim.** That
+amendment says the exchange does not retain the book and no public archive exists outside
+`2026-05-14` -> `2026-06-11T03`; nothing here contradicts it, and H65's "unreportable with the data
+that exists" stands unchanged. Recorded together because the two are close enough to be confused.
+
+## Amendment, 2026-08-18 - A CONTROL THAT CANNOT SEPARATE, ON A THIRD OF ALL HOSTS
+
+Probing 758 external resolution-source URLs across 348 hosts with an impossible path on the same host
+as the control:
+
+| | Kalshi | Polymarket |
+|---|---|---|
+| hosts probed | 257 | 91 |
+| impossible path returns **404/410** - the pair separates | 169 (66%) | 57 (63%) |
+| impossible path returns **200/202/206** - the host answers any path alike | 88 | 34 |
+
+**On a third of hosts a 2xx is a fact about the router, not about the resource.** Single-page apps
+and catch-all routers make the standard control void, exactly as a 400 that means "forbidden" and a
+400 that means "absent" were indistinguishable in packet 5's T1.4. Any measurement on those hosts
+needs a different control - content hashing against a known-absent path is the obvious candidate and
+is untested.
+
+## Amendment, 2026-08-18 - KALSHI'S TWO SETTLEMENT-SOURCE ENDPOINTS DISAGREE
+
+`settlement_sources` - a structured `[{name,url}]` array - is carried on the **event** object and
+again on the **series** object. They are not the same list.
+
+| | events | markets |
+|---|---:|---:|
+| identical | 8,247 (80.8%) | 71,774 |
+| **different** | **1,966 (19.2%)** | **12,457 (14.8%)** |
+
+The disagreement changes the implied source class on thousands of markets and moves B1's in-scope
+count by **10.6%** (22,966 from the event endpoint, 20,526 from the series endpoint, 19,500 agreeing).
+Nothing in either response says which is authoritative. **Take the intersection and say so.**
