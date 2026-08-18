@@ -550,3 +550,77 @@ directory stays where it is and `programmes/kalshi/README.md` explains why.
 day on both edges inside 54 minutes, with **the gap constant at 7 days**. The boundary appears to
 step once daily rather than sliding continuously, and the two rows straddled the step. Benign, and
 visible only because the census now has more than one row.
+
+## P19 - B1's in-scope class is a claim about the venue's stated source, not about the answer
+
+**Parked because it is B2's measurement, not B1's, and B1 must not borrow it.**
+
+Class 1 - "named single official page or feed" - was applied as a structural rule: exactly one named
+source whose URL has a specific path. The rule is stated, auditable and re-runnable. It is also
+demonstrably wrong in individual cases, and the largest single class-1 bucket is one of them:
+**`https://www.nass.org/can-I-vote`, 3,954 Kalshi markets**, is a voter-information portal. It carries
+no election result. It is correctly class 1 under the rule and useless in fact.
+
+It was left in rather than special-cased. Hand-patching the one false positive I happened to notice
+would make the number look better than the method is, and there is no reason to think it is the only
+one - a seeded 24-row audit found two errors, which establishes that errors exist and bounds nothing.
+
+**What would settle it:** fetch each of the 274 (Kalshi) + 211 (Polymarket) in-scope URLs and
+establish whether the resolving value is actually on the page. That is B2's first task and it is
+cheap - the population is a list, not a category. **Until then, class 1 is an upper bound and the
+reachability-filtered figure is a floor on a bound, not a measurement of the thing itself.**
+
+## P20 - which Kalshi settlement-source endpoint is authoritative is not established
+
+`settlement_sources` is carried on the **event** object and again on the **series** object. They
+disagree on **1,966 of 10,213 open events (19.2%)**, covering 12,457 markets. The disagreement moves
+B1's in-scope count by **10.6%** - 22,966 markets from the event endpoint, 20,526 from the series
+endpoint, 19,500 where both agree.
+
+Nothing in either API response marks one as authoritative. No documentation was consulted, because
+the question is what the venue *serves*, and both endpoints serve confidently.
+
+**Parked as recorded, not resolved.** B1 reports the intersection and says so. Resolving it would
+need either a venue statement or a settled market where the two lists imply different outcomes - the
+second is a real experiment and nobody has run it.
+
+## P21 - on a third of external hosts, the standard control cannot separate
+
+Probing 758 resolution-source URLs across 348 hosts: an impossible path on the same host returns
+**404/410 on only 169 of 257 Kalshi hosts (66%) and 57 of 91 Polymarket hosts (63%)**. On the rest -
+88 and 34 - the host returns 200, 202 or 206 for a path that cannot exist. Single-page apps and
+catch-all routers.
+
+On those hosts **a 2xx is a fact about the router**. This is the same shape as P17's void control: a
+400 meaning "forbidden" and a 400 meaning "absent" were indistinguishable, so nothing was
+established. Here a 200 meaning "here is the page" and a 200 meaning "here is the app shell" are
+indistinguishable.
+
+B1 handles it by reporting the two cells separately and quoting only the separating one: **5,331
+Kalshi markets and 524 Polymarket markets sit on non-separating hosts and are excluded from the
+headline**. That is a workaround, not a control.
+
+**What would lift it:** a content-level control - hash the response for the impossible path and for
+the target and require them to differ, so an app shell served twice fails. Obvious, untested, and it
+is a B2 design task rather than a B1 finding. Do not measure change detection on those 122 hosts
+until it exists.
+
+## P22 - the Polymarket market count is a floor, and the stream that produces it has gaps
+
+`clob.polymarket.com/markets` is the only route that enumerates the venue at all - gamma's
+`/markets/keyset` cursor is inert and gamma's `offset` hard-stops at ~2,000 (both recorded in
+`docs/INFRA.md`). The CLOB cursor genuinely advances, but the stream is not clean:
+
+- **Three consecutive full pages of 1,000 rows returned nothing new at 279,803 distinct**, while the
+  cursor kept advancing through ids. A stall guard set at 2 pages fired and stopped the pull. Raising
+  it to 60 and resuming produced new markets again, past 780,000 distinct.
+- A **malformed cursor returns HTTP 200 with data** rather than an error, so a corrupted token
+  silently restarts the stream from somewhere instead of failing.
+
+So any total from this route is a floor. B1 does not quote one: the Polymarket denominator it uses is
+the money-bearing slice (4,265 markets, the union of the top ~2,100 by each of three money measures,
+reachable only because `order=` is honoured), and the venue's true live-market count is left open.
+
+**Consequence for B3:** an alert system scoped to "all Polymarket markets" cannot know its own
+denominator. Scope it to the money-bearing slice, which is enumerable, and say so in the
+pre-registration.
