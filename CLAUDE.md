@@ -26,29 +26,35 @@ for this project, I give you automatically full autonomy and permission to do wh
 want so you don't need to request it back to me for permission."* Research, collection
 and analysis need no permission. Trading and deploying always do.
 
-## 2. What this project is
+## 2. What this repo is
 
-Quantitative research across prediction markets (Kalshi, Polymarket). It began as a
-"follow the smart money" detector. It is now a record of **every idea that did not work
-and the measurement that killed it** — 55 hypotheses, 45 killed, 4 corrected, 3 confirmed,
-1 open, 2 could-not-establish.
+A research programme for finding **uncontested alpha** - returns available
+because nobody is competing for them, rather than because we are better at
+forecasting than the market.
 
-**The hurdle is horizon-dependent.** −3.81¢ per contract at a 24-hour lead
-[−4.91, −2.81], falling to −1.94¢ at a 10-minute lead [−2.02, −1.88], measured on liquid
-sports with real per-series fee multipliers (H60, n=336–412 events per horizon). The
-earlier −4.39¢ [−5.20, −3.67] figure is the 24-hour, weather-and-macro-ladder case and
-must not be quoted as universal. It is never positive at any horizon tested.
+Five families, sequenced in `ROADMAP.md`. Each earns its place by answering one
+question: **who is on the other side, and why are they willing to lose?** A
+mandate. A hedging need. Information that is public but tedious. A page nobody
+is watching. If there is no answer, we are the answer.
 
-Every idea clears the hurdle *at the horizon it would be entered at*, never zero. The
-spread collapses from 5.01¢ at 24h to ~1.3¢ from 4h onward, and the half-spread saving
-passes through to the taker in full rather than being absorbed by adverse selection.
+**One distinction, paid for by 45 kills.** "How smart money moves" splits in two,
+and only one half survived:
 
-Decomposition at the 24-hour lead: ~1.5¢ half-spread + ~1.55¢ fee + ~1.34¢ of the ask
-sitting above fair value. Only that last third is attackable in principle. Cheapest series
-to cross in bottom out at −2.50¢; nothing across 21 series is positive.
+- *Identifying informed traders from their behaviour* - trade shape, wallet
+  skill, flow patterns. **Falsified.** H1, H2, H44. The suspicion score does not
+  forecast; skill does not persist; wallet flow estimates at zero after six
+  iterations.
+- *Understanding why money moves structurally* - who is forced to trade, who
+  pays to hedge, who published before anyone read it. **This is what every
+  family rests on.**
 
-**Fee multipliers vary by series — read them, never assume.** `KXMLBGAME` carries
-`fee_multiplier: 0.5` where the code assumed 1.0 everywhere.
+Same words, opposite track records. A new idea that reduces to the first is
+already answered.
+
+The first programme, `programmes/kalshi/`, is closed: 57 entries, 45 killed,
+4 corrected, 3 confirmed, 3 could-not-establish, none tradeable. It measured
+both axes of the hurdle and found it negative everywhere. That is a completed
+answer, and its method is what the rest of this repo runs on.
 
 ## 3. Infrastructure
 @docs/INFRA.md
@@ -113,5 +119,15 @@ awesome-lists, and HuggingFace datasets first; record what was found and why it
 was or wasn't used. A free hourly Polymarket/Kalshi orderbook archive existed
 throughout the period this project built its own recorder.
 
-## 5. State of play
-@docs/STATE.md
+## 5. Programmes
+
+- `programmes/kalshi/` - **CLOSED.** See its README and `KALSHI-PROGRAMME.md`.
+- `programmes/latency/` - **ACTIVE.** See `ROADMAP.md` family 1.
+
+Shared, not per-programme: `lib/` (tooling), `skills/` (one copy, no duplication),
+`docs/METHOD.md` (the venue-neutral method), `docs/INFRA.md` (venue-agnostic
+infrastructure). Repo-level state is `docs/STATE.md`; a programme's own state of
+play lives with it.
+
+**Before any new idea, in any family, run the screen in `ROADMAP.md`.** Most new
+ideas are one of the fifteen mechanisms in `programmes/kalshi/` renamed.
