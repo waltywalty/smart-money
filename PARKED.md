@@ -474,3 +474,46 @@ external venue and record the result without a human present. It can. Full findi
 establish reachability, not a rate-limit regime, and the shared runner IP has a bucket history set
 by strangers. That has to be re-measured on Actions, counterbalanced, before any bulk pull moves
 there. **Census-scale scheduled measurement: established. Bulk collection from CI: unmeasured.**
+
+---
+
+## P18 - the PAT cannot write `.github/workflows/` or dispatch a run. A0's verification is unreachable.
+
+**Blocks: packet 6 A0 step 4, and therefore Phase B.** It also re-opens, in a narrower form, the
+question P15 closed.
+
+**Three 403s, isolated by probe rather than assumed:**
+
+| attempt | result |
+|---|---|
+| Git Data API, tree **containing** `.github/workflows/census.yml` | **403** `Resource not accessible by personal access token` |
+| Git Data API, identical tree of 240 entries **without** that path | **201** |
+| Contents API, `PUT .github/workflows/census.yml` | **403** `refusing to allow a Personal Access Token to create or update workflow ... without workflow scope` |
+| `POST /actions/workflows/census.yml/dispatches` | **403** `Resource not accessible by personal access token` |
+
+The first two are the control pair: same endpoint, same token, same tree size, **one path
+different**. That is what identifies the cause. The Git Data 403 message names the token generally
+and is misleading - the token *is* accessible to that endpoint, just not for that path. Another
+status naming the wrong cause.
+
+**Consequence, and what was done about it.** A0 required the workflow's paths to move in the same
+commit as the restructure, then a live run to prove the unattended probe still writes. Neither is
+possible with this credential. A0's own fallback was executed: **`registry/retention/` was returned
+to the repo root**, so the workflow's paths are byte-identical to what run #1 used and nothing it
+touches has moved. Everything else stayed restructured.
+
+**The probe is therefore untouched, not verified.** It should behave exactly as it did on run #1 -
+but *should* is not *did*, and this project has already paid for that distinction once.
+
+**revive_if - any one of these:**
+
+1. The PAT gains **Workflows: read and write** *and* **Actions: read and write**. Then the path moves
+   and the run is dispatched in one session.
+2. Walton clicks **Run workflow** in the UI now. That alone verifies the current parked state - a
+   `github-actions[bot]` commit with the control pair separating - and unblocks Phase B without any
+   permission change.
+3. The `17 4 * * *` cron fires (next: **2026-08-19T04:17Z**). Same verification, ~21 hours later,
+   unattended - which is the more faithful test of the thing being claimed.
+
+**Until one of those:** `registry/retention/` stays at the root and `programmes/kalshi/README.md`
+says why, so nobody tidies it away without reading this.
