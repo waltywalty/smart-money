@@ -386,3 +386,11 @@ every pooled figure, and separate the shape from the magnitude and say which you
 Commits: `07a8296` H65 entry - `daa6e5f` registry - `5ef44cf` INDEX - `7a70789` synthesis -
 `c57ab2c` method skill. Census remains parked as P15. No other verdict, figure or `revive_if`
 changed. `worker.js` untouched. No trade, no deployment.
+
+**Packet 5 closed out** at `CLOSEOUT-2026-08-18.md` (`e2ad0dd`). MEASURED / INFERRED / ASSUMED as
+three lists, parking lot ranked, three findings that were wrong before they were right, H65 in B1's
+own words, and a portability section that describes and stops. Family dispersion is a MEASURED item
+in its own right rather than a line in a verdict. The depth ceiling is recorded as a hard limit in
+`docs/INFRA.md` (`0205041`) so it is findable without reading footnotes: no public Kalshi book source
+outside 2026-05-14 to 2026-06-11T03 has ever existed, so replication is impossible and
+**unreportable** is the correct word, not pending.
