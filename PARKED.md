@@ -449,3 +449,28 @@ is assumed, not measured.
 
 **Why it is parked rather than dropped:** the standing use of R2 assumes the data is not world
 readable. That assumption is now explicitly untested rather than quietly inherited.
+
+---
+
+## P15 - RESOLVED 2026-08-18. The CI write path works end to end.
+
+**Unparked, not amended away.** The entry above stands as the record of the block; this is what
+lifted it.
+
+Walton added **Workflows: read and write** to the PAT and the workflow landed. **Run #1 green.**
+Verified from the resources, each with a control - impossible commit sha **422**, run #1
+**success**, commit **`bc2c8bf`** authored *and* committed by **`github-actions[bot]`**, writing
+`registry/retention/CI-CENSUS-LOG.md`. **The built-in `GITHUB_TOKEN` did it. No PAT, no paste, no
+human.**
+
+Kalshi from a shared GitHub runner IP: cutoff **200**, live floor **200**, impossible-series control
+**200 with 0 rows**, positive control **200**. Both controls in the same pass.
+
+**What was actually being tested was never the census.** It was whether this project can measure an
+external venue and record the result without a human present. It can. Full finding in
+`docs/INFRA.md`, *"THE DURABLE WRITE PATH"*.
+
+**What remains unmeasured, and is not covered by this:** bulk collection from CI. Seven requests
+establish reachability, not a rate-limit regime, and the shared runner IP has a bucket history set
+by strangers. That has to be re-measured on Actions, counterbalanced, before any bulk pull moves
+there. **Census-scale scheduled measurement: established. Bulk collection from CI: unmeasured.**
