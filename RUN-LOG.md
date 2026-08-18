@@ -253,3 +253,61 @@ prepared patch; nothing was lost**, because every rebuilt artifact went to `main
 produced — Walton's ruling working as intended.
 
 **Next action:** the R2 endpoint, then Gate 0 line 3, then Phase 1.
+
+---
+
+## Session, 2026-08-18 — packet 5, Phase A0 + Phase B + Phase C
+
+Three clocks agreed at the start (VM, Kalshi, GitHub): `2026-08-18T01:48Z`. Measurements from
+2026-08-17 keep that date in their filenames; this session's own work is dated 08-18.
+
+**A0 — control audit, run before A1 as instructed.** Every control class re-run live at the access
+level of the measurement it certified, not reasoned from documents. **One void class: an
+unauthenticated probe of the private R2 bucket, where control and real key both return 400.** It was
+recognised as void in the session that ran it, and everything it touched is established at
+authenticated access, so **no finding reverts to unverified and `PARKED.md` gets no entries from
+A0**. That absence is the report, not a skip.
+
+The packet's leading candidate — packet 2's 1999-dated key on `r2kalshi.pmxt.dev` — **fails on one
+count, not two**: the host is public, so control and measurement held matching (anonymous) access
+and the control does separate at 404 against 206. It failed on *layer*, and that was corrected on
+2026-08-17.
+
+**A0's own new finding:** an impossible control is only half a control. **An absence claim also
+needs a probe that must succeed, in the same pass** — otherwise the control and the measurement
+return the same status and the pair cannot tell *gone* from *everything is 404 right now*. Every
+absence claim in the register passed this, but **by habit rather than by rule**. Now in rule 10.
+
+`skills/empirical-claims/SKILL.md` rules 10–14 consolidated into one status-layer rule with five
+instances. Rules 12 and 13 kept at their numbers because `gh_commit.py`, its tests and this log all
+cite "rule 12"; 11 and 14 became pointers rather than renumbering live references.
+
+**Phase B — the close of the programme.** `registry/KALSHI-PROGRAMME.md` (the hurdle on both axes
+with its decomposition, the three confirmed effects and why none is money, the fifteen mechanisms as
+a five-minute screen, the instrument-failure catalogue, the seven right-for-the-wrong-reason entries
+enumerated in one place **for the first time**, and what the data constraint actually was).
+`skills/research-method/SKILL.md` lifts the method off the venue, keeping the Kalshi instances as
+worked examples. `docs/ASSETS.md` inventories everything built, with rebuild and repoint costs.
+
+**Phase C.** P14's third signature had already run — 7,075 rows checked, **0 mismatches** — so it was
+confirmed, not re-run. The two-hour trade hole and the `/events` attribution wording are now
+amendments in `INFRA.md`, the latter pinned at **falsified / replacement supported / not reproduced**
+so it cannot harden. P15 and P16 parked.
+
+**The census question is answered by its own failure.** `PUT .github/workflows/census.yml` → **403**:
+the per-session PAT carries `Contents: write` but not `Workflows: write`. Every other write in the
+session succeeded with the same token. So whether an Actions runner reaches Kalshi cleanly and can
+commit without a paste is **could not establish**, not a null — and the workflow is committed out of
+the way at `.github/CENSUS-WORKFLOW-PENDING.md` rather than rebuilt from memory later.
+
+**One correctness fix.** The create-guard printed *"a 200 here means the path existed after all"*
+for every non-201 status, including the 403 above — a misleading message on a refused write. It now
+distinguishes 200, 401/403 and everything else. 16 tests still pass.
+
+**A1–A3 (H65) are NOT started**, per Walton's instruction to bring A0's result for a ruling first.
+Phase B was run in the meantime rather than idling, as the packet directs.
+
+**No STOP conditions hit.** No registry verdict, figure or `revive_if` changed. `worker.js`
+untouched. No trade, no deployment.
+
+**Next action:** Walton's ruling on A0, then A1 — execute B1's sealed design exactly.
