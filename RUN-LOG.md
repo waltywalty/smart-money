@@ -414,3 +414,50 @@ Kernel VM must be re-measured on Actions before any bulk pull moves there.
 **Incidental, from run #1's own data:** `market_settled_ts` 2026-06-18, live floor 2026-06-11T04:59,
 gap ~7 days - unchanged since 08-17, up from 6 on 08-14. P9 remains closed, and the check that
 confirmed it ran without anyone asking.
+
+---
+
+## Session, 2026-08-18 - packet 6 Phase A. A0 BLOCKED, fallback executed.
+
+**A0.1.** The census workflow touches exactly one repo path: `registry/retention/CI-CENSUS-LOG.md`,
+on three lines (`mkdir -p`, `F=`, `git add`). Nothing else. `index.html` was checked and **loads no
+repo file at all** - its only relative fetch is a Worker URL - so Pages is unaffected by any move.
+
+**A1 done, as one commit.** `25b6b3f`: 117 files moved, blob SHAs reused so content is
+byte-identical by construction rather than by re-upload, and adds+deletes in a single tree so git
+can detect the renames. 52 tests pass in the new layout - verified **before** the commit was built
+and again by fetching the live repo afterwards. 160 blobs before, 160 after.
+
+**A0 could not be satisfied, and the reason is a credential, not a mistake.** Three 403s, isolated
+by a control pair rather than guessed:
+
+| attempt | result |
+|---|---|
+| Git Data tree **containing** `.github/workflows/` | **403** |
+| identical 240-entry tree **without** it | **201** |
+| Contents `PUT .github/workflows/census.yml` | **403** *"...without `workflow` scope"* |
+| `POST .../dispatches` | **403** |
+
+So the workflow's path cannot move in the same commit, cannot move at all, and the verification run
+cannot be triggered. **A0's stated fallback was executed**: `registry/retention/` returned to the
+repo root (`698e987`), leaving the workflow's paths byte-identical to run #1's. Everything else
+stayed restructured. *A broken unattended probe is worse than an untidy repo.*
+
+**The probe is untouched, not verified.** That distinction is the whole reason A0 exists and it is
+recorded as **P18**, with three routes to closing it - two of which need no permission change.
+
+**A2, A3 done.** `CLAUDE.md` rewritten around the method (`efef1cd`); `ROADMAP.md` committed
+(`01a02a5`); programme READMEs for kalshi (`7d4e43e`) and latency (`4558434`). **A4 skipped on
+Walton's instruction** - the repo keeps the name `smart-money`; the meaning is carried by
+`CLAUDE.md` §2 and `ROADMAP.md`.
+
+**Not done, and deliberately not rushed:** the `docs/INFRA.md` and `docs/STATE.md` splits.
+**Phase B not started** - A0 is blocking and its verification is unreachable.
+
+**A new instrument fact.** A 403 reading *"Resource not accessible by personal access token"* named
+the token when the real cause was a single path inside the payload; the same token, same endpoint
+and same tree size succeeded with that path removed. Another status naming the wrong layer, and the
+control pair is what found it.
+
+No verdict, figure or `revive_if` changed. The Kalshi registry moved whole and untouched.
+`worker.js` untouched. No trade, no deployment.
