@@ -413,3 +413,32 @@ The workflow itself is written and ready (`workflow_dispatch` plus a daily cron,
 `/historical/cutoff` and the live floor with both an impossible control and a known-present
 positive control, appending one line to `registry/retention/CI-CENSUS-LOG.md` and committing with
 `GITHUB_TOKEN`). It is held out of the repository only by the 403.
+
+## Amendment, 2026-08-18 - the Kalshi depth ceiling. A hard limit, findable here on purpose.
+
+**There is no public source of Kalshi order-book depth outside `2026-05-14` -> `2026-06-11T03`, and
+there never will be.**
+
+`archive.pmxt.dev` / `r2kalshi.pmxt.dev` is the **only** public archive of the Kalshi book that has
+ever existed. It stopped at `2026-06-11T03` and has not resumed. Re-verified 2026-08-18 with a
+positive control beside the impossible one, because a control that must fail is only half a control:
+
+| probe | status |
+|---|---|
+| impossible key `1999-01-01T00` | **404** |
+| known-present `2026-06-10T12` | **206** |
+| last published `2026-06-11T03` | **206** |
+| first hour after coverage `2026-06-11T04` | **404** |
+| `2026-08-16T12`, `2026-08-17T12` | **404** |
+
+The exchange does not retain the book, so **no amount of future collection recovers the past**. Any
+Kalshi depth question is bounded to that window, and within it to the **41% of hours** that pass an
+80% bracketable admission rule, and within those to **quiet hours** - A1 measured admitted shards
+trading 1.45-1.80x less actively than the hours excluded.
+
+**The practical consequence:** a study needing a *second* depth source for replication cannot get
+one. That is why H65's positive family observation is recorded as **unreportable with the data that
+exists** rather than pending - *pending* invites someone to come back to it, and nobody can.
+
+**What would lift it:** a new public archive, a commercial book feed, or continuous self-collection
+from today forward - which buys the future and never the past.
