@@ -311,3 +311,49 @@ Phase B was run in the meantime rather than idling, as the packet directs.
 untouched. No trade, no deployment.
 
 **Next action:** Walton's ruling on A0, then A1 — execute B1's sealed design exactly.
+
+## Session, 2026-08-18 (continued) - the A0 ruling, then H65
+
+**A0 ruling applied.** Walton parked T1.4's first-pass statement only: its claim that three R2
+objects were unreadable without credentials was certified by a probe where the impossible key and
+the real keys both returned 400, so it established nothing. **Probably true, not shown.** Everything
+resting on the authenticated 404 control stands. Parked as **P17**, and
+`registry/historical/A0-CONTROL-AUDIT-2026-08-18.md` carries a dated amendment with its original
+"nothing to rule on" conclusion **left on the page** - the point being that the reasoning changed,
+not that it was never written. The audit had laundered a void control in its own closing paragraph,
+on its own subject matter.
+
+**Census stays parked as P15.** Not attempted again this session.
+
+**H65 executed exactly as B1 sealed it** (`4775d76`). All three abandonment conditions were tested
+first and none fired: the book **is** reconstructible from `orderbook_delta` (the pre-registration's
+single largest untested assumption); bracket-width p99 across admitted shards runs **median 6.0s,
+max 59.0s** against a 60s threshold; and every size point clears the 150-event bar (198-201).
+
+101 archive hours probed, **41 admitted** at the sealed 80% bracketable rule. Books replayed to
+T-10m, YES bought at the ask off resting NO bids, fees from `analysis/fees/fee_model.py` at
+`regime='documented'`.
+
+**Verdict: CONFIRMED, branch one.** Flat from 1 to 10 contracts, monotonically worse above, and
+**negative at every point** - -3.11c at 1, -2.98c at the least-cost point of 2, -5.89c at 100,
+**-10.20c at 500**. The least-cost point fails B1's own calling rule (neighbours differ by 0.13c and
+0.01c against interval half-widths of 4.56c and 4.67c), so it is reported **flat, not a minimum**.
+Span across the axis **7.23c against a fee arm bounded at 0.53c** - the spread arm is 13.6x the
+entire fee arm, which is what the pre-registration predicted and why.
+
+**Two things the study did not flatter itself about.** Leave-one-series-out **crosses zero at every
+size up to 25 contracts** - dropping `KXCS2MAP` alone turns the pooled figure positive at small
+size - and family dispersion (+3.42c to -15.26c at one contract) is larger than the whole size axis.
+`KXATPCHALLENGERMATCH` reads positive and is **explicitly not reported as a result**: B1's branch
+three requires LOO-series, a depth-source replication and a quiet-hour check, and only the first has
+been done - and the third is decisive, because the entire study runs on admitted shards, which A1
+established are the quiet hours.
+
+**The sharpest limit was not anticipated by the pre-registration:** 54% of markets on admitted
+shards carry **no snapshot before their entry instant**, which costs more than the archive ending
+and more than the admission rule. **201 events of 1,086 survive - 15.4% of the target population.**
+
+`registry/INDEX.md` rebuilt: 57 substantive entries, H65 CONFIRMED. No other verdict, figure or
+`revive_if` changed. `worker.js` untouched. No trade, no deployment.
+
+**Next action:** Walton's ruling on H65.
