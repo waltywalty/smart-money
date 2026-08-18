@@ -1,0 +1,9 @@
+# CI census log - written by GitHub Actions, no pasted secret
+
+Control discipline: `ctl` is an impossible series (must return 200 with 0 rows)
+and `pos` is a known-present series (must return 200). A control that must fail
+is only half of one - see SKILL.md rule 10.
+
+| date (UTC) | cutoff http | market_settled_ts | live floor http | min close_time | ctl http/rows | pos http | run |
+|---|---|---|---|---|---|---|---|
+| 2026-08-18T06:01Z | 200 | 2026-06-18T00:00:00Z | 200 | 2026-06-11T04:59:00Z | 200 / 0 | 200 | [32105186943](https://github.com/waltywalty/smart-money/actions/runs/32105186943) |
