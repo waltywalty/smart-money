@@ -517,3 +517,36 @@ but *should* is not *did*, and this project has already paid for that distinctio
 
 **Until one of those:** `registry/retention/` stays at the root and `programmes/kalshi/README.md`
 says why, so nobody tidies it away without reading this.
+
+### P18 update, 2026-08-18 - VERIFIED by dispatch. The probe survived the restructure.
+
+**Route 2 taken.** Walton dispatched the workflow manually; verified here from the resources with a
+control, not from the report:
+
+| check | result |
+|---|---|
+| control: impossible commit sha | **422** (not 200) |
+| run **#2** | **completed / success**, `2026-08-18T06:55:49Z` |
+| commit **`69cca04`** author *and* committer | **`github-actions[bot]`** |
+| what it wrote | `registry/retention/CI-CENSUS-LOG.md` (modified, **+1**) |
+| the four probes | cutoff **200**, live floor **200**, impossible-series control **200 / 0 rows**, positive control **200** |
+
+**The control pair separates**, which is what makes the four 200s mean anything: the impossible
+series returns 200-with-0-rows against a known-present series returning 200. **A 113-file
+restructure landed underneath this probe and it still writes.**
+
+**Route 3 has not been consumed and should be allowed to fire.** The `17 4 * * *` cron next runs at
+**2026-08-19T04:17Z**. Run #2 was *dispatched by a human*; the cron run is **unattended**, which is
+the more faithful test of the property being claimed - that this project can measure and record with
+nobody present. A dispatched green run proves the paths are right. Only the scheduled one proves the
+thing P15 was actually about. **Check that it landed.**
+
+**Still parked, and still the reason `registry/retention/` sits at the root:** the credential cannot
+write `.github/workflows/` by any API, nor dispatch a run. Routes 1 remains open. Until then the
+directory stays where it is and `programmes/kalshi/README.md` explains why.
+
+**Incidental, from the two rows now in the log.** Between `06:01Z` and `06:55Z` the cutoff advanced
+`2026-06-18` -> `2026-06-19` and the live floor `2026-06-11T04:59` -> `2026-06-12T04:59` - a full
+day on both edges inside 54 minutes, with **the gap constant at 7 days**. The boundary appears to
+step once daily rather than sliding continuously, and the two rows straddled the step. Benign, and
+visible only because the census now has more than one row.
