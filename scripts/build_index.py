@@ -76,6 +76,8 @@ TOPIC = {
     "H57": "kxrain-overpricing", "H58": "calibration-clean-path", "H59": "pm-reversion-replication",
     "H60": "hurdle-horizon-dependent", "H61": "obtainability", "H62": "mean-reversion",
     "H63": "reversion-in-trades",
+    "H64": "depth-unanswered",
+    "H65": "hurdle-size-axis",
 }
 
 W_ID, W_VERDICT, W_TOPIC, W_ONE = 4, 9, 24, 42
