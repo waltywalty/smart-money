@@ -150,3 +150,51 @@ established at authenticated access. **`PARKED.md` gets no new entries from A0**
 is itself the report - it is not a silent skip.
 
 The audit's product is the general rule, not a list of casualties.
+
+---
+
+# AMENDMENT, 2026-08-18 - Walton's ruling. The conclusion above is superseded.
+
+**The "For Walton" section above stands exactly as written and is not edited.** It said *"There is
+nothing to rule on"* and *"`PARKED.md` gets no new entries from A0"*. Both are now false. They stay
+on the page because **the point is that the reasoning changed, not that it was never written** - an
+audit whose subject is claims that were certified by something that certified nothing cannot quietly
+delete its own bad certification.
+
+## What the audit got wrong
+
+It found the void class, traced what that class certified, observed that a later authenticated pass
+found the objects present and intact, and concluded nothing was left uncertified.
+
+**That last step does not follow.** The later measurement answered a different question:
+
+| the void control was asked | the authenticated pass answered |
+|---|---|
+| are these objects **unreadable without credentials**? | are these objects **present and intact with credentials**? |
+
+Both are true of the same objects and neither implies the other. The first is a claim about the
+**access boundary**, and nothing has probed that boundary with an instrument able to separate
+*forbidden* from *absent*.
+
+## The ruling
+
+> Park T1.4's first-pass statement only. Its claim that three objects were unreadable without
+> credentials was certified by a control that certified nothing - a 400 meaning "forbidden" and a
+> 400 meaning "absent" are indistinguishable, so it was never established. Probably true, not shown.
+> All R2 claims resting on the authenticated 404 control stand.
+>
+> **A claim certified by a void control is unverified even when a later measurement makes it look
+> obvious.**
+
+Parked as **P17**. No verdict, figure or `revive_if` changed. Everything on the authenticated 404
+control is untouched: the T1.4 second pass, Gate 0 line 3, the Phase 1 LIST verification, the
+`r2.py` roundtrip gate, the packet 5 handoff re-download.
+
+## The lesson, which is the reason this is an amendment and not a rewrite
+
+An audit that finds a void control must ask **what that control was asked**, not **whether the thing
+it pointed at turned out fine**. Reasoning from the second is how a void control gets laundered into
+a verified claim.
+
+This audit did exactly that, in its own closing paragraph, on its own subject matter. That is worth
+more on the record than a clean document would have been.
