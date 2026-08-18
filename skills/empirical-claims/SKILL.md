@@ -106,11 +106,23 @@ Observed, repeatedly, in production:
 Every one of those was caught by disagreement between two methods, not by inspection. None of
 them announced itself, and none of them looked like a failure at the moment it happened.
 
-### A single ordering of arms is not a control
+### A single ordering of arms is not a control - counterbalance it or wash it out
 
 When an experiment varies one factor and the arms run in sequence, **elapsed history is a
-second factor and it was not randomised.** Repeat the decisive arm after that history has
-changed. If the effect does not repeat, the factor you varied was not the cause.
+second factor and it was not randomised.** Anything with memory - a rate limiter, a cache, a
+connection pool, a warmed index, a quota - loads that memory into whichever arm runs later.
+
+**The operational rule, for every endpoint A/B in this project:**
+
+1. **Counterbalance.** Run each arm in **both positions**: A-then-B and B-then-A. Report both
+   orderings. If the effect flips with the order, the order was the cause.
+2. **Or wash out.** Idle until the shared state has recovered, and show that it recovered -
+   a baseline arm that returns to its clean value - before the next arm starts.
+3. **Report the position.** Every rate or latency figure carries *what ran before it*. A number
+   without its predecessor is not reproducible.
+4. **Hold the source constant.** Two arms from two machines are not an A/B. See below.
+5. **One repeat is the minimum.** The cost of the defence is one extra arm. Run it especially
+   when the result is the one you wanted, because that is when the sequence stops early.
 
 > **2026-08-17, T1.2.** Testing whether `/historical/markets` is rate-limited differently from
 > `/markets`. Three arms on `/historical` at up to 69 req/s: **0% rejection**. One arm on
@@ -118,16 +130,21 @@ changed. If the effect does not repeat, the factor you varied was not the cause.
 > **28.4% rejection**. One variable differed. The conclusion wrote itself, and it answered
 > exactly the question the packet had asked.
 >
-> It was wrong. Repeating the `/historical` arm gave **32.5%**, and again **44.1%**. The
-> limiter is shared and it has memory; `/historical` had simply been measured first, with the
-> bucket full. The apparent property of the endpoint was a property of the running order.
->
-> Stopping at the confirming arm would have published a false infrastructure fact backed by a
-> real, reproducible-looking measurement. Nothing about the numbers was wrong. The **design**
-> was: one ordering, no repeat.
+> It was wrong. Repeating the `/historical` arm gave **32.5%**, and again **44.1%**. The limiter
+> is shared and it has memory; `/historical` had simply been measured first, with the bucket
+> full. The apparent property of the endpoint was a property of the running order.
 
-The cost of the defence is one extra arm. Run it especially when the result is the one you
-wanted, because that is when the sequence stops early.
+> **The same day, one level deeper.** With the ordering rule applied, the arms were re-run from
+> a **different VM in a different metro**: 3,200 requests at up to 64 threads, **zero 429s**,
+> where the first machine had started rejecting after roughly 600. So the rejection curve is not
+> a property of the API either - it is a property of *(API, source, recent history)*. Having
+> stopped attributing to the endpoint what belonged to the ordering, the next available mistake
+> was to attribute to the API what belonged to the source. **Both are the same error: crediting
+> the variable you varied when an uncontrolled one moved too.**
+
+The general form is the one already stated for status codes: **a number produced by a layer you
+did not name is not a measurement of the thing you meant.** Ordering, source and warm state are
+layers.
 
 ## Part 2 — the verification gate
 
