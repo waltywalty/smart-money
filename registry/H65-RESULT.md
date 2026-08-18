@@ -4,9 +4,46 @@
 in its own commit at **`4775d76`**, sha256
 `44668cf75a08c4cfc5560f7bc4c96de2abbe1e3e1fa0c075de3065693a598fbc`, before any depth datum was read.
 
-**Verdict: CONFIRMED - the prediction landed, on branch one.** The hurdle has a size axis, it is
-**negative at every point on it**, and it worsens monotonically above 10 contracts. The 1-10 region
-is **flat**, not a called minimum.
+**Verdict: CONFIRMED on branch one, by Walton's ruling of 2026-08-18.** The ruling set the terms
+below; the draft of this entry stated the verdict without separating shape from magnitude, and that
+separation is the substance of what changed.
+
+### Shape - CONFIRMED
+
+The hurdle has a size axis. It is **negative at every one of the nine size points**, the 1-10 region
+is **flat**, it **worsens monotonically above 10 contracts**, and it is **spread-dominated**: the
+measured span across the axis is **7.23c against a fee arm bounded at 0.53c**, so the spread arm is
+**13.6x** the entire fee arm. That is branch one, and the pre-registration's justification for
+predicting it - *"a term bounded at 0.53c cannot dominate a term with no ceiling"* - is confirmed by
+the measurement rather than merely by its direction.
+
+### Magnitude at small size - NOT SEPARATED FROM ZERO
+
+**The shape is confirmed. The small-size numbers are not.** Two independent checks agree on where
+the surface becomes distinguishable from zero, and it is not at the small sizes that matter most to
+a retail-scale order:
+
+| size | mean | 95% CI | CI vs zero | LOO-series | LOO-series vs zero |
+|---|---:|---|---|---|---|
+| 1 | -3.11c | [-7.76, +1.37] | **includes 0** | [-4.73, +0.60] | **crosses 0** |
+| 2 | -2.98c | [-7.63, +1.57] | **includes 0** | [-4.59, +0.76] | **crosses 0** |
+| 5 | -2.99c | [-7.61, +1.74] | **includes 0** | [-4.67, +0.80] | **crosses 0** |
+| 10 | -3.24c | [-7.86, +1.29] | **includes 0** | [-5.05, +0.61] | **crosses 0** |
+| 25 | -3.71c | [-8.38, +0.87] | **includes 0** | [-5.59, +0.18] | **crosses 0** |
+| 50 | -4.55c | [-9.29, +0.13] | **includes 0** | [-6.53, -0.51] | excludes 0 |
+| 100 | -5.89c | [-10.73, -1.11] | excludes 0 | [-8.15, -1.81] | excludes 0 |
+| 250 | -8.40c | [-13.17, -3.56] | excludes 0 | [-10.64, -4.18] | excludes 0 |
+| 500 | -10.20c | [-14.96, -5.44] | excludes 0 | [-12.61, -6.39] | excludes 0 |
+
+**The bootstrap interval excludes zero only from 100 contracts up. Leave-one-series-out excludes it
+only from 50 up.** Below that the point estimates are negative and consistent with the rest of the
+registry, but **this study does not establish their magnitude** - it establishes that the surface
+does not improve with size, and that it becomes decisively negative once size is large enough to eat
+the book.
+
+So: **do not quote -3.11c at one contract as a measured hurdle.** Quote the shape, and quote the
+magnitude from 100 contracts upward. The small-size hurdle remains what H56/H60 measured by other
+means; H65 neither confirms nor refines it.
 
 > **Every figure in this document is a property of quiet hours on Kalshi in June 2026. It is not a
 > property of the exchange.**
@@ -99,13 +136,71 @@ families against a 7.23c spread across the whole size axis. This is why leave-on
 **crosses zero at every size up to 25 contracts**: dropping `KXCS2MAP` alone turns the pooled figure
 positive at small size.
 
-**No positive family result is reported as a finding here.** B1's branch three requires, before any
-positive result may be stated, *"(a) leave-one-series-out, (b) a depth-source replication, and (c)
-an explicit check that A1's quiet-hour restriction is not producing it."* Only (a) has been done.
-And (c) is the decisive one: **this entire study runs on admitted shards, which A1 established are
-the quiet hours** - so a positive family figure arrives through exactly the channel A1 showed to be
-selected. It is recorded as an observation, not as a result, and it is not revivable without the
-full branch-three treatment.
+### `KXATPCHALLENGERMATCH`: OBSERVED, NOT REPORTED - pending branch three
+
+It reads **+3.42c at one contract and +3.13c at 100**, on 36 events. Walton's ruling records it as
+**observed, not reported.** It is not a result, it is not a lead, and it does not enter any figure,
+summary or downstream study in that character.
+
+B1 fixed in advance what would be required before any positive result may be stated:
+
+> *"Do not report without (a) leave-one-series-out, (b) a depth-source replication, and (c) an
+> explicit check that A1's quiet-hour restriction is not producing it."*
+
+| requirement | status |
+|---|---|
+| (a) leave-one-series-out | **done** - and it is what exposes the dispersion above |
+| (b) depth-source replication | **not done** - `archive.pmxt.dev` is the only Kalshi book source that exists, and it stopped at `2026-06-11T03`. There is no second source to replicate against |
+| (c) quiet-hour check | **not done, and it is the decisive one** |
+
+On (c): **this entire study runs on admitted shards, and A1 established that admitted shards are the
+quiet hours** - trading 1.45-1.80x less actively than the hours excluded, pearson -0.631, LOO
+[-0.698, -0.594]. A1 also stated the direction of the resulting bias in advance: *"quiet hours have
+thinner resting size but also less competition for it"*, so a depth figure from healthy shards
+**understates how hard it is to get filled when it matters**. A positive family figure is therefore
+arriving through precisely the channel already shown to be selected, in the direction that flatters
+it. That is the expected artefact, not a surprise.
+
+**Because (b) cannot currently be satisfied at all, this observation is not merely unreported - it
+is unreportable with the data that exists.** It is recorded here so it is not rediscovered as new.
+
+## Family dispersion exceeds both measured axes of the hurdle - a finding about the POOLED hurdle, not about H65
+
+**Walton's ruling gives this its own line, and it is not a caveat on this study. It is a statement
+about every pooled hurdle figure this registry has ever quoted.**
+
+At one contract, on a single horizon, in a single week, the five families run:
+
+| family | mean P&L @1 contract |
+|---|---:|
+| `KXATPCHALLENGERMATCH` | **+3.42c** |
+| `KXCS2GAME` | +0.20c |
+| `KXBNB15M` | -0.13c |
+| `KXATPSETWINNER` | -1.08c |
+| `KXCS2MAP` | **-15.26c** |
+
+**Span: 18.68c.** Set that against the two axes the registry has spent two packets measuring:
+
+| source of variation | measured span |
+|---|---:|
+| **family**, at one size and one horizon | **18.68c** |
+| size, 1 to 500 contracts (H65) | 7.23c |
+| horizon, 24h to 10m (H60) | 1.87c |
+| **size and horizon combined** | **9.10c** |
+
+**Which family is in the pool moves the hurdle more than twice as much as both measured axes
+together (2.05x).** Every pooled hurdle figure in this registry - H56's -4.39c, H60's horizon curve,
+this surface - is therefore **weighted by its family mix at least as much as by the variable it
+names**. H56's own false positive #7 was this same shape one level down: a -29.7pp calibration gap
+where 62 of 89 markets were one series.
+
+**The operational consequence:** a hurdle quoted without its family composition is not a hurdle, in
+the same way that a price without size is not a price. Any future cost figure in this project should
+carry its composition beside it, and any comparison between two hurdle figures should first check
+whether it is comparing families rather than the axis it claims to compare.
+
+This is not a scope limit on H65. **It is a general property of the pooled hurdle that H65 happened
+to be the study large enough to expose.**
 
 ## Series composition of every size point
 
