@@ -169,6 +169,26 @@ Ask of every finding: *what would have to be true for this to be right, and did 
 - **Lead with what would overturn it**, not with the number.
 - Give the **interval, the n, and the unit that n counts**.
 - **Depth beside every price.** A price without size is not a price.
+- **Composition beside every pooled figure, not just every subgroup.** A pooled number is weighted
+  by its mix at least as much as by the variable it names.
+
+  > **Worked example, 2026-08-18.** A cost surface was measured across a 500x size range (span
+  > 7.23c) and, in an earlier study, across a 24h-to-10m horizon range (span 1.87c). The five
+  > product families in the pool spanned **18.68c at a single size and a single horizon** - **2.05x
+  > both measured axes combined**. Which families were in the pool moved the answer more than either
+  > variable being studied. The same shape had already appeared one level down, where a -29.7pp
+  > calibration gap turned out to be 62 of 89 markets in one series.
+
+  **A cost quoted without its composition is not a cost**, in the same way that a price without size
+  is not a price. Before comparing two pooled figures, check whether you are comparing their mixes
+  rather than the axis you named.
+
+- **Separate the shape from the magnitude, and say which one you established.** A study can confirm
+  that a curve is monotone, negative and dominated by one term while failing to separate its small-end
+  values from zero. Report both verdicts. In the worked example above the interval excluded zero only
+  from the 100-unit point up, and leave-one-group-out only from 50 up - so the shape was a finding and
+  the small-end numbers were not.
+
 - **Composition of every subgroup you highlight**, unprompted - a pooled figure weighted by
   collector health rather than by anything about the market is not a market figure.
 - **Scope limits stated as scope limits**, in the sentence with the number: *this is a property of
