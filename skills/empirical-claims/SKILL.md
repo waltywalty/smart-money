@@ -54,25 +54,38 @@ Observed, repeatedly, in production:
    exhaust the socket pool and the client hangs *below* the timeout layer, alive and making no
    progress. Use `with urlopen(...) as r:` or a pooled session. Add a heartbeat file and treat a stale
    heartbeat as a stall, because this failure is silent by construction.
-10. **Probe object stores with a ranged `GET`, never `HEAD`, and always include an impossible
-    control key.** A coverage sweep built on `HEAD` reported an archive complete through August
-    that ends in June. **Corrected 2026-08-17 — right rule, wrong mechanism.** This said `HEAD`
-    returns `200` for keys that do not exist. It does not. Re-measured with the status read at the
-    resource layer: `HEAD` on the impossible 1999 control returns **404**, ranged `GET` returns
-    **404**, and on a real key they return **200** and **206**. The original `200` was
-    `HTTP/1.1 200 Connection Established` — the CONNECT tunnel's status, printed first by
-    `curl -I` and by `curl -D -` for **every** request through the VM's proxy, HEAD and GET alike
-    (see rule 11). **Keep the rule**: ranged `GET` gives 206-vs-404, a sharper distinction than
-    HEAD's 200-vs-404, and it survives proxies that mangle HEAD. Only the reason was wrong.
-11. **Report status codes, never booleans, and send an explicit User-Agent.** A bare
-    `python-urllib` UA is blocked at some edges; the resulting `HTTPError` was mapped by a
-    `try/except` to "file absent", and the sweep reported everything missing — including files
-    already proven present. A 403 must never be readable as a 404.
-    **And report the status code *of the resource*, knowing which layer produced it.** Through a
-    CONNECT proxy the first header line is the tunnel's `200`, not the object's. A sweep that read
-    it with `head -1` reported `http=200` for six keys that do not exist; `-w '%{http_code}'`
-    returns their real `404`. A code read from the wrong layer is worse than a boolean, because it
-    looks like evidence.
+10. **A status code is produced by a layer, and it may not be the resource's.**
+    Five instances, all silent, all plausible: a summarising fetch layer inventing
+    values; `curl -I` through a proxy returning the CONNECT tunnel's 200 for keys
+    that do not exist; urllib failing TLS on the proxy leg, surfacing as an error a
+    `try/except` maps to "absent"; an unanswered `Expect: 100-continue` returning
+    `http=100` after 120 seconds and reading as success; and an unauthenticated
+    control returning 400 identically to a real key, certifying nothing.
+
+    Therefore: read the status of the *resource*, at the correct layer. Send
+    `-H 'Expect:'`. Treat any 1xx as not-success. And **a control must hold the
+    same access level as the measurement** - otherwise it cannot distinguish
+    absent from forbidden, and it is not a control.
+
+    **A control that must fail is only half of one. An absence claim also needs a
+    probe that must succeed, in the same pass.** When the finding *is* absence, the
+    impossible key and the measurement return the same status, and the pair cannot
+    tell "this object is gone" from "everything is 404 right now". Added by the A0
+    audit, 2026-08-18: this project passed that test everywhere, but by habit rather
+    than by rule - every archive-absence sweep happened to carry known-present keys
+    alongside. Habit is not a control either. Probe all three: impossible, known
+    present, and the thing in question.
+
+    **Corollary, formerly rule 10.** Probe object stores with a **ranged GET, never
+    HEAD** - not because HEAD lies (re-measured at the resource layer it returns a
+    correct 404) but because ranged GET answers **206 against 404**, a sharper
+    distinction than 200-against-404, and it survives proxies that mangle HEAD.
+
+11. *Folded into rule 10.* An explicit User-Agent remains mandatory: a bare
+    `python-urllib` UA is blocked at some edges, and the resulting exception was
+    once mapped by a `try/except` to "file absent", reporting a whole archive
+    missing. **A 403 must never be readable as a 404.**
+
 12. **Verify a write by reading it back through a different path.** Rendered HTML, CDN-fronted
     pages and the writing process itself are all the same instrument as each other in the ways
     that matter. Read back through the API, unauthenticated where the resource is public. A count
@@ -84,24 +97,8 @@ Observed, repeatedly, in production:
     `series_ticker=` is the reverse. An ignored filter returns a full, plausible,
     wrong result set - six different crypto markets once arrived reporting the
     same close time. Record the verification per endpoint, not per parameter.
-14. **The general form of rules 10-13: a status, a count or a body may have been
-    produced by a layer other than the resource. Name the layer before you believe
-    the number.** Four instances, all in this project, all silent, all in the
-    direction of a plausible wrong answer:
-
-    | what was read | what produced it | how it presented |
-    |---|---|---|
-    | a quote of `0.29/0.30` where the book said `0.05/0.06` | the summarising fetch layer | a confident, specific, invented value |
-    | `http=200` for six keys that do not exist | the **CONNECT tunnel** (`HTTP/1.1 200 Connection Established`) | `curl -D - \| head -1` on every request, present or absent |
-    | "file absent" across a whole sweep | a **TLS failure on the proxy leg** - some VMs export `HTTPS_PROXY=https://…`, which `urllib` cannot use | a generic exception a `try/except` maps to absence |
-    | `http=100` after 120 s on a 16 MB PUT | an **unanswered `Expect: 100-continue`** | an interim 1xx returned as if it were final |
-
-    The defences are the same each time and they are cheap: **read the status of the
-    resource specifically** (`-w '%{http_code}'`, not the first header line); **an
-    interim 1xx is never a success**; **an exception is not evidence of absence**
-    until you have shown the request reached the resource; and **a control that
-    must fail, run in the same pass**, because every one of these was caught by a
-    control disagreeing and none by inspection.
+14. *Superseded by rule 10*, which states the general form with five instances
+    rather than four. Kept as a number so existing references do not dangle.
 
 Every one of those was caught by disagreement between two methods, not by inspection. None of
 them announced itself, and none of them looked like a failure at the moment it happened.
