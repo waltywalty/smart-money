@@ -193,3 +193,76 @@ does not.
    stop, not a caveat.
 3. **Then, and only then, arm the population and wait.** The next CPI or FOMC release is the
    natural first test, because the instant is known.
+
+---
+
+## Amendment, 2026-08-20 - the finding of the packet, promoted out of the parking lot
+
+P23 was filed as a parked item. It is not one. **It is the most important thing in this
+packet** and belongs here, where the packet's conclusions live.
+
+### A probe built to stop a dead url looking like a quiet source produced exactly that confusion on its first automated run
+
+B4 exists for one reason: **a url that quietly stops resolving is indistinguishable, in the
+detection data, from a source that never publishes.** Left unwatched, rot deflates every B3
+rate without touching a number.
+
+Run #1, research VM: **125 of 125 resolving.** Run #2, GitHub CI runner, 46 minutes later:
+**119.** Six urls failed. **All six return 200 or 206 from the VM, minutes after CI recorded
+them dead:**
+
+| url | from CI | from the VM | markets |
+|---|---|---|---:|
+| `bloomberg.com/billionaires/` | **403** | 206 | 52 |
+| `kenpom.com/index.php` | **403** | 200 | 43 |
+| `hitsdailydouble.com/charts/hits-top-50` | **0** | 200 | 3 |
+| `defillama.com/stablecoins` | **403** | 200 | 1 |
+| `gov.il/.../central-elections-committee/...` | **403** | 206 | 1 |
+| `hitsdailydouble.com/sales_plus_streaming` | **0** | 200 | 1 |
+
+Shared runner IPs are refused by anti-bot layers that do not refuse the Kernel VM.
+
+**A persistent 403 is exactly what real rot looks like.** The instrument built to separate
+absence from failure produced, on its first unattended run, the precise confusion it was
+built to prevent - one layer up from where it was looking. Only the VM baseline 46 minutes
+earlier caught it. Without that, six urls enter the record as decayed and stay there.
+
+### Why this is a finding and not an incident
+
+It is the **ninth** entry in this packet's wrong-before-right list, and the **third where
+the fault was inside something built to catch faults** - after the stale write-verification
+and the decode swallow. That is not a run of bad luck. It is a property of building
+instruments.
+
+> **An instrument that checks for a failure mode is not exempt from that failure mode, and
+> is often the likeliest place to find it** - because it is the component nobody checks,
+> having been built as the check. Every fault-catcher needs its own control, at its own
+> level, from somewhere the instrument cannot reach.
+
+The three share a shape the other six do not: **each produced a clean-looking result.** An
+inert cursor returned 200 and rows. A stale read returned the file. A blocked fetch returned
+a status code. None threw, none logged an error, and all three would have passed any review
+that read the output instead of controlling the instrument. **That is the argument for
+controls over inspection, and it now rests on nine instances rather than on an assertion.**
+
+### What was done about it
+
+Every row now carries **both** vantage readings, **how stale** the other is, and the refusal
+headers (`server`, `cf-ray`, `retry-after`) on any non-2xx - because an IP-reputation bounce
+and a blanket datacenter ban are identical as status codes and behave completely differently
+over time. **A url is reported DECAYED only when it fails from both vantages**, which is the
+standing cross-check rule applied to the instrument rather than to a finding.
+
+The per-run state lives inside `POPULATION-DECAY.md` itself as a fenced block, because the
+CI workflow commits only that file. A separate state file would be written by CI, never
+committed, and the comparison would silently never populate - the same class of failure
+again, avoided only by having just met it twice.
+
+### Open, and deliberately not decided
+
+**Where B3 runs is not decided and will not be until there is a week of data.** The question
+is not whether CI is blind to six urls; it is whether that blindness is **stable**. A stable
+exclusion is a scoping decision - 101 markets, name them, move on. An unstable one, varying
+by run or by which runner IP the job lands on, means **CI cannot be trusted for detection at
+all**, which is a different answer. One CI reading cannot tell the two apart. The cron fires
+daily; decide at seven.
