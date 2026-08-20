@@ -11,8 +11,8 @@ import json,subprocess,hashlib,collections,random,urllib.parse as up
 from concurrent.futures import ThreadPoolExecutor
 UA='smart-money-research/1.0 (+B2 source-layer study; contact rogerlgk@gmail.com)'
 def body(u,t=25):
-    r=subprocess.run(['curl','-sS','-A',UA,'-H','Expect:','-L','--max-redirs','5','--max-time',str(t),'-w',chr(10)+'%{http_code}',u],capture_output=True,text=True,timeout=40)
-    b,_,c=r.stdout.rpartition(chr(10))
+    r=subprocess.run(['curl','-sS','-A',UA,'-H','Expect:','-L','--max-redirs','5','--max-time',str(t),'-w',chr(10)+'%{http_code}',u],capture_output=True,timeout=40)
+    b,_,c=r.stdout.decode('utf-8','replace').rpartition(chr(10))
     return (int(c) if c.isdigit() else -1), b
 imp={}; tgt={}
 for fn in ('b1/v2/reach.jsonl','b1/v2/pm_reach.jsonl'):
