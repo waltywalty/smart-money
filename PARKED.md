@@ -1,3 +1,11 @@
+# B4 - population decay probe.
+#
+# INSTALLED 2026-08-20 (134b4c3), by hand.  The credential this project uses CANNOT write
+# this path - see PARKED.md P18: the PAT is refused on any workflow path by every API
+# route, and cannot dispatch a run.  So every future change to THIS FILE needs the same
+# manual move; a session can change programmes/latency/b4/population_probe.py freely, but
+# not this.  Run #1 was green and committed e4e37b7 as github-actions[bot].
+
 Ranked by how much each blocks.
 
 ---
