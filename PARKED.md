@@ -1,10 +1,3 @@
-# PARKED
-
-Items that terminate in a **decision**, a **verdict**, a **revival** or a **resource
-commitment**. Under the packet 3 autonomy contract these are not mine to make during an
-unsupervised run. Each entry is a completed piece of work: the evidence is gathered and the
-options are stated. Only the ruling is missing.
-
 Ranked by how much each blocks.
 
 ---
