@@ -632,3 +632,38 @@ with the cron's nominal time rather than the observed time will be wrong by that
 21h58m - the cutoff did not advance: still `2026-06-19`, floor still `2026-06-12T04:59`.
 Consistent with the once-daily step recorded earlier, and not evidence for it, since the
 window is under 24 hours. **The gap has held at exactly 7 days across all three rows.**
+
+## Amendment, 2026-08-20 - THE WRITE-VERIFICATION PATH WAS ITSELF UNRELIABLE
+
+Rule 12 of the skill says **verify a write by reading it back through a different path**. This
+project's different path was `raw.githubusercontent.com`. **It is CDN-cached and it cannot be
+forced to refresh.**
+
+Caught on `skills/empirical-claims/SKILL.md`: the Contents API reported `200 updated`, 17,761
+bytes, and the read-back returned **15,554 bytes - the exact pre-edit size**. The new section was
+absent from the read-back and present in the commit.
+
+| route | bytes returned | correct? |
+|---|---:|---|
+| `raw.githubusercontent.com/.../SKILL.md` | 15,554 | **stale** |
+| the same with `?cb=<timestamp>` | 15,554 | **stale - query string ignored** |
+| the same with `Cache-Control: no-cache` and `Pragma: no-cache` | 15,554 | **stale - request headers ignored** |
+| Contents API with `Accept: application/vnd.github.raw` | 17,761 | correct |
+| **Git Data API `git/blobs/{sha}`** | **17,761** | **correct**, sha256 matched local |
+
+Impossible-blob control: `git/blobs/000...0` -> **404**, so the pair separates.
+
+**Why this matters more than a stale read.** The mechanism is that fetching a file *before* editing
+it populates the CDN with the old copy - which is exactly the amend-never-edit workflow this
+project uses on every sealed document. So the verification was least reliable precisely where it
+was most needed, and a read-back that *matched* could have been a cache miss rather than a check.
+
+**The corrected path is the Git Data API blob**: resolve the path to a blob sha through the
+Contents API, fetch `git/blobs/{sha}`, base64-decode, compare sha256 against the local file. It is
+a different API family from the Contents PUT that wrote the file, it is not CDN-fronted, and it
+carries a clean impossible-key control. `lib/verify_blob.py` does this.
+
+**Every write made on 2026-08-20 was re-verified through the blob route after the discovery** -
+`PARKED.md`, `docs/INFRA.md`, `programmes/latency/B2-PREP.md`, `skills/empirical-claims/SKILL.md`,
+`b2/data/change.jsonl`, `b2/strata.py` - all six byte-identical. The earlier raw-based checks
+happened to be right. The instrument was still wrong.
