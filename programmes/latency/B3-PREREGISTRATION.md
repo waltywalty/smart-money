@@ -228,3 +228,54 @@ interest, split SCHEDULED 47 / UNSCHEDULED 39 / UNKNOWN 39, with
 inside UNSCHEDULED.
 
 **Bootstrap seed `20260820`. 10,000 resamples. Unit of observation: THE EVENT.**
+
+---
+
+## Amendment 1, 2026-08-20, hours after sealing. A decode fault excluded seven sources.
+
+Sections 2 through 8 are unchanged and the sealed population stands at **125 urls, 5,274
+markets, $70,790,897**. This amendment corrects the *reason* seven urls are absent, which
+was wrong, and records why the population is not being re-derived anyway.
+
+**The fault.** The B2 collectors captured response bodies with `subprocess.run(...,
+text=True)`. A gzip or PDF body raises `UnicodeDecodeError`, the surrounding `except`
+swallowed it, and the url was recorded as **code -1 - unreachable**. Caught in B4 when
+`weather.com/kalshi` logged `-1` inside the probe and returned `206` in 0.3s when fetched
+alone. The failing byte was `0x8b` at position 1 - a gzip magic byte.
+
+**A source that answered correctly was recorded as dead.** The correct status for those
+urls is **not measured**, which is neither "unstable" nor "unreachable".
+
+**What it excluded, and this is the part that matters more than the count:**
+
+| url | markets | open interest |
+|---|---:|---:|
+| `dol.gov/ui/data.pdf` | 11 | $15,322 |
+| `federalreserve.gov/releases/g17/Current/g17.pdf` | 9 | $1,270 |
+| `bls.gov/sae/tables/annual-average/table-1-...` | 4 | $1,335 |
+| `eia.gov/outlooks/steo/tables/pdf/10btab.pdf` | 4 | $0 |
+| `nass.usda.gov/Publications/Todays_Reports/...` | 4 | $0 |
+| `nass.usda.gov/Statistics_by_State/Wisconsin/...` | 4 | $1,025 |
+| `justice.gov/opa/media/1422326/dl` | 1 | $0 |
+| **total** | **37 (+0.7%)** | **$18,952 (+0.03%)** |
+
+**Every one is a PDF or a binary download.** The fault did not exclude a random sample - it
+systematically excluded the **machine-readable** sources, which are the highest-quality
+feeds in a corpus B1 found to be essentially all HTML. Today that cost 0.03% of the open
+interest. In a corpus with more feeds it would have removed the best part of the population
+and left a clean-looking result.
+
+**The population is not re-derived**, because 37 markets and $18,952 do not move any figure
+in this document and re-deriving a sealed population for an immaterial change is worse than
+leaving it: it breaks the seal for nothing. **The seven are recorded here as eligible but
+unmeasured**, and if a later amendment widens the population for any other reason they are
+admitted first without further argument.
+
+**Fixed** in `b2/change.py`, `b2/hash_control.py` and `b4/population_probe.py`: bodies are
+captured as bytes and decoded with `errors='replace'`. **No collector in this programme may
+use `text=True` on a response body.**
+
+**What this says about the seal.** Sealing before the instrument was fully shaken out was
+still correct - the fault was found *because* the population was frozen and then probed
+against, which is what B4 is for. A pre-registration that waits for a perfect instrument
+never gets written.
