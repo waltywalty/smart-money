@@ -689,3 +689,68 @@ at exactly 7 days across all three rows.**
 
 **Still parked, and still the reason `registry/retention/` sits at the repo root:** the
 PAT cannot write `.github/workflows/` by any API, nor dispatch a run. That is unchanged.
+
+### P18 - amendment, 2026-08-20. The B4 probe is installed and running. The constraint is unchanged.
+
+Walton moved `population-probe.yml` into `.github/workflows/` by hand (`134b4c3`) and
+dispatched it. **Run #1 green in 1m21s, and it committed: `e4e37b7`, author and committer
+`github-actions[bot]`, `2026-08-20T08:22:50Z`.** Verified through the commits API rather
+than the file it wrote; impossible-sha control **422**.
+
+**P18 itself is unchanged.** The credential still cannot write `.github/workflows/` by any
+API route and still cannot dispatch. **Every future change to a workflow file needs the same
+manual move.** `programmes/latency/b4/population_probe.py` is freely writable and is where
+logic changes belong; the YAML is not.
+
+**Two tidy-ups from the install:**
+
+1. **The staged mirror is deleted.** `programmes/latency/b4/population-probe.yml` was a
+   second copy of a file that is now live. Two copies of a workflow drift, and the one an
+   agent can edit is the one that does nothing. The live copy is the only copy.
+2. **The installed file's header is stale and needs a hand.** Lines 1-7 still read
+   `STAGED, NOT INSTALLED` - true of the original, false of the running one, and a future
+   session reading it will be told the probe is inert while it is committing daily.
+   **The correct replacement, for whoever can write that path:**
+
+```
+# B4 - population decay probe.
+#
+# INSTALLED 2026-08-20 (134b4c3), by hand.  The credential this project uses CANNOT write
+# this path - see PARKED.md P18: the PAT is refused on any workflow path by every API
+# route, and cannot dispatch a run.  So every future change to THIS FILE needs the same
+# manual move; a session can change programmes/latency/b4/population_probe.py freely, but
+# not this.  Run #1 was green and committed e4e37b7 as github-actions[bot].
+```
+
+## P23 - the decay probe's first automated run produced a false decay signal
+
+**Run #1 from the research VM: 125 of 125 resolving. Run #2 from the GitHub runner, 46
+minutes later: 119.** Six urls "failed". **All six return 200 or 206 from the VM, minutes
+after the CI run recorded them dead:**
+
+| url | from CI | from the VM | markets |
+|---|---|---|---:|
+| `bloomberg.com/billionaires/` | **403** | 206 | 52 |
+| `kenpom.com/index.php` | **403** | 200 | 43 |
+| `hitsdailydouble.com/charts/hits-top-50` | **0** | 200 | 3 |
+| `defillama.com/stablecoins` | **403** | 200 | 1 |
+| `gov.il/.../central-elections-committee/...` | **403** | 206 | 1 |
+| `hitsdailydouble.com/sales_plus_streaming` | **0** | 200 | 1 |
+
+Shared GitHub runner IPs are refused by anti-bot layers that do not refuse the Kernel VM.
+**This is the packet-5 finding arriving somewhere new:** the rejection curve is a property
+of *(endpoint, source, recent history)*, and here the source is the vantage.
+
+**Why it matters more than 101 markets.** A persistent 403 is *exactly what real rot looks
+like*. The probe was built because a url that quietly 404s is indistinguishable from a
+source that never publishes - and on its first automated run it produced precisely that
+confusion, one layer up. Without the VM baseline 46 minutes earlier, six urls would have
+entered the record as decayed and stayed there.
+
+**Fixed:** every row now records the vantage it was measured from, rows are comparable
+**only within a vantage**, and **a url counts as decayed only when it fails from both** -
+which is the standing cross-check rule applied to the probe rather than to a finding.
+
+**Still open:** the CI vantage cannot see 101 markets' worth of sources at all. If B3 ever
+runs from CI rather than a VM, those markets are invisible to it, and that is a property of
+where the code runs rather than of the market. **Not yet decided where B3 will run.**
