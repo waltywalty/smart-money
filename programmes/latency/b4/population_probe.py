@@ -26,6 +26,12 @@ P=os.path.join(ROOT,'programmes/latency/b3/population.json')
 S=os.path.join(ROOT,'programmes/latency/b2/data/strata_volatility.json')
 LOG=os.path.join(ROOT,'programmes/latency/b4/POPULATION-DECAY.md')
 IMP='/__b4_impossible_control__'
+# WHERE the probe ran from is part of the measurement, not metadata.  Run #1 from CI
+# reported 6 of 125 unreachable that returned 200/206 from the research VM minutes later
+# - shared runner IPs are refused by anti-bot layers that do not refuse the VM.  A
+# persistent 403 is exactly what real rot looks like, so rows from different vantages are
+# NOT comparable and a url is only decayed if it fails from BOTH.
+VANTAGE='ci' if os.environ.get('GITHUB_ACTIONS')=='true' else 'vm'
 def base(u):
     p=up.urlparse(u); return p.scheme+'://'+p.netloc
 def fetch(u,t=25,tries=3):
@@ -73,15 +79,15 @@ with open(LOG,'a') as f:
         f.write('One row per run, appended, never edited. `resolving` requires 2xx **and** a\n')
         f.write('separating control on that host. A url that quietly 404s is indistinguishable\n')
         f.write('from a source that never publishes, so the decay is dated rather than assumed.\n\n')
-        f.write('| run (UTC) | urls | resolving | not 2xx | 2xx, control void | markets resolving | OI resolving |\n')
-        f.write('|---|---:|---:|---:|---:|---:|---:|\n')
-    f.write('| %s | %d | **%d** | %d | %d | %d | $%s |\n'%(stamp,len(urls),len(ok),len(not2xx),len(void),mk_ok,'{:,.0f}'.format(oi_ok)))
+        f.write('| run (UTC) | from | urls | resolving | not 2xx | 2xx, control void | markets resolving | OI resolving |\n')
+        f.write('|---|---|---:|---:|---:|---:|---:|---:|\n')
+    f.write('| %s | %s | %d | **%d** | %d | %d | %d | $%s |\n'%(stamp,VANTAGE,len(urls),len(ok),len(not2xx),len(void),mk_ok,'{:,.0f}'.format(oi_ok)))
     if not2xx:
-        f.write('\n<details><summary>%s - not 2xx (%d)</summary>\n\n'%(stamp,len(not2xx)))
+        f.write('\n<details><summary>%s [%s] - not 2xx (%d)</summary>\n\n'%(stamp,VANTAGE,len(not2xx)))
         for u in sorted(not2xx,key=lambda u:-meta.get(u,{}).get('oi',0)):
             f.write('- `%d` %s  (%d markets, $%s)\n'%(res[u]['code'],u,meta.get(u,{}).get('markets',0),'{:,.0f}'.format(meta.get(u,{}).get('oi',0.0))))
         f.write('\n</details>\n')
-print('%s  urls %d  resolving %d  not2xx %d  control-void %d'%(stamp,len(urls),len(ok),len(not2xx),len(void)))
+print('%s [%s]  urls %d  resolving %d  not2xx %d  control-void %d'%(stamp,VANTAGE,len(urls),len(ok),len(not2xx),len(void)))
 print('  markets resolving %d  open interest $%s'%(mk_ok,'{:,.0f}'.format(oi_ok)))
 print('  at risk: not-2xx %d markets $%s ; control-void %d markets $%s'%(mk_bad,'{:,.0f}'.format(oi_bad),mk_void,'{:,.0f}'.format(oi_void)))
 print('  control separated on %d of %d hosts'%(sum(1 for h in hosts if ctl[h][0] in (404,410)),len(hosts)))
