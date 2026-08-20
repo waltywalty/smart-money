@@ -512,3 +512,70 @@ summary.
 So the arm that carries 6x the per-host load - the many-urls-per-host case, which is the
 real risk for a host like `wunderground` with 36 in-scope urls - absorbed **1 request every
 2.1 seconds for 30 minutes** without a single 429 and with fetch times flat to -2.4%.
+
+## 13. Is the White House EOP page contested?  I said probably. It is not, and the test that showed it is the only unconfounded one available.
+
+**The hypothesis.** The stratum split rests on a competitive claim - nobody refreshes the
+BLS page. A White House personnel page during a shake-up is one of the most-refreshed
+pages on the internet. If the EOP page is contested, that is a stratum-ASSIGNMENT error
+rather than a weighting problem, and the genuinely uncontested money is $7.8M rather than
+$50.9M. That would change the business, so it was worth an hour.
+
+**Proxy:** quoted spread and depth within 5c from the live public book (`orderbook_fp`).
+Tight and deep means someone is competing to quote. *It measures competition to QUOTE. A
+market can be tightly quoted by patient market makers with nobody racing the source, so a
+wide book is decent evidence of an uncontested market and a tight book is suggestive, not
+conclusive, about a latency race.*
+
+**Control note.** An impossible ticker's orderbook returns **HTTP 200** with
+`{"orderbook_fp":{"no_dollars":[],"yes_dollars":[]}}`. The status control is **void** -
+200 against 200 - and the **content control separates**, which is the P21 pattern again.
+The measurement rejects empty books, so it was safe; the control is content-based and is
+reported as such.
+
+**First cut, and it looked emphatic:**
+
+| group | n | median spread | median depth 5c | median OI |
+|---|---:|---:|---:|---:|
+| EOP | 32 | **0.20c** | 404,820 | 1,548,106 |
+| other unscheduled, quiet | 60 | 7.20c | 400 | 56 |
+| scheduled, quiet | 60 | 5.00c | 1,023 | 785 |
+
+36x tighter, 1,000x deeper. **And it is confounded, fatally.** The largest non-EOP market
+in the whole in-scope population holds **16,440 contracts**; the EOP median is
+**1,548,106**. Two to three orders of magnitude apart, with **no overlap at all**, so the
+groups cannot be size-matched - there is nothing to match against. By this project's own
+rule, a control not matched on the confounder is not a control, and size is the confounder.
+
+**The only unconfounded test is within the EOP group itself.** If small EOP markets are
+also tight, tightness tracks the source; if they are not, it tracks size.
+
+| EOP quartile by open interest | n | median OI | median spread |
+|---|---:|---:|---:|
+| smallest | 8 | 117,618 | 2.00c |
+| 2nd | 8 | 1,285,776 | 0.10c |
+| 3rd | 8 | 1,666,786 | 0.20c |
+| largest | 8 | 2,129,601 | 0.30c |
+
+Within EOP, spread against log10(open interest): **r = -0.94, n = 32.**
+
+And at matched size:
+
+| markets under 20,000 contracts | n | median spread |
+|---|---:|---:|
+| **EOP** | **4** | **6.00c** |
+| other unscheduled | 60 | 7.20c |
+| scheduled | 60 | 5.00c |
+
+**A small EOP market is quoted as loosely as a small market anywhere else.** The tight
+book is explained by size, not by the source being contested.
+
+> **The hypothesis is refuted. The EOP page stays in UNSCHEDULED, there is no
+> stratum-assignment error, and the concentration remains a weighting problem exactly as
+> first framed.**
+
+**How much weight the refutation carries:** the matched cell is **n = 4**. Four markets and
+a correlation are not a lot. The correlation is strong and the direction is unambiguous, but
+this is a refutation at the level of "the evidence for contestedness evaporated when the
+confounder was controlled", not "contestedness has been ruled out". If B3 later shows EOP
+events behaving differently from their stratum-mates, this is the first thing to revisit.
