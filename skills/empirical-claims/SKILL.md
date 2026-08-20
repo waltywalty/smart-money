@@ -178,6 +178,37 @@ A corollary worth stating separately, because it is cheap to get wrong: **a cont
 is only half a control.** Pair it with a positive control that must succeed, or a uniformly broken
 instrument reads as a clean negative.
 
+### An instrument that checks for a failure mode is not exempt from that failure mode
+
+And it is often the likeliest place to find it, **because it is the component nobody checks -
+having been built as the check.**
+
+Three instances in one packet, all in tooling written to catch faults:
+
+| the instrument | what it was built to catch | how it failed |
+|---|---|---|
+| the write-verification read-back | a write that did not land | read through a CDN that served a stale copy - *intermittently*, so it was usually right |
+| the body-capturing fetch | a source that stopped answering | `text=True` on a gzip body raised, the `except` recorded a working source as unreachable |
+| the url-decay probe | a dead url looking like a quiet source | its first unattended run reported six live urls dead, because it ran from a vantage they refuse |
+
+> **2026-08-20.** A probe built for exactly one purpose - to stop a url that quietly stops
+> resolving from being mistaken for a source that never publishes - produced that precise
+> confusion on its first automated run, one layer up from where it was looking. Six urls
+> read as `403` from a shared CI runner and `200`/`206` from a VM minutes later. **A
+> persistent 403 is what real rot looks like.** Only an unrelated baseline taken 46 minutes
+> earlier caught it.
+
+**What the three have in common, and the other faults in that packet did not: each produced
+a clean-looking result.** An inert cursor returned 200 and rows. A stale read returned the
+file. A refused fetch returned a status code. **None threw. None logged an error.** All three
+would have passed any review that read the output instead of controlling the instrument.
+
+**The rule:** every fault-catcher needs its own control, at its own level, drawn from
+somewhere the instrument cannot reach - a second vantage, a second API family, a second
+encoding path. **A check you have not controlled is a claim, not a check.** And prefer the
+failure that is loud: an instrument that crashes is cheaper than one that returns a plausible
+number.
+
 ## Part 2 — the verification gate
 
 Run every candidate finding through these before it is reported. Each one caught a real false
