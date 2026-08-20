@@ -143,6 +143,37 @@ The general form is the one already stated for status codes: **a number produced
 did not name is not a measurement of the thing you meant.** Ordering, source and warm state are
 layers.
 
+### A control not matched on the confounder is not a control
+
+The ordering rule above is one instance of a wider one. **A control has to be matched on the
+thing that could produce the effect by itself.** Matched on anything else, it will happily
+certify a difference that the confounder produced, and it will look like diligence while doing it.
+
+Three instances in this project, all the same shape:
+
+| what was compared | the unmatched confounder | what it certified |
+|---|---|---|
+| `/historical` arms against a `/markets` arm | running order - the limiter has memory | an endpoint property that was a property of the sequence |
+| arms from two VMs in two metros | source IP - the bucket is per-source | an API property that was a property of the source |
+| all change-detection targets against all impossible-path controls | **host** - an impossible path only has a body on catch-all hosts | a page-level signal that was host-level churn |
+
+> **2026-08-20, B2.** 425 in-scope resolution pages fetched four times over an hour with nothing
+> happening, each paired with an impossible path on the same host. Pooled, targets changed 33.9%
+> against controls at 24.2% - a **+9.6 pp lift**, which reads as "a change on a real page means
+> something". Paired **on the same host**, the lift went to **-4.7 pp** and target and control
+> agreed on 93% of pairs. The control set was 33 app-shell hosts and the target set was 369 pages
+> of every kind; the comparison was measuring hosts, not pages. CDN headers, timestamps and
+> session IDs churn at the host level and land in both arms.
+
+**The operational test, before you accept any control:** name the mechanism that could produce the
+effect without your hypothesis being true, then check that the control shares it. Same host, same
+source, same access level, same position in the sequence, same warm state. **If the control differs
+from the treatment in more than the one thing you are testing, it is a second treatment.**
+
+A corollary worth stating separately, because it is cheap to get wrong: **a control that must fail
+is only half a control.** Pair it with a positive control that must succeed, or a uniformly broken
+instrument reads as a clean negative.
+
 ## Part 2 — the verification gate
 
 Run every candidate finding through these before it is reported. Each one caught a real false
