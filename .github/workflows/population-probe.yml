@@ -1,0 +1,30 @@
+# B4 - population decay probe.
+#
+# STAGED, NOT INSTALLED.  This file cannot be committed to .github/workflows/ with the
+# credential this project uses - see PARKED.md P18: the PAT is refused on any workflow
+# path by every API route, and cannot dispatch a run either.  Moving this file into
+# .github/workflows/ needs Walton's hand.  Until then it is inert and the probe is run
+# manually, which is exactly the state P15 was about and is recorded rather than hidden.
+name: B4 population decay
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '43 5 * * *'
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe the frozen B3 population
+        run: REPO_ROOT=. python3 programmes/latency/b4/population_probe.py
+      - name: Commit the dated row
+        run: |
+          F=programmes/latency/b4/POPULATION-DECAY.md
+          if git diff --quiet -- "$F"; then echo 'no change'; exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$F"
+          git commit -m "B4 population decay $(date -u +%Y-%m-%d): frozen population re-probed"
+          git push
