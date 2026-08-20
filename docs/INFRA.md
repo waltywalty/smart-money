@@ -667,3 +667,19 @@ carries a clean impossible-key control. `lib/verify_blob.py` does this.
 `PARKED.md`, `docs/INFRA.md`, `programmes/latency/B2-PREP.md`, `skills/empirical-claims/SKILL.md`,
 `b2/data/change.jsonl`, `b2/strata.py` - all six byte-identical. The earlier raw-based checks
 happened to be right. The instrument was still wrong.
+
+### Correction to the amendment above, same day, ten minutes later
+
+The amendment says `raw.githubusercontent.com` is CDN-cached and served a stale copy. Both true.
+But the next write - `programmes/latency/B2-PREP.md`, also fetched before editing, the same
+condition that produced the stale read on `SKILL.md` - came back **fresh and byte-correct through
+raw, immediately**.
+
+**So the staleness is intermittent, and that is worse than consistent staleness, not better.** An
+instrument that is usually right and occasionally silently wrong is more dangerous than one that is
+always wrong, because nothing prompts you to check it. Today's earlier raw-based verifications were
+correct; they were correct by luck.
+
+**The rule stands and hardens: verify through `git/blobs/{sha}`, always, not because raw is always
+stale but because you cannot tell when it is.** A verification you cannot trust to fail is not a
+verification.
