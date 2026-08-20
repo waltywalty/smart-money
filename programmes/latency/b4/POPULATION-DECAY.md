@@ -4,6 +4,17 @@ One row per run, appended, never edited. `resolving` requires 2xx **and** a
 separating control on that host. A url that quietly 404s is indistinguishable
 from a source that never publishes, so the decay is dated rather than assumed.
 
+
+> **Vantage note, added 2026-08-20 after run #2.** Rows are **only comparable within the
+> same vantage.** Run #1 (research VM) reported 125 of 125 resolving; run #2 (GitHub CI
+> runner) reported 119, and **all six "failures" returned 200 or 206 from the VM minutes
+> later** - `bloomberg.com/billionaires` 403->206, `defillama.com/stablecoins` 403->200,
+> `kenpom.com` 403->200, `gov.il` 403->200, `hitsdailydouble.com` (x2) transport-fail->200.
+> Shared runner IPs are refused by anti-bot layers that do not refuse the VM. **A persistent
+> 403 is exactly what real rot looks like**, so a url counts as decayed only when it fails
+> from **both** vantages. The two rows below predate the `from` column: row 1 is `vm`,
+> row 2 is `ci`.
+
 | run (UTC) | urls | resolving | not 2xx | 2xx, control void | markets resolving | OI resolving |
 |---|---:|---:|---:|---:|---:|---:|
 | 2026-08-20T07:36Z | 125 | **125** | 0 | 0 | 5274 | $70,790,897 |
