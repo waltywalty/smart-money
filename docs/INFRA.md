@@ -717,3 +717,44 @@ verification path - not because it is always stale but because it is *sometimes*
 response does not say which. Verify through `git/blobs/{sha}` (`lib/verify_blob.py`): a different
 API family from the Contents PUT that writes, not CDN-fronted, and carrying a clean impossible-key
 control (blob `000...0` -> 404).
+
+## Amendment, 2026-08-20 - THE VANTAGE IS PART OF THE MEASUREMENT, NOT METADATA
+
+**A shared GitHub-hosted runner IP is refused by hosts that do not refuse a Kernel VM.**
+Measured on the B4 population probe, the same 125 urls, 46 minutes apart:
+
+| | research VM | GitHub CI runner |
+|---|---:|---:|
+| resolving | **125 / 125** | **119 / 125** |
+
+The six: `bloomberg.com/billionaires/` (403 vs 206, 52 markets), `kenpom.com/index.php`
+(403 vs 200, 43), `hitsdailydouble.com` x2 (transport failure vs 200), 
+`defillama.com/stablecoins` (403 vs 200), `gov.il/.../central-elections-committee/...`
+(403 vs 206). **All six answer normally from the VM.**
+
+This is packet 5's finding arriving somewhere new. The rejection curve is a property of
+*(endpoint, source, recent history)* - and here the **source is the vantage**. Packet 5
+found it as a rate-limit difference between two metros; this is a flat anti-bot block on
+datacenter ranges, present from the first request.
+
+**Why it is dangerous rather than merely inconvenient.** A persistent 403 is
+indistinguishable from a url that has genuinely rotted. Any process that records
+reachability from a single vantage will accumulate false decay, and false decay silently
+deflates every downstream rate without touching a number.
+
+**The operational rules:**
+
+1. **Record the vantage on every reachability measurement.** A series that mixes vantages is
+   not a series.
+2. **Compare only within a vantage**, and state how stale the other vantage's reading is.
+   A comparison against a week-old baseline is not a comparison.
+3. **Declare a url dead only when it fails from both.** This is the standing cross-check
+   rule - a different source, not a second call to the same one - applied to an instrument.
+4. **Capture refusal headers** (`server`, `cf-ray`, `retry-after`). An IP-reputation bounce
+   and a blanket datacenter ban are identical as status codes and behave completely
+   differently over time. Whether this blindness is **stable** decides whether it is a
+   scoping decision or a disqualification, and one reading cannot tell them apart.
+
+**Open:** the CI vantage cannot see 101 markets' worth of sources. Whether that set is
+stable across runs, times of day and runner IPs is being measured daily and is not yet
+known.
