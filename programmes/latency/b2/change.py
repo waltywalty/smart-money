@@ -26,10 +26,10 @@ def norm(b):
     b=SCRIPT.sub(' ',b or ''); b=COMMENT.sub(' ',b); return WS.sub(' ',b).strip()
 def fetch(u,t=25):
     try:
-        r=subprocess.run(['curl','-sS','-A',UA,'-H','Expect:','-L','--max-redirs','5','--max-time',str(t),'-w',chr(10)+'%{http_code}',u],capture_output=True,text=True,timeout=40)
+        r=subprocess.run(['curl','-sS','-A',UA,'-H','Expect:','-L','--max-redirs','5','--max-time',str(t),'-w',chr(10)+'%{http_code}',u],capture_output=True,timeout=40)
     except Exception:
         return {'url':u,'code':-1}
-    b,_,c=r.stdout.rpartition(chr(10))
+    b,_,c=r.stdout.decode('utf-8','replace').rpartition(chr(10))
     return {'url':u,'code':(int(c) if c.isdigit() else -1),'len':len(b or ''),
             'raw':hashlib.sha256((b or '').encode('utf-8','replace')).hexdigest()[:32],
             'norm':hashlib.sha256(norm(b).encode('utf-8','replace')).hexdigest()[:32]}
