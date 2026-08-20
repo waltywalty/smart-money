@@ -253,3 +253,135 @@ measurement**:
 the half of B3's kill criterion that is under our control. The other half - how fast the
 price moves once the source publishes - cannot be answered without real events, and is
 what B3 exists to collect.
+
+---
+
+# Amendment, 2026-08-20 (later) - the fourth round, the stratum split, and what a short window costs
+
+## 6. The T+60m round settles the paired comparison
+
+All three intervals, paired on the same host:
+
+| interval | target changed | control changed | lift | verdicts agreed |
+|---|---:|---:|---:|---:|
+| T+5m | 22.4% | 27.1% | -4.7 pp | 79/85 (93%) |
+| T+15m | 32.9% | 29.4% | +3.5 pp | 82/85 (96%) |
+| T+60m | 30.6% | 31.8% | -1.2 pp | 82/85 (96%) |
+
+The lift hovers around zero at every horizon and the two arms agree on 93-96% of pairs.
+**Naive hash-based change detection carries no signal on the hosts where a control
+exists.** Three horizons, one conclusion.
+
+## 7. What a 15-minute observation window costs
+
+The usable set was originally defined on three rounds spanning 15 minutes. Recomputed
+over all four rounds spanning an hour:
+
+| window | urls | markets | open interest |
+|---|---:|---:|---:|
+| 15 minutes | 171 | 9,975 | $71,958,143 |
+| 60 minutes | 126 | 9,228 | $71,684,318 |
+| **lost by extending** | **45 (26.3%)** | 747 | **$273,825 (0.4%)** |
+
+**A short window overstates the stable population by a quarter of its URLs and by almost
+none of its value.** The pages that fail the longer test are cheap ones. That is a
+fortunate result and it was not guaranteed - the same arithmetic could have removed the
+White House page and taken 60% of the money with it.
+
+Excluding `nass.org/can-I-vote` per P19: **125 urls, 5,274 markets, $70,790,897.**
+Derived twice by different routes - by re-running the stability filter over four rounds,
+and independently by cross-tabulating a measured volatility flag against the strata -
+and the two agree exactly.
+
+## 8. The stratum split, per the 2026-08-20 ruling
+
+Scheduled publication versus unscheduled: opposite cost structures, opposite competition.
+Pooling them would average an HFT race against an empty field.
+
+| stratum | urls | markets | open interest | share of OI |
+|---|---:|---:|---:|---:|
+| SCHEDULED | 82 | 3,046 | $18,520,213 | 26.1% |
+| UNSCHEDULED | 45 | 2,508 | $50,917,664 | 71.6% |
+| UNKNOWN - not forced into a bucket | 43 | 467 | $1,626,845 | 2.3% |
+
+### The concentration behind that table
+
+| | top-1 url | top-3 | top-5 | top-10 |
+|---|---:|---:|---:|---:|
+| share of all in-scope open interest | **60.5%** | 77.7% | 87.5% | 93.6% |
+
+**$43,018,413 of the $50.9M unscheduled stratum - 84.5% of it - is one page**:
+`whitehouse.gov/administration/executive-office-of-the-president/`, 37 markets. Remove
+that single url and the strata inverse: SCHEDULED $11.8M over 81 urls, UNSCHEDULED $7.9M
+over 44.
+
+"The uncontested stratum carries the money" is true and rests entirely on one White House
+personnel page. The **competitive** argument for the unscheduled stratum stands on its own
+logic and does not need the dollar total; but no bar may be computed on a pooled $50.9M
+that is really one contract family. **Open for ruling before B3 is sealed.**
+
+## 9. A third kind of source was hiding inside SCHEDULED
+
+Reported by stratum, the T+15m -> T+60m decay first looked like the prediction failing:
+SCHEDULED decayed at **42.7%**, UNSCHEDULED at 13.3%. Calendared pages should be the
+stillest things in the corpus.
+
+**32 of the 35 scheduled decayers were `wunderground.com` history pages** - rolling
+observation feeds that accumulate a new reading every few minutes, not calendared
+releases. Separating them:
+
+| class | urls | decayed | markets | open interest |
+|---|---:|---:|---:|---:|
+| **SCHEDULED** (calendared release) | 41 | **0 - 0.0%** | 2,114 | $17,700,136 |
+| UNSCHEDULED | 45 | 13.3% | 2,508 | $50,917,664 |
+| UNKNOWN | 43 | 9.3% | 467 | $1,626,845 |
+| **ROLLING** (new) | 41 | **85.4%** | 932 | $820,077 |
+
+**Not one of the 41 calendared-release pages changed in an hour.** The prediction was
+right and the pooled number was hiding it behind a single host with 36 urls.
+
+The durable form is **not** a fourth semantic stratum - a host list fitted to which pages
+happened to decay is not a classifier. Stratum stays semantic; **volatility is measured
+per url** (did normalised content change at any point across four rounds) and B3's bar is
+the intersection:
+
+| stratum | quiet | volatile |
+|---|---|---|
+| SCHEDULED | 47 urls, 2,571 mk, $18,344,614 | 35 urls, 475 mk, $175,599 |
+| UNSCHEDULED | 39 urls, 2,439 mk, $50,825,419 | 6 urls, 69 mk, $92,245 |
+| UNKNOWN | 39 urls, 264 mk, $1,620,864 | 4 urls, 203 mk, $5,981 |
+
+Excluding every volatile url costs **$273,825 - 0.4%**.
+
+This also resolves a loose end: `billboard.com/charts/hot-100` decayed inside an hour
+despite the Hot 100 updating weekly. A false positive of exactly the kind B2 exists to
+count, now classified rather than floating.
+
+## 10. What a 403 is conditioned on, and an API nobody named
+
+`earthquake.usgs.gov/earthquakes/browse/` returned **403 from the first request** in the
+sustained study while its impossible-path control returned 404 - the pair separates, so a
+block, not a rate limit and not exhaustion. **Refused-from-request-1 and refused-after-N
+are different findings and only the second is a rejection curve.**
+
+Diagnostic - no browser user-agent was impersonated, and the result does not license
+impersonating one:
+
+| user-agent | the named source | impossible path | `fdsnws/event/1/version` |
+|---|---|---|---|
+| research UA | **403** | 404 | **200** |
+| curl default | **403** | 404 | **200** |
+| empty | **403** | 404 | **200** |
+
+And `earthquake.usgs.gov/earthquakes/map/` returns **200** with the research UA. So the
+block is **path-specific**, not user-agent-conditioned and not host-wide.
+
+**The same agency serves an open JSON API on the same host** - the first machine-readable
+feed found anywhere in this corpus, against B1's finding that in-scope sources are
+essentially all HTML. The general move for B2: when the named source is blocked or
+JavaScript-only, check whether the publisher offers an API.
+
+**With a boundary that must not be blurred.** Substituting a different url for the venue's
+named settlement source is *a different resource*. For detection and alerting that is
+fine. For deciding how a market resolves it is not, and convenience is not a reason to
+conflate them.
