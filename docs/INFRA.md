@@ -683,3 +683,37 @@ correct; they were correct by luck.
 **The rule stands and hardens: verify through `git/blobs/{sha}`, always, not because raw is always
 stale but because you cannot tell when it is.** A verification you cannot trust to fail is not a
 verification.
+
+### Second correction, same day - what the intermittent staleness means for the record
+
+Two consequences that the amendment and its first correction both understate.
+
+**1. Every raw-based verification in this project's history is UNVERIFIED, not wrong.** Rule 12 has
+been satisfied through `raw.githubusercontent.com` for the whole project. Most of those checks were
+probably fine - the CDN usually invalidates on push. **None of them were ever proven.** There is no
+way to go back and establish which reads were fresh, because the cache leaves no trace in the
+response. The correct status for the historical record is *not established*, which is the same
+verdict P17 carries and for the same reason: a check performed with an instrument that cannot fail
+reliably certifies nothing.
+
+This does **not** mean the writes are suspect. Every file can still be verified *now* through the
+blob route, and the six checked on 2026-08-20 all passed. It means the verification **events** are
+void, not the files.
+
+**2. What caught it was a second sample of the same instrument.** Reading the same file twice
+through the same path normally proves nothing - it is the textbook example of a check that cannot
+fail, and this project's own rule is to cross-check against a *different* endpoint. It worked here
+for one reason only: **the two samples disagreed.** `SKILL.md` came back stale; `B2-PREP.md`, the
+next write under identical conditions, came back fresh.
+
+A repeated measurement can only ever falsify, never confirm. When it agrees you have learned
+nothing; when it disagrees you have learned that the instrument is non-deterministic, which is
+often the more valuable thing. **The rule that follows: repeat the check with the same instrument
+not to confirm a result but to detect that the instrument is unstable - and treat agreement as no
+evidence.**
+
+**The operational rule, final form.** `raw.githubusercontent.com` is **unsuitable** as a
+verification path - not because it is always stale but because it is *sometimes* stale and the
+response does not say which. Verify through `git/blobs/{sha}` (`lib/verify_blob.py`): a different
+API family from the Contents PUT that writes, not CDN-fronted, and carrying a clean impossible-key
+control (blob `000...0` -> 404).
