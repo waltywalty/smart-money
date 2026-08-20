@@ -86,7 +86,11 @@ Observed, repeatedly, in production:
     once mapped by a `try/except` to "file absent", reporting a whole archive
     missing. **A 403 must never be readable as a 404.**
 
-12. **Verify a write by reading it back through a different path.** Rendered HTML, CDN-fronted
+12. **Verify a write by reading it back through a different path - and check that the path is not
+    cached.** `raw.githubusercontent.com` is CDN-fronted, ignores cache-busting query strings and
+    ignores `Cache-Control: no-cache`. Fetching a file before editing it populates that cache with
+    the old copy, which is exactly the amend-never-edit workflow - so the check is least reliable
+    where it is most needed. Use the Git Data API blob route (`lib/verify_blob.py`). Original text: Rendered HTML, CDN-fronted
     pages and the writing process itself are all the same instrument as each other in the ways
     that matter. Read back through the API, unauthenticated where the resource is public. A count
     that matches the pre-write state is evidence *for* a stale read, not against it.
