@@ -126,3 +126,130 @@ B2 proper has not started. What exists is the population, the compliance envelop
 working control. The three things the packet asks for - change detection, false-positive
 rate, and measured latency from publication to first price move - all need repeated
 fetches over time, which is the first thing in this programme that is not a single read.
+
+---
+
+# Amendment, 2026-08-20 - the false-positive floor, and the split that reframes B2
+
+Four rounds at T+0, +5m, +15m, +60m over 425 in-scope targets (the 14 robots-disallowed
+hosts excluded outright) and 187 impossible-path controls, on an ordinary weekday
+morning with nothing happening. Rounds 0-2 are reported here; round 3 lands at 06:22Z
+and is appended below.
+
+Two hashes per fetch: **raw** over the whole body, and **normalised** after stripping
+`<script>`/`<style>` blocks, HTML comments and collapsing whitespace - so markup churn
+can be told from content churn.
+
+## 1. The headline, and the answer I had to throw away
+
+Across 367 URLs that returned 2xx in all three rounds: **56.9% did not change at all,
+28.9% changed at every single interval, 14.2% were intermittent.**
+
+My first comparison put all targets against all impossible-path controls and produced a
+**+9.6 pp lift** for targets - which reads as "a change on a real page means something".
+**It does not.** An impossible path only has a body to hash on hosts that serve a
+catch-all, which are exactly the app-shell hosts and the ones most likely to churn. The
+comparison was between a broad target set and a narrow, unrepresentative control set.
+
+Paired on the same host, holding access conditions constant:
+
+| interval | target changed | control changed | lift | verdicts agreed |
+|---|---:|---:|---:|---:|
+| T+5m | 22.4% | 27.1% | **-4.7 pp** | 79/85 (93%) |
+| T+15m | 32.9% | 29.4% | +3.5 pp | 82/85 (96%) |
+
+**On the hosts where a control exists at all, a hash change carries essentially no
+information - the page that cannot exist churns as much as the page that does.** This
+is the same failure shape the project has hit before: the comparison was against the
+wrong population rather than against a different endpoint. The unpaired number is
+recorded because it was computed, not because it is usable.
+
+## 2. The in-scope population is two different problems
+
+Which pages churn is more informative than how many.
+
+**Churns at every interval** - live-quote pages: `google.com/finance` NDX and SPX
+(3,514 markets), `cfbenchmarks.com` BRTI/ETHUSD/XRPUSD (2,067), `app.pyth.com` (1,152),
+`charts.youtube.com`, `tradingview.com`, `trends.google.com`.
+
+**Stable** - publication pages: `oscars.org`, `federalreserve.gov` FOMC calendar,
+`bls.gov` CPI, `bea.gov` GDP, `home.treasury.gov` yields, `billboard.com` Hot 100,
+KBO schedule, 36 `wunderground.com` history pages.
+
+**These need different mechanisms, and the packet's B2 question is only well-posed for
+one of them.** "Measured latency from publication to first meaningful price move"
+assumes a discrete publication. A live quote has none: it moves continuously and the
+market resolves on a value read at a stated time. Change detection is right for the
+first kind and a category error for the second.
+
+## 3. Stability alone is not enough - a page that is always empty is maximally stable
+
+`binance.com` returns HTTP 202 with **zero bytes** and `carbonarc.ai` an identical
+4,665-byte shell for any path. Both scored perfectly stable. Neither can ever signal
+anything. So the usable subset is stability **intersected with** P21's control result,
+not stability alone.
+
+| the stable set, by whether any control separates on that host | urls | markets | open interest |
+|---|---:|---:|---:|
+| status control separates (untested by the hash control) | 120 | 2,622 | $65,109,017 |
+| status control separates (tested) | 26 | 4,981 | $6,030,572 |
+| content control separates | 25 | 2,372 | $818,554 |
+| **VOID - no control works** | **38** | **691** | **$536,625** |
+
+**Usable for change detection: 171 URLs, 9,975 markets, $71,958,143 of open interest -
+77.4% of all the open interest measured.** Dropping `nass.org/can-I-vote` as well, which
+P19 records as a false positive: **170 URLs, 6,021 markets, $71,064,722.**
+
+The money concentrates in the stable, controllable half. That is a better result than
+the market count alone suggests, and it is the number B3 should be scoped to.
+
+## 4. For the churning half: is the quote in the HTML, or only in JavaScript?
+
+Hashing is the wrong instrument there, so the narrower question decides whether those
+markets are reachable at all. Test: fetch twice 30s apart, extract every number with 3+
+significant digits, and check whether the numeric set **moves**. Control at the same
+access level: run the identical extraction on an impossible path on the same host, so
+any number that moves there too is boilerplate.
+
+On the 22 largest churning URLs:
+
+| | urls | markets | open interest |
+|---|---:|---:|---:|
+| **live value is server-rendered** (numbers moved, control did not) | 5 | 5,280 | $16,519,038 |
+| no numeric movement in the served HTML at all | 16 | 2,273 | $1,400,140 |
+| movement indistinguishable from boilerplate | 1 | 32 | - |
+
+The five that work are `google.com/finance` NDX and SPX and three `cfbenchmarks.com`
+indices - real ticks, e.g. ETH `2,249.80 -> 2,250.25` and BTC `69,489.68 -> 69,489.73`
+in 30 seconds. **Every `app.pyth.com` and `pythdata.app` page failed**: 129 KB, ~200
+numbers, and not one of them moved in 30 seconds while the page hash churned every
+interval. Those are JavaScript shells - the churn is markup and the value is not in the
+HTML. `forbes.com/real-time-billionaires` moved 11 numbers while its control moved 277,
+so its movement is boilerplate and the control correctly refused it.
+
+Reaching the JS-only pages needs a headless render, which **changes the measurement's
+access level and therefore needs its own control** before anything measured through it
+counts.
+
+## 5. The polling budget, from measured fetch times
+
+Single-fetch wall time over 671 reachable in-scope sources: p50 **0.43s**, p90 1.23s,
+p99 4.12s, and exactly one URL of 671 over 10 seconds. **The fetch is not the
+bottleneck; the poll interval is.**
+
+For the 170-URL usable set - 85 of them timed in the reach pass, the other 85
+mean-imputed at 0.71s, so the sweep total of **120.8s is an estimate, not a
+measurement**:
+
+| concurrency | sweep (est) | median detection delay |
+|---|---:|---:|
+| 4 | 30.2s | 15.5s |
+| 6 | 20.1s | 10.5s |
+| **8** | **15.1s** | **8.0s** |
+| 12 | 10.1s | 5.4s |
+| 16 | 7.5s | 4.2s |
+
+**The 10-second median detection target is met from concurrency 8 upward.** That settles
+the half of B3's kill criterion that is under our control. The other half - how fast the
+price moves once the source publishes - cannot be answered without real events, and is
+what B3 exists to collect.
