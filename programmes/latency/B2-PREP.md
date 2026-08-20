@@ -472,3 +472,43 @@ sample of a curve this project has already shown to be a property of
 *(endpoint, source, recent history)*. **No declared crawl-delay is silence, not permission,
 and a clean 30 minutes is not consent either.** Re-measure before any cadence increase, and
 treat a first 429 as a finding rather than an error.
+
+### Correction to 12 - the rejection table above was split by wall-clock and one cell was empty
+
+The first pass split the run into four equal **time** quarters, and the third quarter came
+back `0/0` for every host - because the 1,808s suspension fell inside it, so a whole
+quarter contained no requests. **That table was measuring the scheduler, not the hosts.**
+Split by **sweep index** instead, which counts requests - what a rejection curve is
+actually a function of:
+
+**Arm A** - one url per host per sweep, 938 requests over 134 sweeps:
+
+| host | sw 1-20 | 21-40 | 41-60 | 61-80 | 81-100 | 101-120 | 121-134 |
+|---|---|---|---|---|---|---|---|
+| `earthquake.usgs.gov` | 403 x10/20 | 403 x10/20 | 403 x10/20 | 403 x10/20 | 403 x10/20 | 403 x10/20 | 403 x7/14 |
+| `home.treasury.gov` | ok 20 | ok 20 | ok 20 | ok 20 | ok 20 | ok 20 | ok 14 |
+| `oklahoma.gov` | ok 20 | ok 20 | ok 20 | ok 20 | ok 20 | ok 20 | ok 14 |
+| `bea.gov` | ok 20 | ok 20 | ok 20 | ok 20 | ok 20 | ok 20 | ok 14 |
+| `bls.gov` | ok 20 | ok 20 | ok 20 | ok 20 | ok 20 | ok 20 | ok 14 |
+| `eia.gov` | ok 20 | ok 20 | ok 20 | ok 20 | ok 20 | ok 20 | ok 14 |
+| `federalreserve.gov` | ok 20 | ok 20 | ok 20 | ok 20 | ok 20 | ok 20 | ok 14 |
+
+**Arm B** - `wunderground.com` at 6 urls per sweep, 6x the per-host rate, 871 requests:
+
+| host | sw 1-20 | 21-40 | 41-60 | 61-80 | 81-100 | 101-120 | 121-134 |
+|---|---|---|---|---|---|---|---|
+| `wunderground.com` | ok 130 | ok 130 | ok 130 | ok 130 | ok 130 | **REF 6/130** | ok 91 |
+
+**Six government hosts never refused a single request.** `usgs` refused at sweep 1 and in
+every block after, flat - a block, and a flat line is not a curve.
+
+`wunderground` is the only host that refused **after** a period of success: six transport
+failures at request ~663, all inside one sweep, **then 91 further requests with none**.
+That is not a rejection curve either. **A curve persists or worsens; this recovered
+completely and never recurred.** It is recorded as a single-sweep transport failure, which
+is a different thing and should not be allowed to become "we saw rate limiting" in a later
+summary.
+
+So the arm that carries 6x the per-host load - the many-urls-per-host case, which is the
+real risk for a host like `wunderground` with 36 in-scope urls - absorbed **1 request every
+2.1 seconds for 30 minutes** without a single 429 and with fetch times flat to -2.4%.
