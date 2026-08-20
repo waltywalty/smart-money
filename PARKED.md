@@ -624,3 +624,68 @@ reachable only because `order=` is honoured), and the venue's true live-market c
 **Consequence for B3:** an alert system scoped to "all Polymarket markets" cannot know its own
 denominator. Scope it to the money-bearing slice, which is enumerable, and say so in the
 pre-registration.
+
+### P21 - amendment, 2026-08-20. The content control was built, measured, and replicated. Mostly lifted.
+
+The original entry above stands as written. This records what happened when the
+"obvious, untested" candidate was tested - first on 2026-08-18, then in full again on
+2026-08-20 from a different VM and a different egress IP after the first VM expired.
+
+**Design.** Fetch the body for the impossible path and for the target, hash both,
+require them to differ. An app shell served twice fails; a real page passes. Run on all
+60 hosts where the status control is void, and - because a control that only fires on
+the broken cases is not a control - on a seeded sample of 40 hosts where the status
+control is known to work.
+
+| | content differs | content identical |
+|---|---:|---:|
+| status control **does not** separate | **50** (47 on 08-18) | 10 (13 on 08-18) |
+| status control **does** separate - positive side | 40 (39) | 0 (1) |
+
+**Recovers 50 of 60 void hosts (83%), covering 4,363 in-scope markets and $1,994,952
+of open interest, and agrees with the status control on 40 of 40 where that control
+already worked. Adopt it.**
+
+**Still void: 10 hosts, 712 markets, 3.4% of the in-scope population, $536,625 of open
+interest.** Byte-identical bodies for a path that cannot exist and one that can. Two
+matter more than their market count suggests:
+
+- **`binance.com` returns HTTP 202 with a zero-byte body** to this vantage point, for
+  both the impossible path and the real one. It is the largest single Polymarket
+  in-scope source - `/en/trade/BTC_USDT` and `/en/trade/ETH_USDT`, 186 markets between
+  them. **Neither control establishes anything about it from here.**
+- **`carbonarc.ai` / `carbonarc.co`, 446 Kalshi markets**, serve an identical 4,665-byte
+  shell for everything.
+
+**A second finding, from having run it twice.** Four hosts of 60 changed verdict in 48
+hours - `itftennis.com`, `sec.state.ma.us` and `ottawa.ca` went void -> separating,
+`state.gov` went the other way. **The content control is a good control and not a
+deterministic one.** B2 must re-establish it per measurement session rather than caching
+a host allowlist, or it will inherit a stale verdict and not know.
+
+**Still open:** the 10 need a headless render - which changes the measurement's access
+level and so needs its own control - or an out-of-band source. Until then anything
+measured on them is uncontrolled and must be reported as such, not folded into a total.
+**Do not let the 3.4% quietly become zero.**
+
+## P18 - RESOLVED for route 3, 2026-08-20. The unattended run landed.
+
+The scheduled census fired on its own and committed with no human present. This is the
+claim P15 was actually about; a dispatched run only ever proved the paths were right.
+
+| | |
+|---|---|
+| row written | `2026-08-19T04:53Z` (cron `17 4 * * *`, 36 min late - Actions cron is best-effort) |
+| commit | **`e94dc5c`**, author **and** committer `github-actions[bot]` |
+| verified via | the commits API - a different path than the log file that was read |
+| control | impossible commit sha -> **422**, not 200 |
+| four probe statuses | cutoff **200**, live floor **200**, impossible-series control **200 / 0 rows**, positive control **200** |
+
+**Incidental.** Between `2026-08-18T06:55Z` and `2026-08-19T04:53Z` - 21h58m - the
+cutoff did **not** advance: still `2026-06-19`, floor still `2026-06-12T04:59`. That is
+consistent with the once-daily step recorded earlier rather than against it, since the
+window is under 24 hours, but it is not evidence for it either. **The gap has now held
+at exactly 7 days across all three rows.**
+
+**Still parked, and still the reason `registry/retention/` sits at the repo root:** the
+PAT cannot write `.github/workflows/` by any API, nor dispatch a run. That is unchanged.
