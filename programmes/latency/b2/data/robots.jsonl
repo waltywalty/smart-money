@@ -1,0 +1,201 @@
+{"base": "https://app.pyth.com", "http": 404, "venues": ["kalshi"], "markets": 1152, "n_paths": 18, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 4348}
+{"base": "https://weather.com", "http": 200, "venues": ["kalshi"], "markets": 438, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 4940}
+{"base": "https://eng.koreabaseball.com", "http": 200, "venues": ["kalshi"], "markets": 164, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 4, "robots_bytes": 83}
+{"base": "https://pythdata.app", "http": 404, "venues": ["kalshi", "polymarket"], "markets": 621, "n_paths": 16, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 4348}
+{"base": "https://www.ercot.com", "http": 200, "venues": ["kalshi"], "markets": 4, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 27, "robots_bytes": 814}
+{"base": "https://apnews.com", "http": 200, "venues": ["kalshi"], "markets": 888, "n_paths": 3, "n_blocked": 0, "crawl_delay": null, "n_disallow": 18, "robots_bytes": 1238}
+{"base": "https://www.fhfa.gov", "http": 200, "venues": ["kalshi"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 36, "robots_bytes": 2873}
+{"base": "https://truflation.com", "http": 200, "venues": ["kalshi"], "markets": 15, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 68}
+{"base": "https://www.skiutah.com", "http": 200, "venues": ["kalshi"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 9, "robots_bytes": 274}
+{"base": "https://www.nass.usda.gov", "http": 200, "venues": ["kalshi"], "markets": 17, "n_paths": 4, "n_blocked": 0, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 43}
+{"base": "https://www.europeantour.com", "http": 200, "venues": ["kalshi"], "markets": 138, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 16, "robots_bytes": 1226}
+{"base": "https://operations.portofvirginia.com", "http": 200, "venues": ["kalshi"], "markets": 4, "n_paths": 1, "n_blocked": 0, "crawl_delay": 10.0, "n_disallow": 5, "robots_bytes": 360}
+{"base": "https://data.bls.gov", "http": 200, "venues": ["kalshi"], "markets": 10, "n_paths": 4, "n_blocked": 4, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 26}
+{"base": "https://www.theice.com", "http": 200, "venues": ["kalshi"], "markets": 175, "n_paths": 2, "n_blocked": 0, "crawl_delay": null, "n_disallow": 9, "robots_bytes": 308}
+{"base": "https://www.google.com", "http": 200, "venues": ["kalshi"], "markets": 3514, "n_paths": 2, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 6624}
+{"base": "https://openrouter.ai", "http": 200, "venues": ["kalshi"], "markets": 42, "n_paths": 2, "n_blocked": 0, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 83}
+{"base": "https://www.hitsdailydouble.com", "http": 200, "venues": ["kalshi"], "markets": 3, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 2, "robots_bytes": 48}
+{"base": "https://www.eia.gov", "http": 200, "venues": ["kalshi", "polymarket"], "markets": 47, "n_paths": 6, "n_blocked": 0, "crawl_delay": null, "n_disallow": 24, "robots_bytes": 688}
+{"base": "https://www.census.gov", "http": 200, "venues": ["kalshi"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 1162}
+{"base": "https://irma.nps.gov", "http": 200, "venues": ["kalshi"], "markets": 5, "n_paths": 2, "n_blocked": 0, "crawl_delay": 1.0, "n_disallow": 1, "robots_bytes": 63}
+{"base": "https://www.bls.gov", "http": 200, "venues": ["kalshi", "polymarket"], "markets": 370, "n_paths": 7, "n_blocked": 0, "crawl_delay": null, "n_disallow": 8, "robots_bytes": 467}
+{"base": "https://www.carbonarc.ai", "http": 200, "venues": ["kalshi"], "markets": 321, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 4665}
+{"base": "https://www.whitehouse.gov", "http": 200, "venues": ["kalshi"], "markets": 52, "n_paths": 2, "n_blocked": 0, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 79}
+{"base": "https://www.realclearpolling.com", "http": 403, "venues": ["kalshi"], "markets": 17, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 783}
+{"base": "https://arena.ai", "http": 200, "venues": ["kalshi", "polymarket"], "markets": 114, "n_paths": 10, "n_blocked": 0, "crawl_delay": null, "n_disallow": 4, "robots_bytes": 1147}
+{"base": "https://www.oscars.org", "http": 200, "venues": ["kalshi"], "markets": 509, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 34, "robots_bytes": 2026}
+{"base": "https://www.cnn.com", "http": 200, "venues": ["kalshi"], "markets": 20, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 36, "robots_bytes": 3456}
+{"base": "https://www.newyorkfed.org", "http": 200, "venues": ["kalshi"], "markets": 12, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 3, "robots_bytes": 203}
+{"base": "https://www.cfbenchmarks.com", "http": 200, "venues": ["kalshi"], "markets": 2067, "n_paths": 6, "n_blocked": 0, "crawl_delay": null, "n_disallow": 1226, "robots_bytes": 47372}
+{"base": "https://home.treasury.gov", "http": 200, "venues": ["kalshi", "polymarket"], "markets": 250, "n_paths": 3, "n_blocked": 0, "crawl_delay": null, "n_disallow": 34, "robots_bytes": 2169}
+{"base": "https://charts.youtube.com", "http": 200, "venues": ["kalshi"], "markets": 239, "n_paths": 10, "n_blocked": 0, "crawl_delay": null, "n_disallow": 21, "robots_bytes": 792}
+{"base": "https://www.tsa.gov", "http": 403, "venues": ["kalshi"], "markets": 21, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 379}
+{"base": "https://www.tradingview.com", "http": 200, "venues": ["kalshi", "polymarket"], "markets": 99, "n_paths": 15, "n_blocked": 0, "crawl_delay": null, "n_disallow": 15, "robots_bytes": 1054}
+{"base": "https://dashboard.ornnai.com", "http": 404, "venues": ["kalshi"], "markets": 1657, "n_paths": 2, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 8254}
+{"base": "https://artificialanalysis.ai", "http": 200, "venues": ["kalshi"], "markets": 51, "n_paths": 4, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 399}
+{"base": "https://dltv.org", "http": 200, "venues": ["kalshi"], "markets": 30, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 22, "robots_bytes": 643}
+{"base": "https://www.paramountplus.com", "http": 200, "venues": ["kalshi"], "markets": 12, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 54, "robots_bytes": 2120}
+{"base": "https://portwatch.imf.org", "http": 200, "venues": ["kalshi", "polymarket"], "markets": 93, "n_paths": 6, "n_blocked": 0, "crawl_delay": 60.0, "n_disallow": 6, "robots_bytes": 194}
+{"base": "https://secure.actblue.com", "http": 200, "venues": ["kalshi"], "markets": 6, "n_paths": 1, "n_blocked": 0, "crawl_delay": 5.0, "n_disallow": 3, "robots_bytes": 718}
+{"base": "https://www.nyc.gov", "http": 200, "venues": ["kalshi"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 36}
+{"base": "https://rollcall.com", "http": 200, "venues": ["kalshi"], "markets": 15, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 430}
+{"base": "https://votehub.com", "http": 200, "venues": ["kalshi"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 720}
+{"base": "https://fred.stlouisfed.org", "http": 200, "venues": ["kalshi", "polymarket"], "markets": 84, "n_paths": 10, "n_blocked": 0, "crawl_delay": 1.0, "n_disallow": 6, "robots_bytes": 960}
+{"base": "https://www.youtube.com", "http": 200, "venues": ["kalshi", "polymarket"], "markets": 62, "n_paths": 4, "n_blocked": 0, "crawl_delay": null, "n_disallow": 21, "robots_bytes": 792}
+{"base": "https://www.carbonarc.co", "http": 200, "venues": ["kalshi"], "markets": 125, "n_paths": 25, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 4665}
+{"base": "https://www.billboard.com", "http": 200, "venues": ["kalshi"], "markets": 358, "n_paths": 3, "n_blocked": 0, "crawl_delay": null, "n_disallow": 9, "robots_bytes": 1153}
+{"base": "https://www.dol.gov", "http": 200, "venues": ["kalshi"], "markets": 11, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 34, "robots_bytes": 2027}
+{"base": "https://x.com", "http": 200, "venues": ["kalshi", "polymarket"], "markets": 124, "n_paths": 27, "n_blocked": 27, "crawl_delay": 1.0, "n_disallow": 2, "robots_bytes": 2678}
+{"base": "https://www.bloomberg.com", "http": 200, "venues": ["kalshi", "polymarket"], "markets": 52, "n_paths": 2, "n_blocked": 0, "crawl_delay": null, "n_disallow": 25, "robots_bytes": 7048}
+{"base": "https://ratings.fide.com", "http": 504, "venues": ["kalshi"], "markets": 154, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 114}
+{"base": "https://portal.ct.gov", "http": 200, "venues": ["kalshi"], "markets": 11, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 39, "robots_bytes": 1241}
+{"base": "https://earthquake.usgs.gov", "http": 404, "venues": ["kalshi", "polymarket"], "markets": 15, "n_paths": 3, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 355}
+{"base": "https://tradingeconomics.com", "http": 200, "venues": ["kalshi"], "markets": 62, "n_paths": 7, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 49}
+{"base": "https://www.nass.org", "http": 200, "venues": ["kalshi"], "markets": 3954, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 34, "robots_bytes": 2027}
+{"base": "https://forecast.weather.gov", "http": 404, "venues": ["kalshi"], "markets": 79, "n_paths": 10, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 22758}
+{"base": "https://www.nhc.noaa.gov", "http": 200, "venues": ["kalshi"], "markets": 4, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 46}
+{"base": "https://elections.hawaii.gov", "http": 200, "venues": ["kalshi"], "markets": 12, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 20, "robots_bytes": 791}
+{"base": "https://www.ice.com", "http": 200, "venues": ["kalshi"], "markets": 58, "n_paths": 2, "n_blocked": 0, "crawl_delay": null, "n_disallow": 9, "robots_bytes": 308}
+{"base": "https://trends.google.com", "http": 200, "venues": ["kalshi"], "markets": 87, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 2, "robots_bytes": 93}
+{"base": "https://www.labiennale.org", "http": 200, "venues": ["kalshi"], "markets": 193, "n_paths": 1, "n_blocked": 0, "crawl_delay": 60.0, "n_disallow": 36, "robots_bytes": 2189}
+{"base": "https://www.ismworld.org", "http": 200, "venues": ["kalshi"], "markets": 8, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 82, "robots_bytes": 3885}
+{"base": "https://www.sos.state.mn.us", "http": 404, "venues": ["kalshi"], "markets": 12, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 0}
+{"base": "https://www.michigan.gov", "http": 403, "venues": ["kalshi"], "markets": 36, "n_paths": 3, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 382}
+{"base": "https://leginfo.legislature.ca.gov", "http": 200, "venues": ["kalshi"], "markets": 1, "n_paths": 1, "n_blocked": 1, "crawl_delay": 10.0, "n_disallow": 3, "robots_bytes": 165}
+{"base": "https://store.nytimes.com", "http": 200, "venues": ["kalshi"], "markets": 5, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 40, "robots_bytes": 3628}
+{"base": "https://www.spacex.com", "http": 404, "venues": ["kalshi", "polymarket"], "markets": 16, "n_paths": 2, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 321}
+{"base": "https://thegameawards.com", "http": 404, "venues": ["kalshi"], "markets": 18, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 39279}
+{"base": "https://www.federalreserve.gov", "http": 404, "venues": ["kalshi", "polymarket"], "markets": 231, "n_paths": 6, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 78952}
+{"base": "https://www.bea.gov", "http": 200, "venues": ["kalshi", "polymarket"], "markets": 223, "n_paths": 3, "n_blocked": 0, "crawl_delay": null, "n_disallow": 34, "robots_bytes": 2027}
+{"base": "https://www.cnbc.com", "http": 200, "venues": ["kalshi"], "markets": 5, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 8, "robots_bytes": 3099}
+{"base": "https://www.weather.gov", "http": 404, "venues": ["kalshi", "polymarket"], "markets": 20, "n_paths": 4, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 28725}
+{"base": "https://www.aogr.com", "http": 404, "venues": ["kalshi"], "markets": 12, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 39106}
+{"base": "https://disclosure.spglobal.com", "http": 403, "venues": ["kalshi"], "markets": 13, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 384}
+{"base": "https://www.maine.gov", "http": 200, "venues": ["kalshi"], "markets": 3, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 84, "robots_bytes": 2528}
+{"base": "https://www.latingrammy.com", "http": 200, "venues": ["kalshi"], "markets": 7, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 123}
+{"base": "https://lmarena.ai", "http": 200, "venues": ["kalshi"], "markets": 37, "n_paths": 3, "n_blocked": 0, "crawl_delay": null, "n_disallow": 4, "robots_bytes": 1147}
+{"base": "https://kenpom.com", "http": 200, "venues": ["kalshi"], "markets": 43, "n_paths": 1, "n_blocked": 0, "crawl_delay": 5.0, "n_disallow": 9, "robots_bytes": 326}
+{"base": "https://www.forbes.com", "http": 200, "venues": ["kalshi"], "markets": 43, "n_paths": 2, "n_blocked": 0, "crawl_delay": null, "n_disallow": 20, "robots_bytes": 10719}
+{"base": "https://www.rules.senate.gov", "http": 200, "venues": ["kalshi"], "markets": 22, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 30}
+{"base": "https://www.usbr.gov", "http": 200, "venues": ["kalshi"], "markets": 8, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 2, "robots_bytes": 50}
+{"base": "https://www.nasdaq.com", "http": 0, "venues": ["kalshi"], "markets": 19, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 0}
+{"base": "https://www.spglobal.com", "http": 403, "venues": ["kalshi"], "markets": 55, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 384}
+{"base": "https://www.trendforce.com", "http": 200, "venues": ["kalshi"], "markets": 9, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 5, "robots_bytes": 269}
+{"base": "https://commission.europa.eu", "http": 200, "venues": ["kalshi"], "markets": 5, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 22, "robots_bytes": 1643}
+{"base": "https://www.sec.state.ma.us", "http": 200, "venues": ["kalshi"], "markets": 12, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 46, "robots_bytes": 1032}
+{"base": "https://ai.google.dev", "http": 200, "venues": ["kalshi"], "markets": 4, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 67}
+{"base": "https://claude.com", "http": 200, "venues": ["kalshi"], "markets": 4, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 107}
+{"base": "https://app.rwa.xyz", "http": 200, "venues": ["kalshi"], "markets": 6, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 2, "robots_bytes": 97}
+{"base": "https://www.who.int", "http": 200, "venues": ["kalshi"], "markets": 3, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 17920}
+{"base": "https://www.fda.gov", "http": 200, "venues": ["kalshi", "polymarket"], "markets": 32, "n_paths": 2, "n_blocked": 0, "crawl_delay": 30.0, "n_disallow": 25, "robots_bytes": 2505}
+{"base": "https://www.cdc.gov", "http": 200, "venues": ["kalshi", "polymarket"], "markets": 24, "n_paths": 4, "n_blocked": 0, "crawl_delay": null, "n_disallow": 39, "robots_bytes": 1641}
+{"base": "https://www.usnews.com", "http": 200, "venues": ["kalshi"], "markets": 19, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 2, "robots_bytes": 6767}
+{"base": "https://www.scimagojr.com", "http": 200, "venues": ["kalshi"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 10, "robots_bytes": 2052}
+{"base": "https://www.espn.com", "http": 200, "venues": ["kalshi"], "markets": 129, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 103, "robots_bytes": 3223}
+{"base": "https://international.tse.jus.br", "http": 200, "venues": ["kalshi"], "markets": 16, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 13, "robots_bytes": 362}
+{"base": "https://www.ams.usda.gov", "http": 403, "venues": ["kalshi"], "markets": 7, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 388}
+{"base": "https://www.nasa.gov", "http": 200, "venues": ["kalshi"], "markets": 4, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 69}
+{"base": "https://seia.org", "http": 403, "venues": ["kalshi"], "markets": 5, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 139}
+{"base": "https://guide.michelin.com", "http": 202, "venues": ["kalshi"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 0}
+{"base": "https://streeteasy.com", "http": 200, "venues": ["kalshi"], "markets": 8, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 31, "robots_bytes": 1912}
+{"base": "https://store.steampowered.com", "http": 200, "venues": ["kalshi"], "markets": 10, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 9, "robots_bytes": 303}
+{"base": "https://sos.ga.gov", "http": 200, "venues": ["kalshi"], "markets": 2, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 33, "robots_bytes": 2005}
+{"base": "https://www.irs.gov", "http": 200, "venues": ["kalshi"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 69, "robots_bytes": 3267}
+{"base": "https://www.sos.state.tx.us", "http": 200, "venues": ["kalshi"], "markets": 2, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 0}
+{"base": "https://georgerrmartin.com", "http": 200, "venues": ["kalshi"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 119}
+{"base": "https://www.senate.gov", "http": 200, "venues": ["kalshi"], "markets": 9, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 37494}
+{"base": "https://www.tesla.com", "http": 403, "venues": ["kalshi"], "markets": 11, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 377}
+{"base": "https://data.giss.nasa.gov", "http": 200, "venues": ["kalshi", "polymarket"], "markets": 8, "n_paths": 2, "n_blocked": 2, "crawl_delay": null, "n_disallow": 16, "robots_bytes": 899}
+{"base": "https://www.congress.gov", "http": 200, "venues": ["kalshi", "polymarket"], "markets": 5, "n_paths": 3, "n_blocked": 1, "crawl_delay": 2.0, "n_disallow": 11, "robots_bytes": 3529}
+{"base": "https://intel.arkm.com", "http": 200, "venues": ["kalshi", "polymarket"], "markets": 2, "n_paths": 2, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 68}
+{"base": "https://www.ncdc.noaa.gov", "http": 200, "venues": ["kalshi"], "markets": 6, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 91, "robots_bytes": 2591}
+{"base": "https://www.ncei.noaa.gov", "http": 200, "venues": ["kalshi"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 8, "robots_bytes": 254}
+{"base": "https://www.spc.noaa.gov", "http": 200, "venues": ["kalshi"], "markets": 11, "n_paths": 1, "n_blocked": 1, "crawl_delay": 10.0, "n_disallow": 11, "robots_bytes": 439}
+{"base": "https://www.nber.org", "http": 200, "venues": ["kalshi"], "markets": 6, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 22, "robots_bytes": 1593}
+{"base": "https://www.in.gov", "http": 200, "venues": ["kalshi"], "markets": 2, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 23, "robots_bytes": 696}
+{"base": "https://blogs.nasa.gov", "http": 200, "venues": ["kalshi"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 262642}
+{"base": "https://apps.bea.gov", "http": 200, "venues": ["kalshi"], "markets": 2, "n_paths": 2, "n_blocked": 2, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 207}
+{"base": "https://data.worldbank.org", "http": 200, "venues": ["kalshi"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 23}
+{"base": "https://nces.ed.gov", "http": 200, "venues": ["kalshi"], "markets": 6, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 4, "robots_bytes": 309}
+{"base": "https://www.nbc.com", "http": 200, "venues": ["kalshi"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 198, "robots_bytes": 6732}
+{"base": "https://dos.fl.gov", "http": 404, "venues": ["kalshi"], "markets": 2, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 0}
+{"base": "https://www.pa.gov", "http": 200, "venues": ["kalshi"], "markets": 2, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 272}
+{"base": "https://oklahoma.gov", "http": 200, "venues": ["kalshi"], "markets": 2, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 64}
+{"base": "https://www.imf.org", "http": 200, "venues": ["kalshi"], "markets": 2, "n_paths": 2, "n_blocked": 0, "crawl_delay": null, "n_disallow": 12, "robots_bytes": 436}
+{"base": "https://apps.apple.com", "http": 200, "venues": ["kalshi"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 5, "robots_bytes": 506}
+{"base": "https://www.eiu.com", "http": 404, "venues": ["kalshi"], "markets": 4, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 61524}
+{"base": "https://sonyinteractive.com", "http": 404, "venues": ["kalshi"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 64210}
+{"base": "https://www.consilium.europa.eu", "http": 403, "venues": ["kalshi"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 13135}
+{"base": "https://pib.gov.in", "http": 403, "venues": ["kalshi"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 386}
+{"base": "https://www.anl.gov", "http": 200, "venues": ["kalshi"], "markets": 4, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 35, "robots_bytes": 2064}
+{"base": "https://www.epa.gov", "http": 200, "venues": ["kalshi"], "markets": 2, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 28, "robots_bytes": 2035}
+{"base": "https://ligamx.net", "http": 200, "venues": ["polymarket"], "markets": 4, "n_paths": 1, "n_blocked": 1, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 3492}
+{"base": "https://gol.gg", "http": 200, "venues": ["polymarket"], "markets": 33, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 9, "robots_bytes": 793}
+{"base": "https://www.binance.com", "http": 200, "venues": ["polymarket"], "markets": 222, "n_paths": 7, "n_blocked": 0, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 3888}
+{"base": "https://www.atptour.com", "http": 200, "venues": ["polymarket"], "markets": 34, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 9, "robots_bytes": 2172}
+{"base": "https://dumatv.ru", "http": 200, "venues": ["polymarket"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 24835}
+{"base": "https://www.weather.gov.hk", "http": 200, "venues": ["polymarket"], "markets": 23, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 328, "robots_bytes": 9850}
+{"base": "https://www.aljazeera.com", "http": 200, "venues": ["polymarket"], "markets": 3, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 15, "robots_bytes": 1834}
+{"base": "https://www.wsj.com", "http": 200, "venues": ["polymarket"], "markets": 2, "n_paths": 1, "n_blocked": 1, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 4326}
+{"base": "https://www.nfl.com", "http": 200, "venues": ["polymarket"], "markets": 13, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 10, "robots_bytes": 343}
+{"base": "https://www.wunderground.com", "http": 200, "venues": ["polymarket"], "markets": 347, "n_paths": 44, "n_blocked": 0, "crawl_delay": null, "n_disallow": 2, "robots_bytes": 395}
+{"base": "https://www.mdpi.com", "http": 403, "venues": ["polymarket"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 380}
+{"base": "https://www.wtatennis.com", "http": 200, "venues": ["polymarket"], "markets": 8, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 78}
+{"base": "https://www.itftennis.com", "http": 200, "venues": ["polymarket"], "markets": 19, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 122}
+{"base": "https://www.ufc.com", "http": 200, "venues": ["polymarket"], "markets": 36, "n_paths": 2, "n_blocked": 0, "crawl_delay": 15.0, "n_disallow": 32, "robots_bytes": 1967}
+{"base": "https://data.chain.link", "http": 429, "venues": ["polymarket"], "markets": 21, "n_paths": 13, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 31037}
+{"base": "https://www.mlssoccer.com", "http": 200, "venues": ["polymarket"], "markets": 94, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 13, "robots_bytes": 296}
+{"base": "https://www.un.org", "http": 200, "venues": ["polymarket"], "markets": 16, "n_paths": 1, "n_blocked": 0, "crawl_delay": 10.0, "n_disallow": 37, "robots_bytes": 2226}
+{"base": "https://fe.secondmarket.com", "http": 200, "venues": ["polymarket"], "markets": 19, "n_paths": 2, "n_blocked": 2, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 26}
+{"base": "https://openai.com", "http": 200, "venues": ["polymarket"], "markets": 3, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 98}
+{"base": "https://liquipedia.net", "http": 200, "venues": ["polymarket"], "markets": 2, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 3659, "robots_bytes": 157303}
+{"base": "https://www.cmegroup.com", "http": 0, "venues": ["polymarket"], "markets": 2, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 0}
+{"base": "https://www.boxofficemojo.com", "http": 200, "venues": ["polymarket"], "markets": 14, "n_paths": 1, "n_blocked": 1, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 1471}
+{"base": "https://www.bankofengland.co.uk", "http": 200, "venues": ["polymarket"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 9, "robots_bytes": 345}
+{"base": "https://www.mlb.com", "http": 200, "venues": ["polymarket"], "markets": 98, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 76, "robots_bytes": 2224}
+{"base": "https://6abc.com", "http": 200, "venues": ["polymarket"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 8, "robots_bytes": 732}
+{"base": "https://truthsocial.com", "http": 403, "venues": ["polymarket"], "markets": 4, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 5585}
+{"base": "https://thehill.com", "http": 200, "venues": ["polymarket"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 13, "robots_bytes": 2218}
+{"base": "https://www.conmebol.com", "http": 404, "venues": ["polymarket"], "markets": 2, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 139}
+{"base": "https://www.cbf.com.br", "http": 404, "venues": ["polymarket"], "markets": 2, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 53537}
+{"base": "https://www.ecb.europa.eu", "http": 200, "venues": ["polymarket"], "markets": 2, "n_paths": 1, "n_blocked": 0, "crawl_delay": 5.0, "n_disallow": 32, "robots_bytes": 1141}
+{"base": "https://newsroom.spotify.com", "http": 200, "venues": ["polymarket"], "markets": 8, "n_paths": 2, "n_blocked": 0, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 31}
+{"base": "https://government.is", "http": 200, "venues": ["polymarket"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 54, "robots_bytes": 4830}
+{"base": "https://www.the-numbers.com", "http": 200, "venues": ["polymarket"], "markets": 6, "n_paths": 2, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 113}
+{"base": "https://www.pegelonline.wsv.de", "http": 404, "venues": ["polymarket"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 6283}
+{"base": "https://www.pref.kagawa.lg.jp", "http": 404, "venues": ["polymarket"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 6910}
+{"base": "https://www.bonbast.com", "http": 200, "venues": ["polymarket"], "markets": 3, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 217}
+{"base": "https://hitsdailydouble.com", "http": 200, "venues": ["polymarket"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 2, "robots_bytes": 48}
+{"base": "https://radar.cloudflare.com", "http": 200, "venues": ["polymarket"], "markets": 2, "n_paths": 1, "n_blocked": 0, "crawl_delay": 10.0, "n_disallow": 6, "robots_bytes": 1703}
+{"base": "https://www.bcb.gov.br", "http": 200, "venues": ["polymarket"], "markets": 2, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 6, "robots_bytes": 1146}
+{"base": "https://lol.fandom.com", "http": 200, "venues": ["polymarket"], "markets": 2, "n_paths": 2, "n_blocked": 0, "crawl_delay": null, "n_disallow": 7, "robots_bytes": 887}
+{"base": "https://www.wnba.com", "http": 403, "venues": ["polymarket"], "markets": 3, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 263}
+{"base": "https://app.parcllabs.com", "http": 200, "venues": ["polymarket"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 4, "robots_bytes": 2142}
+{"base": "https://www.stats.gov.cn", "http": 404, "venues": ["polymarket"], "markets": 6, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 146}
+{"base": "https://fr.tradingview.com", "http": 200, "venues": ["polymarket"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 15, "robots_bytes": 1053}
+{"base": "https://www.gov.il", "http": 200, "venues": ["polymarket"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 7796}
+{"base": "https://www.bankofcanada.ca", "http": 200, "venues": ["polymarket"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 120}
+{"base": "https://www.strategy.com", "http": 403, "venues": ["polymarket"], "markets": 2, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 382}
+{"base": "https://www.reuters.com", "http": 200, "venues": ["polymarket"], "markets": 2, "n_paths": 2, "n_blocked": 2, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 3773}
+{"base": "https://www.natesilver.net", "http": 200, "venues": ["polymarket"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 14, "robots_bytes": 723}
+{"base": "https://www.berlin.de", "http": 200, "venues": ["polymarket"], "markets": 8, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 6, "robots_bytes": 3599}
+{"base": "https://www.ch.ch", "http": 200, "venues": ["polymarket"], "markets": 2, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 43241}
+{"base": "https://www.silicondata.com", "http": 200, "venues": ["polymarket"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 107}
+{"base": "https://www.nato.int", "http": 200, "venues": ["polymarket"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 80}
+{"base": "https://stats.wnba.com", "http": 200, "venues": ["polymarket"], "markets": 3, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 58}
+{"base": "https://defillama.com", "http": 200, "venues": ["polymarket"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 129}
+{"base": "https://baseballsavant.mlb.com", "http": 200, "venues": ["polymarket"], "markets": 4, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 24}
+{"base": "https://cneos.jpl.nasa.gov", "http": 200, "venues": ["polymarket"], "markets": 3, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 4, "robots_bytes": 146}
+{"base": "https://tradingview.com", "http": 200, "venues": ["polymarket"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 15, "robots_bytes": 1054}
+{"base": "https://stacks.cdc.gov", "http": 200, "venues": ["polymarket"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": 10.0, "n_disallow": 37, "robots_bytes": 1030}
+{"base": "https://www.state.gov", "http": 200, "venues": ["polymarket"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 659506}
+{"base": "https://www.coingecko.com", "http": 200, "venues": ["polymarket"], "markets": 5, "n_paths": 5, "n_blocked": 0, "crawl_delay": null, "n_disallow": 131, "robots_bytes": 8306}
+{"base": "https://www.cryptoglobe.com", "http": 429, "venues": ["polymarket"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 31031}
+{"base": "https://www.dea.gov", "http": 403, "venues": ["polymarket"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 379}
+{"base": "https://app.lighter.xyz", "http": 200, "venues": ["polymarket"], "markets": 3, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 1, "robots_bytes": 67}
+{"base": "https://www.justice.gov", "http": 200, "venues": ["polymarket"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": 10.0, "n_disallow": 50, "robots_bytes": 2601}
+{"base": "https://www.boj.or.jp", "http": 404, "venues": ["polymarket"], "markets": 2, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 0, "robots_bytes": 2777}
+{"base": "http://x.com", "http": 200, "venues": ["polymarket"], "markets": 1, "n_paths": 1, "n_blocked": 1, "crawl_delay": 1.0, "n_disallow": 2, "robots_bytes": 2678}
+{"base": "https://twitter.com", "http": 200, "venues": ["polymarket"], "markets": 1, "n_paths": 1, "n_blocked": 1, "crawl_delay": 1.0, "n_disallow": 2, "robots_bytes": 2678}
+{"base": "https://www.coinglass.com", "http": 200, "venues": ["polymarket"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 4, "robots_bytes": 109}
+{"base": "https://www.opm.gov", "http": 200, "venues": ["polymarket"], "markets": 1, "n_paths": 1, "n_blocked": 0, "crawl_delay": null, "n_disallow": 9, "robots_bytes": 324}
