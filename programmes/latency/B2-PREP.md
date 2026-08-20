@@ -385,3 +385,90 @@ JavaScript-only, check whether the publisher offers an API.
 named settlement source is *a different resource*. For detection and alerting that is
 fine. For deciding how a market resolves it is not, and convenience is not a reason to
 conflate them.
+
+---
+
+# Amendment, 2026-08-20 (later still) - the sustained-polling result, and a null worth stating as one
+
+## 11. Three horizons, one conclusion. This is a null, not a caveat.
+
+| interval | target changed | control changed | lift | verdicts agreed |
+|---|---:|---:|---:|---:|
+| T+5m | 22.4% | 27.1% | -4.7 pp | 79/85 (93%) |
+| T+15m | 32.9% | 29.4% | +3.5 pp | 82/85 (96%) |
+| T+60m | 30.6% | 31.8% | -1.2 pp | 82/85 (96%) |
+
+The lift straddles zero at every horizon, twice negative and once positive, and the two
+arms return the same verdict on 93-96% of pairs. **Naive hash-based change detection on
+an in-scope resolution page carries no information about that page, on any host where a
+control exists.** Stated as a finding, not as a limitation of the method: the method was
+sound, the population was measured three times over a twelve-fold range of horizons, and
+the answer is no.
+
+What survives is narrower and was established separately: **change detection works on the
+125 urls that are measurably quiet**, where the base rate of spurious change is zero by
+construction rather than by assumption. The null is about the naive form. It is what makes
+the filtered form worth anything.
+
+## 12. Sustained polling - the rejection curve, and what the instrument did instead
+
+**Design:** 7 hosts at one url per sweep, plus `wunderground.com` at 6 urls per sweep (the
+many-urls-per-host case), a 9-second sweep, one hour, with arm A alternating between the
+target and an impossible path on the same host so total load is unchanged and any refusal
+can be attributed to the host rather than the page.
+
+**What actually ran, stated before the result:**
+
+| | design | achieved |
+|---|---|---|
+| sweep cadence | 9.0s | **median 9.7s** |
+| duration | 60 min continuous | **29.8 min active** - the VM was suspended for a single 1,808s gap between sweeps 125 and 126 |
+| arm A per-host rate | 1 per 9s | **1 per 13.3s** |
+| wunderground per-host rate | 1 per 1.5s | **1 per 2.1s** |
+| total requests | - | 1,809 |
+
+The cadence held; the wall clock did not. **This was 30 minutes of polling inside a
+60-minute window, and it must not be described as an hour.**
+
+**The result: no rejection curve at either load.**
+
+| host | requests | 1 per | status codes |
+|---|---:|---:|---|
+| `wunderground.com` | 871 | 2.1s | 200 x799, 404 x66 (controls), **0 x6** |
+| `bls.gov`, `bea.gov`, `federalreserve.gov`, `home.treasury.gov`, `eia.gov` | 134 each | 13.3s | 200 x67, 404 x67 (controls) |
+| `oklahoma.gov` | 134 | 13.3s | 200 x67, 301 x67 (controls) |
+| `earthquake.usgs.gov` | 134 | 13.3s | **403 x67**, 404 x67 (controls) |
+
+**Zero 429s. Zero `Retry-After` headers. Zero `RateLimit` headers.** Fetch-time drift from
+the first quarter of the run to the last: between -10.6% and +8.1%, i.e. noise. A host that
+slows without refusing is still throttling, and none of them did.
+
+The six `code 0` transport failures on wunderground all landed in **one sweep**, all six
+urls at once, then clean - a blip, not a curve.
+
+**`earthquake.usgs.gov` refused from request one** and its control returned 404 throughout,
+so the pair separates: a path-specific block, not a rate limit. **Refused-from-request-1 and
+refused-after-N are different findings and only the second is a rejection curve.**
+
+### The design constraint that fell out of the instrument missing its target
+
+The sweep was budgeted at 9s and the first attempt drifted to 27s per sweep. The cause:
+**`home.treasury.gov` takes 8.8 seconds per fetch**, and in a synchronous sweep the slowest
+host gates every other host's next request.
+
+> **B3 must not poll on a synchronous sweep.** One slow source otherwise sets the detection
+> latency for the entire population. Per-url independent scheduling, or the 10-second bar is
+> decided by whichever source happens to be slowest that day - which is a property of the
+> scheduler, not of the market.
+
+### What this does and does not license
+
+**Does:** 1 request per 13.3s to six government hosts, and 1 per 2.1s to a commercial host,
+for 30 minutes, drew no refusal and no slowdown.
+
+**Does not:** B3's design calls for 1 per 9s, which was not tested; 30 minutes is not
+indefinite; and a single 30-minute window on one weekday morning from one egress IP is one
+sample of a curve this project has already shown to be a property of
+*(endpoint, source, recent history)*. **No declared crawl-delay is silence, not permission,
+and a clean 30 minutes is not consent either.** Re-measure before any cadence increase, and
+treat a first 429 as a finding rather than an error.
