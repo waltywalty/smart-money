@@ -608,3 +608,27 @@ again on the **series** object. They are not the same list.
 The disagreement changes the implied source class on thousands of markets and moves B1's in-scope
 count by **10.6%** (22,966 from the event endpoint, 20,526 from the series endpoint, 19,500 agreeing).
 Nothing in either response says which is authoritative. **Take the intersection and say so.**
+
+## Amendment, 2026-08-20 - THE UNATTENDED RUN. The write path works with nobody present.
+
+The amendment above established the write path on a **dispatched** run. A dispatched run
+proves the paths are right. It does not prove the thing the finding is actually about,
+which is that the project can operate when no human is in the loop. **The scheduled run
+has now fired on its own and committed.**
+
+| check | result |
+|---|---|
+| schedule | cron `17 4 * * *`; fired `2026-08-19T04:53Z` - **36 minutes late**, which is normal for GitHub Actions cron and should be expected, not treated as a fault |
+| commit | **`e94dc5c`**, author **and** committer `github-actions[bot]` |
+| verified via | the **commits API** - a different path than the log file that was read |
+| control | impossible commit sha -> **422**, not 200 |
+| four probe statuses | cutoff **200**, live floor **200**, impossible-series control **200 / 0 rows**, positive control **200** |
+
+**Actions cron is best-effort and drifts by tens of minutes.** Anything scheduled through
+it must be idempotent and must not assume its own fire time. A collector that stamps rows
+with the cron's nominal time rather than the observed time will be wrong by that drift.
+
+**Incidental, now three rows deep.** Between `2026-08-18T06:55Z` and `2026-08-19T04:53Z` -
+21h58m - the cutoff did not advance: still `2026-06-19`, floor still `2026-06-12T04:59`.
+Consistent with the once-daily step recorded earlier, and not evidence for it, since the
+window is under 24 hours. **The gap has held at exactly 7 days across all three rows.**
