@@ -29,3 +29,17 @@ stale baseline is visible as one.
 ```b4state
 {"vantage": "vm", "stamp": "2026-08-20T09:17Z", "epoch": 1787217456, "resolving": 125, "failed": []}
 ```
+| 2026-08-21T06:03Z | ci | 125 | **121** | 4 | 0 | 0 both, 4 ci-only, 0 vm-only (vm 20.8h old) | **0** | 5177 |
+
+<details><summary>2026-08-21T06:03Z [ci] - not 2xx (4)</summary>
+
+- `403` https://www.bloomberg.com/billionaires/  (52 markets, $8,090)  `retry-after=0 server=Varnish x-served-by=cache-chi-kmdw8640085-CHI`
+- `403` https://defillama.com/stablecoins  (1 markets, $0)  `cf-ray=a2e76e9ae8a36abb-MSP server=cloudflare`
+- `403` https://kenpom.com/index.php  (43 markets, $0)  `cf-ray=a2e76eaf9a7fa1d1-MSP server=cloudflare`
+- `403` https://www.gov.il/en/departments/central-elections-committee/govil-landing-page  (1 markets, $0)  `cf-ray=a2e76edcedc56abb-MSP server=cloudflare`
+
+</details>
+
+```b4state
+{"vantage": "ci", "stamp": "2026-08-21T06:03Z", "epoch": 1787292198, "resolving": 121, "failed": ["https://defillama.com/stablecoins", "https://kenpom.com/index.php", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page"]}
+```
