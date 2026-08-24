@@ -49,3 +49,7 @@ from the UK, tested rather than assumed.**
    45 kills died on arithmetic, not on imagination.
 4. Check it does not reduce to *identifying informed traders from behaviour*.
    That is answered.
+5. **If the edge rests on a published anomaly, ask why it survived publication.**
+   Concentration in illiquid, hard-to-trade names is the usual answer, and it means
+   the cost side inherits the concentration. Three independent instruments agreed on
+   this in packet 7 - see `programmes/insider/registry/F2-INSIDER-SCOPING.md`.
