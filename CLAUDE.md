@@ -123,6 +123,33 @@ throughout the period this project built its own recorder.
 
 - `programmes/kalshi/` - **CLOSED.** See its README and `KALSHI-PROGRAMME.md`.
 - `programmes/latency/` - **ACTIVE.** See `ROADMAP.md` family 1.
+- `programmes/insider/` - **SCOPED, NOT OPEN.** Family 2, documented public-record
+  anomalies. **Verdict: could not establish, all seven strands.** No strand reports a
+  per-event effect; Form 4 code `P` leaves the population undefined in the source;
+  neither long-short nor long-only is computable; and no post-2016 out-of-sample
+  re-estimation was found. Four independent routes.
+  `programmes/insider/registry/F2-INSIDER-SCOPING.md`.
+- `programmes/premia/` - **SCOPED, NOT OPEN.** Family 4, structural risk premia.
+  **Verdict: the family does not survive scoping.** The equity variance risk premium is
+  a **kill** - its alpha was measured at approximately zero since ~2010. Perpetual
+  funding carry and the Bitcoin variance risk premium are **could not establish**: no
+  published magnitude exists for the funding-carry strand itself, and the Bitcoin figure
+  is a variance wedge rather than a return. `programmes/premia/registry/F4-PREMIA-SCOPING.md`.
+
+**"Scoped, not open" means a kill condition was sealed first, evidence was gathered against
+it, and a verdict was recorded - with no collector, no capital, and no gate lifted.** Both
+scoped families returned verdicts whose *missing* evidence sits entirely on the cost or risk
+side, and cost moves a residual one way only.
+
+> **Neither entry may be read as "promising, needs more work."** Each says, in terms, that the
+> verdict is agnostic while the evidence is not, and each states both what would revive it and
+> what explicitly would **not** - a larger effect from an older sample, a vendor backtest, or a
+> summary of either.
+
+**One live distinction, in `programmes/premia/`:** tail frequency is recorded as could-not-establish
+because pulling it was **out of scope**, not because it is unknowable - two venues publish the event
+stream on public endpoints. Unretrieved is not unknowable, and a later session must not convert one
+into the other.
 
 Shared, not per-programme: `lib/` (tooling), `skills/` (one copy, no duplication),
 `docs/METHOD.md` (the venue-neutral method), `docs/INFRA.md` (venue-agnostic
