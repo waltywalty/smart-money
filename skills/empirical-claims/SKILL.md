@@ -198,6 +198,24 @@ Three instances in one packet, all in tooling written to catch faults:
 > persistent 403 is what real rot looks like.** Only an unrelated baseline taken 46 minutes
 > earlier caught it.
 
+**Running count: ten instances across the project, four of them inside a fault-catcher.** The
+fourth is the sharpest of the four, because it would have defeated a **rule** rather than a probe.
+
+> **2026-08-24, packet 8.** The vantage rule is itself a fault-catcher: it exists to stop evidence
+> from an old sample being read as current. Applying it means reading each paper's revision date,
+> and for arXiv that comes from the Atom feed. **The feed carries a feed-level `<updated>` element
+> equal to the time of the query**, before any `<entry>`. Parsing the first `<updated>` in the
+> response returned **today's date, minutes old**, for a paper last revised in August 2024.
+>
+> **Every paper would have looked post-vantage, and the rule written to stop stale evidence would
+> have passed all of it.** The only reason it did not is that a revision date reading "four minutes
+> ago" was implausible enough to force a re-check - which is luck, not method.
+>
+> The correct field is `<updated>` **inside** `<entry>`. Same shape as false positive #7 and the
+> unpaired change-detection control: **the field that is easiest to read is not the field that means
+> what you want**, and a fault-catcher reading the wrong field fails silently in the direction of
+> passing everything.
+
 **What the three have in common, and the other faults in that packet did not: each produced
 a clean-looking result.** An inert cursor returned 200 and rows. A stale read returned the
 file. A refused fetch returned a status code. **None threw. None logged an error.** All three
