@@ -50,7 +50,7 @@ from the UK, tested rather than assumed.**
 4. Check it does not reduce to *identifying informed traders from behaviour*.
    That is answered.
 5. **Of any documented edge, ask: what is the friction, and is it still there?**
-   Three cases now, and three times the premium *was* the friction.
+   Five strands now. **Four times the premium *was* the friction; once it was not.**
    - **Family 2** - it survived publication because it was uneconomic to arbitrage:
      concentration in illiquid, hard-to-trade names, so the cost side inherits the
      concentration. Three independent instruments agreed in packet 7 -
