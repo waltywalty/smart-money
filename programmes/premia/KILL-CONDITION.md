@@ -488,4 +488,133 @@ wrong, that is recorded as a dated amendment below stating what changed, why, an
 already known when the change was made** - because a threshold relaxed after seeing the evidence
 is not a threshold.
 
-*(no amendments)*
+---
+
+## Amendments
+
+### On the seal, and what the hash now refers to
+
+**The sealed body is preserved to the byte, and here is the exact claim rather than a loose one.**
+
+The file committed at `2d07ad7` is **25,710 bytes**, sha256
+`2a87dc4c7a34e6c3866fcd3f39ff8e0410506ad26330de85cd9100b7c27d2555`, re-verified against the
+repository immediately before this block was appended.
+
+**The first 25,691 bytes of this file are byte-identical to the first 25,691 bytes of that commit** -
+sha256 `7b65a6aec18a42da5662b79b266b4693f6dc10b5f4c0937f3b22871fe59a9328`, checked rather than
+asserted. That prefix is sections 0 through 11 inclusive, ending at the last line of section 11's
+prose.
+
+**The only removal is the 19 bytes `\n*(no amendments)*\n`** - the placeholder that section 11
+itself invited replacing. Nothing else was deleted, moved or edited.
+
+*(An earlier draft of this paragraph claimed the whole file was byte-identical through section 11.
+It was not, because the placeholder had been removed. The check caught it before commit; the
+corrected claim is the one above.)*
+
+Every citation of that hash - in `PRIORS.md`, `MECHANICS.md`, `TAIL.md`, `SCOPING-VERDICT.md`,
+`registry/F4-PREMIA-SCOPING.md` and `CLOSEOUT-PACKET8.md` - refers to the sealed body and remains
+correct.
+
+> **Appending amendments necessarily changes this file's hash.** A reader verifying the seal must
+> verify **commit `2d07ad7`**, not the current file. The post-amendment file hash is recorded in
+> this amendment's commit message and in `CLOSEOUT-PACKET8.md`.
+
+### What these amendments do and do not do
+
+All three below are **defects recorded, not thresholds widened.** Walton's ruling, 2026-08-25:
+*"Record them as defects in the sealed condition rather than quietly widening it."*
+
+> **No threshold, definition or condition in sections 1 through 8 is changed by any amendment
+> below.** The sealed text stands as written **and wrong**. A future packet writes a correct
+> condition from scratch; it does not inherit this one patched. A condition quietly widened after
+> the evidence is not a condition, and a defect concealed by a patch is worse than a defect on the
+> record.
+
+All three were found during T2-T4 of this same packet and are recorded after T5's verdict was
+formed. **What was already known when they were written** is stated in each, as section 11 requires.
+
+---
+
+### A1 - 2026-08-25 - section 2.1 does not name forced liquidation
+
+**The defect.** Section 2.1 defines a material loss event as the removal of >= 25% of the capital
+deployed at a single venue *"by an action of the venue or its backstop rather than by the market
+movement of the position itself."*
+
+**A forced liquidation is triggered by market movement and executed by the venue's liquidation
+engine. It falls between the two clauses and is named by neither.**
+
+**Why it is material rather than pedantic.** BIS WP 1087, read in T2: at a leverage of 10 -
+*"significantly lower than the maximum leverage offered by most exchanges"* - the futures leg of
+the cash-and-carry strategy *"would have been liquidated in **over half of the months** in our
+sample."* At that rate liquidation is not a tail event. **It is the modal outcome**, and a
+loss-event definition that does not name it is measuring the wrong thing.
+
+**Section 3.3 catches the exposure, and catches it by accident.** Section 3.3 requires `L` to
+include the market exposure created by the surviving leg becoming unhedged - which is exactly what
+a liquidated hedge leg produces. But section 3.3 reaches it as a consequence of **venue failure**,
+not of liquidation. **That the exposure is caught at all is luck rather than design**, and a sealed
+condition that works by luck should say so.
+
+**What was already known when this was written.** T2, T3 and T4 were complete and T5's verdict was
+formed. S1's could-not-establish rests on five independent routes - units, fixed costs, an uncosted
+hedge leg, an unestablished `L`, and an unbounded tail frequency. **None of them is the loss-event
+definition. The verdict does not move.**
+
+**Not widened.** Section 2.1's 25% threshold and its "venue or backstop action" wording stand
+exactly as sealed.
+
+---
+
+### A2 - 2026-08-25 - venue outage is not enumerated as a loss channel
+
+**The defect.** T1 enumerates backstop action (3.1), venue failure (3.2) and auto-deleveraging
+(3.4). **It does not name venue outage.** If the venue is unreachable you cannot add margin, you
+cannot unwind, and you cannot re-hedge. Same class as A1: a loss channel that operates through the
+venue but is not an action the venue's backstop takes.
+
+**The evidence, labelled.** Alleged at BitMEX on 13 March 2020: a twenty-five minute platform
+outage during a move from nearly $8,000 to $4,000, with *"$800 million of its customers' highly
+leveraged positions"* liquidated and the insurance fund untouched. Source: *BMA LLC v. HDR Global
+Trading Limited*, second amended consolidated complaint, para 185 (N.D. Cal. 3:20-cv-03345-WHO).
+**A pleading is a primary document whose contents are allegations**, and the case's disposition was
+not established in this packet.
+
+**And the omission is shared.** **No venue documentation read in T3 names outage as a loss channel
+either** - not Hyperliquid, not OKX, not Deribit's specification. That is a datum about the venues,
+not an excuse for T1.
+
+**Section 3.3 again reaches it by the same accidental route**, and again only via the unhedged-leg
+clause.
+
+**What was already known when this was written.** As A1: T2-T4 complete, T5's verdict formed, and
+none of S1's five routes turns on this. **The verdict does not move.**
+
+**Not widened.** Section 3's enumeration stands exactly as sealed.
+
+---
+
+### A3 - 2026-08-25 - section 1.1 defines `E` without naming the annualisation convention
+
+**The defect.** Section 1.1 defines `E(K)` as annualised *"as a fraction of capital deployed to the
+strand"* and **does not state which annualisation convention a source must use for its figure to
+qualify.**
+
+**Why it matters.** He et al. annualise by the Lucca & Moench (2015) convention: *"We first
+calculate the mean and standard deviation of our trading strategy **during the time it is active**.
+Next, we scale by the number of periods the strategy is active in a year."* Their strategy is
+active **20.06%** of the hours in the sample.
+
+**The convention was checked rather than assumed, and it turned out compatible** - the figure is the
+total accumulated over a year, on capital parked at the venue all year. **But a different paper
+under a different convention would have made the same number mean something else, and T1 gave T5 no
+rule for detecting that.** This is recorded because it **passed by inspection rather than by rule**,
+and the next such check might not have someone reading the annualisation footnote.
+
+**What was already known when this was written.** The check had already been performed and had
+passed. This amendment records a gap in the condition, not a correction to a figure. **The verdict
+does not move.**
+
+**Not widened.** Section 1.1 stands exactly as sealed. A future T1 states the convention it
+requires, in advance, as this one should have.
