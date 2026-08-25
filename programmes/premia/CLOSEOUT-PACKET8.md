@@ -219,3 +219,86 @@ pre-registration of a study. **No determination of whether Walton can legally or
 any venue** - `MECHANICS.md` records what venues state and determines nothing.
 
 **The gate is not lifted by this packet.**
+
+---
+
+## Amendment - 2026-08-25 - post-ruling actions
+
+Appended, not edited. Everything above stands as committed at `5198615`.
+
+**Walton's ruling, 2026-08-25:** T5's verdict accepted as written - S2a killed, S1 and S2b
+could-not-establish, gate unchanged. Three further instructions, all carried out below.
+
+### 1. T1's three defects, amended and dated
+
+`KILL-CONDITION.md` amendments **A1, A2, A3**, dated 2026-08-25, appended under section 11 as that
+section instructs. Walton's wording: *"Record them as defects in the sealed condition rather than
+quietly widening it."*
+
+**No threshold, definition or condition in sections 1 through 8 was changed.** Each amendment states
+the defect, why it is material, what was already known when it was written, and that the sealed text
+stands as written and wrong.
+
+| | |
+|---|---|
+| **A1** | section 2.1 does not name **forced liquidation** - which at 10x leverage is the modal outcome, not a tail. Section 3.3 catches the exposure by the venue-failure route, which is luck rather than design |
+| **A2** | **venue outage** is not enumerated as a loss channel - and no venue documentation read in T3 names it either |
+| **A3** | section 1.1 defines `E` per unit of deployed capital **without naming the annualisation convention** - the convention was checked rather than assumed, and passed by inspection rather than by rule |
+
+**None of the three moves the verdict.** S1's could-not-establish rests on units, fixed costs, an
+uncosted hedge leg, an unestablished `L`, and an unbounded tail frequency. The loss-event definition
+is not among them.
+
+### 2. The hash, stated exactly
+
+| | |
+|---|---|
+| sealed file, commit `2d07ad7` | **25,710 bytes**, sha256 `2a87dc4c7a34e6c3866fcd3f39ff8e0410506ad26330de85cd9100b7c27d2555` |
+| preserved prefix | **first 25,691 bytes**, sha256 `7b65a6aec18a42da5662b79b266b4693f6dc10b5f4c0937f3b22871fe59a9328` - **verified identical**, not asserted |
+| only removal | the 19 bytes `\n*(no amendments)*\n`, the placeholder section 11 invited replacing |
+| amended file, commit `264f383` | **32,835 bytes**, sha256 `9832ace815b782640d6a228a25a64d2b2e927c0a0e03761a5e8d9aed86949e57` |
+
+> **Every citation of `2a87dc4c...` above and in the other packet-8 documents refers to the sealed
+> body and remains correct. A reader verifying the seal verifies commit `2d07ad7`, not the current
+> file.**
+
+**A near-miss worth recording.** The first draft of the amendment header claimed the file was
+byte-identical through section 11. **It was not** - the placeholder had been removed, so the byte
+offsets had shifted. The check that compared prefixes caught it **before commit**, and the claim was
+narrowed to the 25,691 bytes that were actually verified. A byte-identity claim that has not been
+byte-compared is an assertion wearing a hash.
+
+### 3. ROADMAP screen item 5, generalised
+
+Item 5 previously asked why a **published anomaly** survived publication. It now asks of **any**
+documented edge: **what is the friction, and is it still there?** - with all three cases named:
+family 2 (uneconomic to arbitrage), perp funding carry (arbitrage capital constrained), and the
+equity variance risk premium (a restriction on who could sell, which ended with the alpha).
+
+Walton: *"S2a is the cleanest, since the alpha ended when the restriction on who could sell options
+ended."* The item records that, and records that **the earlier form would have missed two of the
+three**.
+
+### 4. Method skill - the instrument catch
+
+`skills/empirical-claims/SKILL.md`, section *"An instrument that checks for a failure mode is not
+exempt from that failure mode"*: running count updated to **ten instances, four inside a
+fault-catcher**, with the packet-8 instance recorded - the arXiv feed-level `<updated>` equal to the
+query time, which would have stamped today's date on every paper and **passed everything the vantage
+rule exists to stop**.
+
+Walton's assessment: *"the best instrument find of the packet... Tenth instance, fourth inside a
+fault-catcher."* The count is his.
+
+### 5. Operational note - the environment was reclaimed mid-ruling
+
+The VM holding the credential was reclaimed between turns. **Nothing was lost**, because every
+artefact had been committed and blob-verified as it was produced - which is the whole point of
+*"make loss cheap instead."* **The token was not re-emitted from the transcript**; a fresh one was
+pasted, per the standing per-session-paste rule.
+
+**Still open, unchanged by this packet and flagged rather than fixed:** `CLAUDE.md` section 5 lists
+only `programmes/kalshi/` and `programmes/latency/`. Neither `programmes/insider/` nor
+`programmes/premia/` appears. That gap predates packet 8 and is not corrected here.
+
+**The gate is not lifted by this packet or by these amendments.**
