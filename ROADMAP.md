@@ -60,8 +60,19 @@ from the UK, tested rather than assumed.**
    - **The equity variance risk premium** - it was a restriction on who could sell
      options, and the alpha ended when the restriction ended.
      Both in `programmes/premia/registry/F4-PREMIA-SCOPING.md`.
+   - **Index-reconstitution flow** - it was the market's capacity to absorb a predictable
+     demand shock, and it expired because **capacity grew**, not because any rule changed.
+     `programmes/flow/registry/F3-FLOW-SCOPING.md`.
+   - **Merger arbitrage** - the exception. It is **not a friction at all**: the payoff behaves
+     like selling an uncovered index put, so somebody must bear a loss that arrives in severe
+     market declines. **Whether it is still there could not be established.** Same entry.
 
    The variance case is the cleanest, because the friction and the premium ended
    together. **A friction that has since eased is not a smaller edge; it is a finished
    one.** Ask this of any edge, not only a published anomaly - the earlier form of this
-   item asked only about published anomalies and would have missed two of the three.
+   item asked only about published anomalies and would have missed three of the five.
+
+   **Five strands in, the question sorts cleanly on its first half and stalls on its
+   second.** What the friction *is* has been establishable from published work every time.
+   Whether it is *still there* has been establishable three times in five. **So ask the
+   second half first: it is the half that fails.**
