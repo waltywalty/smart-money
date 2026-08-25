@@ -135,6 +135,12 @@ throughout the period this project built its own recorder.
   funding carry and the Bitcoin variance risk premium are **could not establish**: no
   published magnitude exists for the funding-carry strand itself, and the Bitcoin figure
   is a variance wedge rather than a return. `programmes/premia/registry/F4-PREMIA-SCOPING.md`.
+- `programmes/flow/` - **SCOPED, NOT OPEN.** Family 3, mechanical flow. **Verdict: the family does
+  not survive scoping.** Merger arbitrage and index-reconstitution flow are both **could not
+  establish** - and **neither is killed on its arithmetic, because in neither case was the
+  arithmetic evaluable.** Not one magnitude was a measurement of the position Walton would hold; the
+  break distribution failed all three of its pre-committed components; the index effect's deletion
+  leg is dead on a measured figure. `programmes/flow/registry/F3-FLOW-SCOPING.md`.
 
 **"Scoped, not open" means a kill condition was sealed first, evidence was gathered against
 it, and a verdict was recorded - with no collector, no capital, and no gate lifted.** Both
