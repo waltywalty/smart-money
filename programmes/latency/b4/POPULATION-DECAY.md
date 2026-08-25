@@ -94,3 +94,19 @@ stale baseline is visible as one.
 ```b4state
 {"vantage": "ci", "stamp": "2026-08-24T06:08Z", "epoch": 1787551684, "resolving": 118, "failed": ["https://defillama.com/stablecoins", "https://hitsdailydouble.com/sales_plus_streaming", "https://international.tse.jus.br/en", "https://kenpom.com/index.php", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page", "https://www.hitsdailydouble.com/charts/hits-top-50"]}
 ```
+| 2026-08-25T06:03Z | ci | 125 | **119** | 6 | 0 | 0 both, 6 ci-only, 0 vm-only (vm 116.8h old) | **0** | 5175 |
+
+<details><summary>2026-08-25T06:03Z [ci] - not 2xx (6)</summary>
+
+- `403` https://www.bloomberg.com/billionaires/  (52 markets, $8,090)  `retry-after=0 server=Varnish x-served-by=cache-bur-kbur8200064-BUR`
+- `403` https://defillama.com/stablecoins  (1 markets, $0)  `cf-ray=a308635d4b4c2adf-LAX server=cloudflare`
+- `301` https://hitsdailydouble.com/sales_plus_streaming  (1 markets, $0)  `server=Netlify`
+- `403` https://kenpom.com/index.php  (43 markets, $0)  `cf-ray=a308636b0bd0490e-LAX server=cloudflare`
+- `0` https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=WCSSTUS1&f=W  (1 markets, $0)  `-`
+- `403` https://www.gov.il/en/departments/central-elections-committee/govil-landing-page  (1 markets, $0)  `cf-ray=a30863bbff738c16-LAX server=cloudflare`
+
+</details>
+
+```b4state
+{"vantage": "ci", "stamp": "2026-08-25T06:03Z", "epoch": 1787637786, "resolving": 119, "failed": ["https://defillama.com/stablecoins", "https://hitsdailydouble.com/sales_plus_streaming", "https://kenpom.com/index.php", "https://www.bloomberg.com/billionaires/", "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=WCSSTUS1&f=W", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page"]}
+```
