@@ -302,3 +302,31 @@ only `programmes/kalshi/` and `programmes/latency/`. Neither `programmes/insider
 `programmes/premia/` appears. That gap predates packet 8 and is not corrected here.
 
 **The gate is not lifted by this packet or by these amendments.**
+
+### 6. Amendment - 2026-08-25 - the flagged gap is closed
+
+Appended because section 5 above is now **out of date, and leaving it standing would be false**.
+
+Section 5 recorded that `CLAUDE.md` section 5 listed only `programmes/kalshi/` and
+`programmes/latency/`, and that the gap was *"flagged rather than fixed."* **Walton ruled it
+fixed**, on the grounds that `CLAUDE.md` is the first thing every session reads and it understated
+the repo by two programmes.
+
+**Commit `bebaea7`.** `programmes/insider/` and `programmes/premia/` added as **SCOPED, NOT OPEN**,
+each with its verdict in one line and a pointer to its registry entry. Both pointers were checked
+to resolve (`200`, with an impossible path returning `404`) before being committed, and the F2
+verdict line was read back and matched verbatim.
+
+Three guards were written in alongside the entries, because a one-line verdict is the easiest thing
+in the repo to misread:
+
+1. **What "scoped, not open" means** - a kill condition sealed first, evidence gathered against it, a
+   verdict recorded, and no collector, no capital and no gate lifted.
+2. **Neither entry may be read as "promising, needs more work."** Both families' missing evidence
+   sits entirely on the cost or risk side, and cost moves a residual one way only.
+3. **Unretrieved is not unknowable.** `programmes/premia/`'s tail frequency is could-not-establish
+   because the pull was out of scope, not because the evidence is absent - two venues publish the
+   event stream on public endpoints. A later session must not convert one into the other.
+
+**No verdict, figure or `revive_if` was changed by this commit.** The entries restate what the
+registry already says; the registry remains authoritative.
