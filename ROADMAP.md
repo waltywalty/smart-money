@@ -49,7 +49,19 @@ from the UK, tested rather than assumed.**
    45 kills died on arithmetic, not on imagination.
 4. Check it does not reduce to *identifying informed traders from behaviour*.
    That is answered.
-5. **If the edge rests on a published anomaly, ask why it survived publication.**
-   Concentration in illiquid, hard-to-trade names is the usual answer, and it means
-   the cost side inherits the concentration. Three independent instruments agreed on
-   this in packet 7 - see `programmes/insider/registry/F2-INSIDER-SCOPING.md`.
+5. **Of any documented edge, ask: what is the friction, and is it still there?**
+   Three cases now, and three times the premium *was* the friction.
+   - **Family 2** - it survived publication because it was uneconomic to arbitrage:
+     concentration in illiquid, hard-to-trade names, so the cost side inherits the
+     concentration. Three independent instruments agreed in packet 7 -
+     `programmes/insider/registry/F2-INSIDER-SCOPING.md`.
+   - **Perp funding carry** - it persists because arbitrage capital is constrained by
+     regulation and margin, and the arbitrageur can be forced out before convergence.
+   - **The equity variance risk premium** - it was a restriction on who could sell
+     options, and the alpha ended when the restriction ended.
+     Both in `programmes/premia/registry/F4-PREMIA-SCOPING.md`.
+
+   The variance case is the cleanest, because the friction and the premium ended
+   together. **A friction that has since eased is not a smaller edge; it is a finished
+   one.** Ask this of any edge, not only a published anomaly - the earlier form of this
+   item asked only about published anomalies and would have missed two of the three.
