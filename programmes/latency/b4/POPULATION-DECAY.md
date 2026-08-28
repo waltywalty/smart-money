@@ -140,3 +140,25 @@ stale baseline is visible as one.
 ```b4state
 {"vantage": "ci", "stamp": "2026-08-27T16:48Z", "epoch": 1787849297, "resolving": 120, "failed": ["https://defillama.com/stablecoins", "https://hitsdailydouble.com/sales_plus_streaming", "https://kenpom.com/index.php", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page"]}
 ```
+| 2026-08-28T17:42Z | ci | 125 | **113** | 12 | 0 | 0 both, 12 ci-only, 0 vm-only (vm 200.4h old) | **0** | 4908 |
+
+<details><summary>2026-08-28T17:42Z [ci] - not 2xx (12)</summary>
+
+- `403` https://www.ice.com/report-center  (10 markets, $2,915,972)  `cf-ray=a3251c9658e26e66-DFW server=cloudflare`
+- `403` https://www.theice.com/products/213/WTI-Crude-Futures  (152 markets, $500,391)  `cf-ray=a3251cb23b10a9f5-DFW server=cloudflare`
+- `403` https://www.theice.com/index  (23 markets, $104,934)  `cf-ray=a3251cb10868e95a-DFW server=cloudflare`
+- `0` https://international.tse.jus.br/en  (16 markets, $26,156)  `-`
+- `403` https://www.ice.com/report/10  (48 markets, $24,618)  `cf-ray=a3251c9708986c66-DFW server=cloudflare`
+- `403` https://www.bloomberg.com/billionaires/  (52 markets, $8,090)  `retry-after=0 server=Varnish x-served-by=cache-dfw-kdfw8210079-DFW`
+- `403` https://defillama.com/stablecoins  (1 markets, $0)  `cf-ray=a3251c0e4b77eb02-DFW server=cloudflare`
+- `0` https://hitsdailydouble.com/sales_plus_streaming  (1 markets, $0)  `-`
+- `403` https://kenpom.com/index.php  (43 markets, $0)  `cf-ray=a3251c22dc38b6f4-DFW server=cloudflare`
+- `403` https://www.gov.il/en/departments/central-elections-committee/govil-landing-page  (1 markets, $0)  `cf-ray=a3251c942d475cf4-DFW server=cloudflare`
+- `0` https://www.hitsdailydouble.com/charts/hits-top-50  (3 markets, $0)  `-`
+- `0` https://www.un.org/dgacm/en/content/protocol/hshgnfa  (16 markets, $0)  `-`
+
+</details>
+
+```b4state
+{"vantage": "ci", "stamp": "2026-08-28T17:42Z", "epoch": 1787938966, "resolving": 113, "failed": ["https://defillama.com/stablecoins", "https://hitsdailydouble.com/sales_plus_streaming", "https://international.tse.jus.br/en", "https://kenpom.com/index.php", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page", "https://www.hitsdailydouble.com/charts/hits-top-50", "https://www.ice.com/report-center", "https://www.ice.com/report/10", "https://www.theice.com/index", "https://www.theice.com/products/213/WTI-Crude-Futures", "https://www.un.org/dgacm/en/content/protocol/hshgnfa"]}
+```
