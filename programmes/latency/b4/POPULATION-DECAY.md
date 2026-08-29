@@ -162,3 +162,20 @@ stale baseline is visible as one.
 ```b4state
 {"vantage": "ci", "stamp": "2026-08-28T17:42Z", "epoch": 1787938966, "resolving": 113, "failed": ["https://defillama.com/stablecoins", "https://hitsdailydouble.com/sales_plus_streaming", "https://international.tse.jus.br/en", "https://kenpom.com/index.php", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page", "https://www.hitsdailydouble.com/charts/hits-top-50", "https://www.ice.com/report-center", "https://www.ice.com/report/10", "https://www.theice.com/index", "https://www.theice.com/products/213/WTI-Crude-Futures", "https://www.un.org/dgacm/en/content/protocol/hshgnfa"]}
 ```
+| 2026-08-29T11:47Z | ci | 125 | **118** | 7 | 0 | 0 both, 7 ci-only, 0 vm-only (vm 218.5h old) | **0** | 5133 |
+
+<details><summary>2026-08-29T11:47Z [ci] - not 2xx (7)</summary>
+
+- `0` https://www.whitehouse.gov/administration/executive-office-of-the-president/  (37 markets, $43,018,413)  `-`
+- `403` https://www.bloomberg.com/billionaires/  (52 markets, $8,090)  `retry-after=0 server=Varnish x-served-by=cache-dfw-kdal2120057-DFW`
+- `403` https://app.rwa.xyz/treasuries  (6 markets, $1,032)  `cf-ray=a32b51ee2bebad26-MSP server=cloudflare`
+- `403` https://defillama.com/stablecoins  (1 markets, $0)  `cf-ray=a32b51f18ad64c92-MSP server=cloudflare`
+- `301` https://hitsdailydouble.com/sales_plus_streaming  (1 markets, $0)  `server=Netlify`
+- `403` https://kenpom.com/index.php  (43 markets, $0)  `cf-ray=a32b5200a8a6a203-MSP server=cloudflare`
+- `403` https://www.gov.il/en/departments/central-elections-committee/govil-landing-page  (1 markets, $0)  `cf-ray=a32b5240ad11a1fa-MSP server=cloudflare`
+
+</details>
+
+```b4state
+{"vantage": "ci", "stamp": "2026-08-29T11:47Z", "epoch": 1788004063, "resolving": 118, "failed": ["https://app.rwa.xyz/treasuries", "https://defillama.com/stablecoins", "https://hitsdailydouble.com/sales_plus_streaming", "https://kenpom.com/index.php", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page", "https://www.whitehouse.gov/administration/executive-office-of-the-president/"]}
+```
