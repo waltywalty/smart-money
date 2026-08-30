@@ -179,3 +179,20 @@ stale baseline is visible as one.
 ```b4state
 {"vantage": "ci", "stamp": "2026-08-29T11:47Z", "epoch": 1788004063, "resolving": 118, "failed": ["https://app.rwa.xyz/treasuries", "https://defillama.com/stablecoins", "https://hitsdailydouble.com/sales_plus_streaming", "https://kenpom.com/index.php", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page", "https://www.whitehouse.gov/administration/executive-office-of-the-president/"]}
 ```
+| 2026-08-30T10:40Z | ci | 125 | **118** | 7 | 0 | 0 both, 7 ci-only, 0 vm-only (vm 241.4h old) | **0** | 5167 |
+
+<details><summary>2026-08-30T10:40Z [ci] - not 2xx (7)</summary>
+
+- `403` https://www.bloomberg.com/billionaires/  (52 markets, $8,090)  `retry-after=0 server=Varnish x-served-by=cache-dfw-kdfw8210141-DFW`
+- `403` https://app.rwa.xyz/treasuries  (6 markets, $1,032)  `cf-ray=a3332ca29ff819ca-MSP server=cloudflare`
+- `403` https://defillama.com/stablecoins  (1 markets, $0)  `cf-ray=a3332ca58b23acf6-MSP server=cloudflare`
+- `0` https://hitsdailydouble.com/sales_plus_streaming  (1 markets, $0)  `-`
+- `403` https://kenpom.com/index.php  (43 markets, $0)  `cf-ray=a3332cb4bc03acd8-MSP server=cloudflare`
+- `403` https://www.gov.il/en/departments/central-elections-committee/govil-landing-page  (1 markets, $0)  `cf-ray=a3332cff9af5acf3-MSP server=cloudflare`
+- `0` https://www.hitsdailydouble.com/charts/hits-top-50  (3 markets, $0)  `-`
+
+</details>
+
+```b4state
+{"vantage": "ci", "stamp": "2026-08-30T10:40Z", "epoch": 1788086435, "resolving": 118, "failed": ["https://app.rwa.xyz/treasuries", "https://defillama.com/stablecoins", "https://hitsdailydouble.com/sales_plus_streaming", "https://kenpom.com/index.php", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page", "https://www.hitsdailydouble.com/charts/hits-top-50"]}
+```
