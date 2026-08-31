@@ -196,3 +196,19 @@ stale baseline is visible as one.
 ```b4state
 {"vantage": "ci", "stamp": "2026-08-30T10:40Z", "epoch": 1788086435, "resolving": 118, "failed": ["https://app.rwa.xyz/treasuries", "https://defillama.com/stablecoins", "https://hitsdailydouble.com/sales_plus_streaming", "https://kenpom.com/index.php", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page", "https://www.hitsdailydouble.com/charts/hits-top-50"]}
 ```
+| 2026-08-31T11:50Z | ci | 125 | **119** | 6 | 0 | 0 both, 6 ci-only, 0 vm-only (vm 266.5h old) | **0** | 5170 |
+
+<details><summary>2026-08-31T11:50Z [ci] - not 2xx (6)</summary>
+
+- `403` https://www.bloomberg.com/billionaires/  (52 markets, $8,090)  `retry-after=0 server=Varnish x-served-by=cache-sjc1000141-SJC`
+- `403` https://app.rwa.xyz/treasuries  (6 markets, $1,032)  `cf-ray=a33bd02bfc726803-SJC server=cloudflare`
+- `403` https://defillama.com/stablecoins  (1 markets, $0)  `cf-ray=a33bd02e781f8123-SJC server=cloudflare`
+- `0` https://hitsdailydouble.com/sales_plus_streaming  (1 markets, $0)  `-`
+- `403` https://kenpom.com/index.php  (43 markets, $0)  `cf-ray=a33bd03b2a7ce612-SJC server=cloudflare`
+- `403` https://www.gov.il/en/departments/central-elections-committee/govil-landing-page  (1 markets, $0)  `cf-ray=a33bd0987b52042c-SJC server=cloudflare`
+
+</details>
+
+```b4state
+{"vantage": "ci", "stamp": "2026-08-31T11:50Z", "epoch": 1788177010, "resolving": 119, "failed": ["https://app.rwa.xyz/treasuries", "https://defillama.com/stablecoins", "https://hitsdailydouble.com/sales_plus_streaming", "https://kenpom.com/index.php", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page"]}
+```
