@@ -212,3 +212,18 @@ stale baseline is visible as one.
 ```b4state
 {"vantage": "ci", "stamp": "2026-08-31T11:50Z", "epoch": 1788177010, "resolving": 119, "failed": ["https://app.rwa.xyz/treasuries", "https://defillama.com/stablecoins", "https://hitsdailydouble.com/sales_plus_streaming", "https://kenpom.com/index.php", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page"]}
 ```
+| 2026-09-01T10:26Z | ci | 125 | **120** | 5 | 0 | 0 both, 5 ci-only, 0 vm-only (vm 289.1h old) | **0** | 5174 |
+
+<details><summary>2026-09-01T10:26Z [ci] - not 2xx (5)</summary>
+
+- `403` https://www.bloomberg.com/billionaires/  (52 markets, $8,090)  `retry-after=0 server=Varnish x-served-by=cache-dfw-kdal2120135-DFW`
+- `403` https://defillama.com/stablecoins  (1 markets, $0)  `cf-ray=a3439263dcdee895-MSP server=cloudflare`
+- `403` https://kenpom.com/index.php  (43 markets, $0)  `cf-ray=a343926f98bea1c4-MSP server=cloudflare`
+- `403` https://www.gov.il/en/departments/central-elections-committee/govil-landing-page  (1 markets, $0)  `cf-ray=a343929a39b3e02b-MSP server=cloudflare`
+- `0` https://www.hitsdailydouble.com/charts/hits-top-50  (3 markets, $0)  `-`
+
+</details>
+
+```b4state
+{"vantage": "ci", "stamp": "2026-09-01T10:26Z", "epoch": 1788258369, "resolving": 120, "failed": ["https://defillama.com/stablecoins", "https://kenpom.com/index.php", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page", "https://www.hitsdailydouble.com/charts/hits-top-50"]}
+```
