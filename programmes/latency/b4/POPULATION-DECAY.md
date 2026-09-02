@@ -227,3 +227,23 @@ stale baseline is visible as one.
 ```b4state
 {"vantage": "ci", "stamp": "2026-09-01T10:26Z", "epoch": 1788258369, "resolving": 120, "failed": ["https://defillama.com/stablecoins", "https://kenpom.com/index.php", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page", "https://www.hitsdailydouble.com/charts/hits-top-50"]}
 ```
+| 2026-09-02T09:54Z | ci | 125 | **115** | 10 | 0 | 0 both, 10 ci-only, 0 vm-only (vm 312.6h old) | **0** | 4940 |
+
+<details><summary>2026-09-02T09:54Z [ci] - not 2xx (10)</summary>
+
+- `403` https://www.ice.com/report-center  (10 markets, $2,915,972)  `cf-ray=a34ba1231fa91151-ORD server=cloudflare`
+- `403` https://www.theice.com/products/213/WTI-Crude-Futures  (152 markets, $500,391)  `cf-ray=a34ba155e933cc6e-ORD server=cloudflare`
+- `403` https://www.theice.com/index  (23 markets, $104,934)  `cf-ray=a34ba1556b221151-ORD server=cloudflare`
+- `403` https://www.ice.com/report/10  (48 markets, $24,618)  `cf-ray=a34ba123691ac959-ORD server=cloudflare`
+- `403` https://www.bloomberg.com/billionaires/  (52 markets, $8,090)  `retry-after=0 server=Varnish x-served-by=cache-chi-kmdw8640025-CHI`
+- `403` https://defillama.com/stablecoins  (1 markets, $0)  `cf-ray=a34ba0e56db0b4c1-ORD server=cloudflare`
+- `0` https://hitsdailydouble.com/sales_plus_streaming  (1 markets, $0)  `-`
+- `403` https://kenpom.com/index.php  (43 markets, $0)  `cf-ray=a34ba0f1cdb538bd-ORD server=cloudflare`
+- `403` https://www.gov.il/en/departments/central-elections-committee/govil-landing-page  (1 markets, $0)  `cf-ray=a34ba121bc1d0ea2-ORD server=cloudflare`
+- `0` https://www.hitsdailydouble.com/charts/hits-top-50  (3 markets, $0)  `-`
+
+</details>
+
+```b4state
+{"vantage": "ci", "stamp": "2026-09-02T09:54Z", "epoch": 1788342850, "resolving": 115, "failed": ["https://defillama.com/stablecoins", "https://hitsdailydouble.com/sales_plus_streaming", "https://kenpom.com/index.php", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page", "https://www.hitsdailydouble.com/charts/hits-top-50", "https://www.ice.com/report-center", "https://www.ice.com/report/10", "https://www.theice.com/index", "https://www.theice.com/products/213/WTI-Crude-Futures"]}
+```
