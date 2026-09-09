@@ -335,3 +335,17 @@ stale baseline is visible as one.
 ```b4state
 {"vantage": "ci", "stamp": "2026-09-08T10:04Z", "epoch": 1788861883, "resolving": 121, "failed": ["https://defillama.com/stablecoins", "https://kenpom.com/index.php", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page"]}
 ```
+| 2026-09-09T10:05Z | ci | 125 | **121** | 4 | 0 | 0 both, 4 ci-only, 0 vm-only (vm 480.8h old) | **0** | 5177 |
+
+<details><summary>2026-09-09T10:05Z [ci] - not 2xx (4)</summary>
+
+- `403` https://www.bloomberg.com/billionaires/  (52 markets, $8,090)  `retry-after=0 server=Varnish x-served-by=cache-bfi-krnt7300086-BFI`
+- `403` https://defillama.com/stablecoins  (1 markets, $0)  `cf-ray=a3855fda7c32b9e2-SEA server=cloudflare`
+- `403` https://kenpom.com/index.php  (43 markets, $0)  `cf-ray=a3855fe609350d2e-SEA server=cloudflare`
+- `403` https://www.gov.il/en/departments/central-elections-committee/govil-landing-page  (1 markets, $0)  `cf-ray=a385601f0d0b17fe-SEA server=cloudflare`
+
+</details>
+
+```b4state
+{"vantage": "ci", "stamp": "2026-09-09T10:05Z", "epoch": 1788948345, "resolving": 121, "failed": ["https://defillama.com/stablecoins", "https://kenpom.com/index.php", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page"]}
+```
