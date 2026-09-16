@@ -433,3 +433,21 @@ stale baseline is visible as one.
 ```b4state
 {"vantage": "ci", "stamp": "2026-09-15T10:25Z", "epoch": 1789467928, "resolving": 121, "failed": ["https://defillama.com/stablecoins", "https://kenpom.com/index.php", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page"]}
 ```
+| 2026-09-16T10:16Z | ci | 125 | **117** | 8 | 0 | 0 both, 8 ci-only, 0 vm-only (vm 649.0h old) | **0** | 4944 |
+
+<details><summary>2026-09-16T10:16Z [ci] - not 2xx (8)</summary>
+
+- `403` https://www.ice.com/report-center  (10 markets, $2,915,972)  `cf-ray=a3bf1dd9de22b2dc-ORD server=cloudflare`
+- `403` https://www.theice.com/products/213/WTI-Crude-Futures  (152 markets, $500,391)  `cf-ray=a3bf1df26ebac959-ORD server=cloudflare`
+- `403` https://www.theice.com/index  (23 markets, $104,934)  `cf-ray=a3bf1df1ec46fa1d-ORD server=cloudflare`
+- `403` https://www.ice.com/report/10  (48 markets, $24,618)  `cf-ray=a3bf1dda1d3fc9f2-ORD server=cloudflare`
+- `403` https://www.bloomberg.com/billionaires/  (52 markets, $8,090)  `retry-after=0 server=Varnish x-served-by=cache-chi-kmdw8640040-CHI`
+- `403` https://defillama.com/stablecoins  (1 markets, $0)  `cf-ray=a3bf1daacb57d300-ORD server=cloudflare`
+- `403` https://kenpom.com/index.php  (43 markets, $0)  `cf-ray=a3bf1db65e52e82e-ORD server=cloudflare`
+- `403` https://www.gov.il/en/departments/central-elections-committee/govil-landing-page  (1 markets, $0)  `cf-ray=a3bf1dd6cb69cc6e-ORD server=cloudflare`
+
+</details>
+
+```b4state
+{"vantage": "ci", "stamp": "2026-09-16T10:16Z", "epoch": 1789553810, "resolving": 117, "failed": ["https://defillama.com/stablecoins", "https://kenpom.com/index.php", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page", "https://www.ice.com/report-center", "https://www.ice.com/report/10", "https://www.theice.com/index", "https://www.theice.com/products/213/WTI-Crude-Futures"]}
+```
