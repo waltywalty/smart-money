@@ -451,3 +451,18 @@ stale baseline is visible as one.
 ```b4state
 {"vantage": "ci", "stamp": "2026-09-16T10:16Z", "epoch": 1789553810, "resolving": 117, "failed": ["https://defillama.com/stablecoins", "https://kenpom.com/index.php", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page", "https://www.ice.com/report-center", "https://www.ice.com/report/10", "https://www.theice.com/index", "https://www.theice.com/products/213/WTI-Crude-Futures"]}
 ```
+| 2026-09-17T10:24Z | ci | 125 | **120** | 5 | 0 | 0 both, 5 ci-only, 0 vm-only (vm 673.1h old) | **0** | 5173 |
+
+<details><summary>2026-09-17T10:24Z [ci] - not 2xx (5)</summary>
+
+- `403` https://www.bloomberg.com/billionaires/  (52 markets, $8,090)  `retry-after=0 server=Varnish x-served-by=cache-iad-kcgs7200111-IAD`
+- `403` https://defillama.com/stablecoins  (1 markets, $0)  `cf-ray=a3c7666e0c2cc9bd-IAD server=cloudflare`
+- `403` https://kenpom.com/index.php  (43 markets, $0)  `cf-ray=a3c76678ec8557fc-IAD server=cloudflare`
+- `403` https://www.gov.il/en/departments/central-elections-committee/govil-landing-page  (1 markets, $0)  `cf-ray=a3c766a22810d600-IAD server=cloudflare`
+- `403` https://www.nass.usda.gov/Publications/Reports_By_Title/  (4 markets, $0)  `-`
+
+</details>
+
+```b4state
+{"vantage": "ci", "stamp": "2026-09-17T10:24Z", "epoch": 1789640676, "resolving": 120, "failed": ["https://defillama.com/stablecoins", "https://kenpom.com/index.php", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page", "https://www.nass.usda.gov/Publications/Reports_By_Title/"]}
+```
