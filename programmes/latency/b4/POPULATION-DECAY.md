@@ -480,3 +480,19 @@ stale baseline is visible as one.
 ```b4state
 {"vantage": "ci", "stamp": "2026-09-18T10:02Z", "epoch": 1789725745, "resolving": 121, "failed": ["https://defillama.com/stablecoins", "https://kenpom.com/index.php", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page"]}
 ```
+| 2026-09-19T09:43Z | ci | 125 | **119** | 6 | 0 | 0 both, 6 ci-only, 0 vm-only (vm 720.4h old) | **0** | 5141 |
+
+<details><summary>2026-09-19T09:43Z [ci] - not 2xx (6)</summary>
+
+- `0` https://www.maine.gov/sos  (3 markets, $34,894)  `-`
+- `403` https://www.bloomberg.com/billionaires/  (52 markets, $8,090)  `retry-after=0 server=Varnish x-served-by=cache-dfw-kdfw8210143-DFW`
+- `403` https://defillama.com/stablecoins  (1 markets, $0)  `cf-ray=a3d7a480fa467c57-DFW server=cloudflare`
+- `0` https://gol.gg/esports/home  (33 markets, $0)  `-`
+- `403` https://kenpom.com/index.php  (43 markets, $0)  `cf-ray=a3d7a48e384b9d60-DFW server=cloudflare`
+- `403` https://www.gov.il/en/departments/central-elections-committee/govil-landing-page  (1 markets, $0)  `cf-ray=a3d7a4e38ea99abe-DFW server=cloudflare`
+
+</details>
+
+```b4state
+{"vantage": "ci", "stamp": "2026-09-19T09:43Z", "epoch": 1789811013, "resolving": 119, "failed": ["https://defillama.com/stablecoins", "https://gol.gg/esports/home", "https://kenpom.com/index.php", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page", "https://www.maine.gov/sos"]}
+```
