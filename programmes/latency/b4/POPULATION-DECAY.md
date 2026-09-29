@@ -632,3 +632,18 @@ stale baseline is visible as one.
 ```b4state
 {"vantage": "ci", "stamp": "2026-09-28T11:58Z", "epoch": 1790596734, "resolving": 119, "failed": ["https://defillama.com/stablecoins", "https://international.tse.jus.br/en", "https://kenpom.com/index.php", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page", "https://www.whitehouse.gov/administration/executive-office-of-the-president/"]}
 ```
+| 2026-09-29T11:33Z | ci | 125 | **120** | 5 | 0 | 0 both, 5 ci-only, 0 vm-only (vm 962.3h old) | **0** | 5161 |
+
+<details><summary>2026-09-29T11:33Z [ci] - not 2xx (5)</summary>
+
+- `403` https://international.tse.jus.br/en  (16 markets, $26,156)  `server=AkamaiGHost`
+- `403` https://www.bloomberg.com/billionaires/  (52 markets, $8,090)  `retry-after=0 server=Varnish x-served-by=cache-iad-kcgs7200139-IAD`
+- `403` https://defillama.com/stablecoins  (1 markets, $0)  `cf-ray=a42aabec883a2d14-IAD server=cloudflare`
+- `403` https://kenpom.com/index.php  (43 markets, $0)  `cf-ray=a42aabf6fe24d633-IAD server=cloudflare`
+- `403` https://www.gov.il/en/departments/central-elections-committee/govil-landing-page  (1 markets, $0)  `cf-ray=a42aac169c18a5ff-IAD server=cloudflare`
+
+</details>
+
+```b4state
+{"vantage": "ci", "stamp": "2026-09-29T11:33Z", "epoch": 1790681612, "resolving": 120, "failed": ["https://defillama.com/stablecoins", "https://international.tse.jus.br/en", "https://kenpom.com/index.php", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page"]}
+```
