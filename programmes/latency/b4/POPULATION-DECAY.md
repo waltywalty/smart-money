@@ -773,3 +773,25 @@ stale baseline is visible as one.
 ```b4state
 {"vantage": "ci", "stamp": "2026-10-07T11:59Z", "epoch": 1791374364, "resolving": 119, "failed": ["https://defillama.com/stablecoins", "https://international.tse.jus.br/en", "https://kenpom.com/index.php", "https://secure.actblue.com/directory", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page"]}
 ```
+| 2026-10-08T12:14Z | ci | 125 | **113** | 12 | 0 | 0 both, 12 ci-only, 0 vm-only (vm 1178.9h old) | **0** | 4894 |
+
+<details><summary>2026-10-08T12:14Z [ci] - not 2xx (12)</summary>
+
+- `403` https://www.ice.com/report-center  (10 markets, $2,915,972)  `cf-ray=a47510009e3c51b1-DFW server=cloudflare`
+- `404` https://thegameawards.com/nominees/game-of-the-year  (18 markets, $1,013,211)  `cf-ray=a4750fd5be98e552-DFW server=cloudflare`
+- `403` https://www.theice.com/products/213/WTI-Crude-Futures  (152 markets, $500,391)  `cf-ray=a475103488edf03a-DFW server=cloudflare`
+- `403` https://www.theice.com/index  (23 markets, $104,934)  `cf-ray=a4751033fbce477f-DFW server=cloudflare`
+- `403` https://international.tse.jus.br/en  (16 markets, $26,156)  `server=AkamaiGHost`
+- `403` https://www.ice.com/report/10  (48 markets, $24,618)  `cf-ray=a47510010bc98b33-DFW server=cloudflare`
+- `403` https://www.bloomberg.com/billionaires/  (52 markets, $8,090)  `retry-after=0 server=Varnish x-served-by=cache-dfw-kdfw8210117-DFW`
+- `403` https://secure.actblue.com/directory  (6 markets, $2,644)  `retry-after=0`
+- `0` https://portwatch.imf.org/pages/chokepoint2  (10 markets, $420)  `-`
+- `403` https://defillama.com/stablecoins  (1 markets, $0)  `cf-ray=a4750fae8c776c3d-DFW server=cloudflare`
+- `403` https://kenpom.com/index.php  (43 markets, $0)  `cf-ray=a4750fbd1d805136-DFW server=cloudflare`
+- `403` https://www.gov.il/en/departments/central-elections-committee/govil-landing-page  (1 markets, $0)  `cf-ray=a4750fffa9fe474c-DFW server=cloudflare`
+
+</details>
+
+```b4state
+{"vantage": "ci", "stamp": "2026-10-08T12:14Z", "epoch": 1791461653, "resolving": 113, "failed": ["https://defillama.com/stablecoins", "https://international.tse.jus.br/en", "https://kenpom.com/index.php", "https://portwatch.imf.org/pages/chokepoint2", "https://secure.actblue.com/directory", "https://thegameawards.com/nominees/game-of-the-year", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page", "https://www.ice.com/report-center", "https://www.ice.com/report/10", "https://www.theice.com/index", "https://www.theice.com/products/213/WTI-Crude-Futures"]}
+```
