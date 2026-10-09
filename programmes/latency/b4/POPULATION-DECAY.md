@@ -795,3 +795,20 @@ stale baseline is visible as one.
 ```b4state
 {"vantage": "ci", "stamp": "2026-10-08T12:14Z", "epoch": 1791461653, "resolving": 113, "failed": ["https://defillama.com/stablecoins", "https://international.tse.jus.br/en", "https://kenpom.com/index.php", "https://portwatch.imf.org/pages/chokepoint2", "https://secure.actblue.com/directory", "https://thegameawards.com/nominees/game-of-the-year", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page", "https://www.ice.com/report-center", "https://www.ice.com/report/10", "https://www.theice.com/index", "https://www.theice.com/products/213/WTI-Crude-Futures"]}
 ```
+| 2026-10-09T12:05Z | ci | 125 | **118** | 7 | 0 | 0 both, 7 ci-only, 0 vm-only (vm 1202.8h old) | **0** | 5137 |
+
+<details><summary>2026-10-09T12:05Z [ci] - not 2xx (7)</summary>
+
+- `404` https://thegameawards.com/nominees/game-of-the-year  (18 markets, $1,013,211)  `cf-ray=a47d40d4296cbd10-LAX server=cloudflare`
+- `403` https://international.tse.jus.br/en  (16 markets, $26,156)  `server=AkamaiGHost`
+- `403` https://www.bloomberg.com/billionaires/  (52 markets, $8,090)  `retry-after=0 server=Varnish x-served-by=cache-phx1710063-PHX`
+- `403` https://secure.actblue.com/directory  (6 markets, $2,644)  `retry-after=0`
+- `403` https://defillama.com/stablecoins  (1 markets, $0)  `cf-ray=a47d40857a3bde63-LAX server=cloudflare`
+- `403` https://kenpom.com/index.php  (43 markets, $0)  `cf-ray=a47d40944aa12f08-LAX server=cloudflare`
+- `403` https://www.gov.il/en/departments/central-elections-committee/govil-landing-page  (1 markets, $0)  `cf-ray=a47d40ef7e7fdc36-LAX server=cloudflare`
+
+</details>
+
+```b4state
+{"vantage": "ci", "stamp": "2026-10-09T12:05Z", "epoch": 1791547536, "resolving": 118, "failed": ["https://defillama.com/stablecoins", "https://international.tse.jus.br/en", "https://kenpom.com/index.php", "https://secure.actblue.com/directory", "https://thegameawards.com/nominees/game-of-the-year", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page"]}
+```
