@@ -812,3 +812,21 @@ stale baseline is visible as one.
 ```b4state
 {"vantage": "ci", "stamp": "2026-10-09T12:05Z", "epoch": 1791547536, "resolving": 118, "failed": ["https://defillama.com/stablecoins", "https://international.tse.jus.br/en", "https://kenpom.com/index.php", "https://secure.actblue.com/directory", "https://thegameawards.com/nominees/game-of-the-year", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page"]}
 ```
+| 2026-10-10T11:21Z | ci | 125 | **117** | 8 | 0 | 0 both, 8 ci-only, 0 vm-only (vm 1226.1h old) | **0** | 5136 |
+
+<details><summary>2026-10-10T11:21Z [ci] - not 2xx (8)</summary>
+
+- `404` https://thegameawards.com/nominees/game-of-the-year  (18 markets, $1,013,211)  `cf-ray=a4853e0a68e7a606-IAD server=cloudflare`
+- `403` https://international.tse.jus.br/en  (16 markets, $26,156)  `server=AkamaiGHost`
+- `403` https://www.bloomberg.com/billionaires/  (52 markets, $8,090)  `retry-after=0 server=Varnish x-served-by=cache-iad-kcgs7200040-IAD`
+- `403` https://defillama.com/stablecoins  (1 markets, $0)  `cf-ray=a4853def39657c67-IAD server=cloudflare`
+- `403` https://kenpom.com/index.php  (43 markets, $0)  `cf-ray=a4853dfbb9ec38e8-IAD server=cloudflare`
+- `0` https://portwatch.imf.org/pages/6b1814d64903461b98144a6cc25eb79c  (3 markets, $0)  `-`
+- `403` https://www.gov.il/en/departments/central-elections-committee/govil-landing-page  (1 markets, $0)  `cf-ray=a4853e1b0967ea88-IAD server=cloudflare`
+- `403` https://www.nass.usda.gov/Publications/Reports_By_Title/  (4 markets, $0)  `-`
+
+</details>
+
+```b4state
+{"vantage": "ci", "stamp": "2026-10-10T11:21Z", "epoch": 1791631311, "resolving": 117, "failed": ["https://defillama.com/stablecoins", "https://international.tse.jus.br/en", "https://kenpom.com/index.php", "https://portwatch.imf.org/pages/6b1814d64903461b98144a6cc25eb79c", "https://thegameawards.com/nominees/game-of-the-year", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page", "https://www.nass.usda.gov/Publications/Reports_By_Title/"]}
+```
