@@ -830,3 +830,21 @@ stale baseline is visible as one.
 ```b4state
 {"vantage": "ci", "stamp": "2026-10-10T11:21Z", "epoch": 1791631311, "resolving": 117, "failed": ["https://defillama.com/stablecoins", "https://international.tse.jus.br/en", "https://kenpom.com/index.php", "https://portwatch.imf.org/pages/6b1814d64903461b98144a6cc25eb79c", "https://thegameawards.com/nominees/game-of-the-year", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page", "https://www.nass.usda.gov/Publications/Reports_By_Title/"]}
 ```
+| 2026-10-11T11:35Z | ci | 125 | **117** | 8 | 0 | 0 both, 8 ci-only, 0 vm-only (vm 1250.3h old) | **0** | 5101 |
+
+<details><summary>2026-10-11T11:35Z [ci] - not 2xx (8)</summary>
+
+- `404` https://thegameawards.com/nominees/game-of-the-year  (18 markets, $1,013,211)  `cf-ray=a48d8ff2cafb27e0-DFW server=cloudflare`
+- `403` https://international.tse.jus.br/en  (16 markets, $26,156)  `server=AkamaiGHost`
+- `403` https://www.bloomberg.com/billionaires/  (52 markets, $8,090)  `retry-after=0 server=Varnish x-served-by=cache-qro-mmqt1070056-QRO`
+- `403` https://www.senate.gov/legislative/TieVotes.htm  (9 markets, $1,195)  `server=AkamaiGHost`
+- `403` https://defillama.com/stablecoins  (1 markets, $0)  `cf-ray=a48d8fabaf264642-DFW server=cloudflare`
+- `301` https://gol.gg/esports/home  (33 markets, $0)  `server=Apache/2.4.62 (Ubuntu)`
+- `403` https://kenpom.com/index.php  (43 markets, $0)  `cf-ray=a48d8fcacb4ef887-DFW server=cloudflare`
+- `403` https://www.gov.il/en/departments/central-elections-committee/govil-landing-page  (1 markets, $0)  `cf-ray=a48d902cc878030e-DFW server=cloudflare`
+
+</details>
+
+```b4state
+{"vantage": "ci", "stamp": "2026-10-11T11:35Z", "epoch": 1791718554, "resolving": 117, "failed": ["https://defillama.com/stablecoins", "https://gol.gg/esports/home", "https://international.tse.jus.br/en", "https://kenpom.com/index.php", "https://thegameawards.com/nominees/game-of-the-year", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page", "https://www.senate.gov/legislative/TieVotes.htm"]}
+```
