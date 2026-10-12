@@ -848,3 +848,20 @@ stale baseline is visible as one.
 ```b4state
 {"vantage": "ci", "stamp": "2026-10-11T11:35Z", "epoch": 1791718554, "resolving": 117, "failed": ["https://defillama.com/stablecoins", "https://gol.gg/esports/home", "https://international.tse.jus.br/en", "https://kenpom.com/index.php", "https://thegameawards.com/nominees/game-of-the-year", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page", "https://www.senate.gov/legislative/TieVotes.htm"]}
 ```
+| 2026-10-12T13:32Z | ci | 125 | **118** | 7 | 0 | 0 both, 7 ci-only, 0 vm-only (vm 1276.3h old) | **0** | 5139 |
+
+<details><summary>2026-10-12T13:32Z [ci] - not 2xx (7)</summary>
+
+- `404` https://thegameawards.com/nominees/game-of-the-year  (18 markets, $1,013,211)  `cf-ray=a49678970d6be16d-SJC server=cloudflare`
+- `403` https://international.tse.jus.br/en  (16 markets, $26,156)  `server=AkamaiGHost`
+- `403` https://www.bloomberg.com/billionaires/  (52 markets, $8,090)  `retry-after=0 server=Varnish x-served-by=cache-pao-kpao1770082-PAO`
+- `403` https://defillama.com/stablecoins  (1 markets, $0)  `cf-ray=a49678776cd22519-SJC server=cloudflare`
+- `403` https://kenpom.com/index.php  (43 markets, $0)  `cf-ray=a4967880fd4f720c-SJC server=cloudflare`
+- `403` https://www.gov.il/en/departments/central-elections-committee/govil-landing-page  (1 markets, $0)  `cf-ray=a49678aefbaff497-SJC server=cloudflare`
+- `403` https://www.nass.usda.gov/Publications/Reports_By_Title/  (4 markets, $0)  `-`
+
+</details>
+
+```b4state
+{"vantage": "ci", "stamp": "2026-10-12T13:32Z", "epoch": 1791811965, "resolving": 118, "failed": ["https://defillama.com/stablecoins", "https://international.tse.jus.br/en", "https://kenpom.com/index.php", "https://thegameawards.com/nominees/game-of-the-year", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page", "https://www.nass.usda.gov/Publications/Reports_By_Title/"]}
+```
