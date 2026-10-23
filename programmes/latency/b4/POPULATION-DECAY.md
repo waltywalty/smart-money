@@ -1072,3 +1072,23 @@ stale baseline is visible as one.
 ```b4state
 {"vantage": "ci", "stamp": "2026-10-22T10:37Z", "epoch": 1792665433, "resolving": 112, "failed": ["https://arena.ai/leaderboard/text/coding-no-style-control", "https://arena.ai/leaderboard/text/overall-no-style-control", "https://data.worldbank.org/indicator/SI.POV.GINI?locations=US", "https://defillama.com/stablecoins", "https://international.tse.jus.br/en", "https://kenpom.com/index.php", "https://lmarena.ai/leaderboard", "https://thegameawards.com/nominees/game-of-the-year", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page", "https://www.maine.gov/sos", "https://www.ncdc.noaa.gov/cag/global/time-series", "https://www.ncei.noaa.gov/access/monitoring/climate-at-a-glance/global/time-series"]}
 ```
+| 2026-10-23T10:29Z | ci | 125 | **115** | 10 | 0 | 0 both, 10 ci-only, 0 vm-only (vm 1537.2h old) | **0** | 5053 |
+
+<details><summary>2026-10-23T10:29Z [ci] - not 2xx (10)</summary>
+
+- `403` https://lmarena.ai/leaderboard  (8 markets, $5,536,045)  `cf-ray=a4f00f463f2d2b03-SEA server=cloudflare`
+- `404` https://thegameawards.com/nominees/game-of-the-year  (18 markets, $1,013,211)  `cf-ray=a4f00f644ff277a3-SEA server=cloudflare`
+- `403` https://arena.ai/leaderboard/text/overall-no-style-control  (78 markets, $292,361)  `cf-ray=a4f00f36e85aeb7b-SEA server=cloudflare`
+- `403` https://www.maine.gov/sos  (3 markets, $34,894)  `server=CloudFront`
+- `403` https://international.tse.jus.br/en  (16 markets, $26,156)  `server=AkamaiGHost`
+- `403` https://www.bloomberg.com/billionaires/  (52 markets, $8,090)  `retry-after=0 server=Varnish x-served-by=cache-bfi-krnt7300050-BFI`
+- `403` https://arena.ai/leaderboard/text/coding-no-style-control  (1 markets, $0)  `cf-ray=a4f00f36fd26a377-SEA server=cloudflare`
+- `403` https://defillama.com/stablecoins  (1 markets, $0)  `cf-ray=a4f00f389c58e7f7-SEA server=cloudflare`
+- `403` https://kenpom.com/index.php  (43 markets, $0)  `cf-ray=a4f00f459ba47684-SEA server=cloudflare`
+- `403` https://www.gov.il/en/departments/central-elections-committee/govil-landing-page  (1 markets, $0)  `cf-ray=a4f00f7c9ae66a40-SEA server=cloudflare`
+
+</details>
+
+```b4state
+{"vantage": "ci", "stamp": "2026-10-23T10:29Z", "epoch": 1792751375, "resolving": 115, "failed": ["https://arena.ai/leaderboard/text/coding-no-style-control", "https://arena.ai/leaderboard/text/overall-no-style-control", "https://defillama.com/stablecoins", "https://international.tse.jus.br/en", "https://kenpom.com/index.php", "https://lmarena.ai/leaderboard", "https://thegameawards.com/nominees/game-of-the-year", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page", "https://www.maine.gov/sos"]}
+```
