@@ -1197,3 +1197,26 @@ stale baseline is visible as one.
 ```b4state
 {"vantage": "ci", "stamp": "2026-10-28T11:36Z", "epoch": 1793187409, "resolving": 114, "failed": ["https://arena.ai/leaderboard/text/coding-no-style-control", "https://arena.ai/leaderboard/text/overall-no-style-control", "https://defillama.com/stablecoins", "https://international.tse.jus.br/en", "https://kenpom.com/index.php", "https://lmarena.ai/leaderboard", "https://thegameawards.com/nominees/game-of-the-year", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page", "https://www.maine.gov/sos", "https://www.senate.gov/legislative/TieVotes.htm"]}
 ```
+| 2026-10-29T11:44Z | ci | 125 | **112** | 13 | 0 | 0 both, 13 ci-only, 0 vm-only (vm 1682.4h old) | **0** | 5009 |
+
+<details><summary>2026-10-29T11:44Z [ci] - not 2xx (13)</summary>
+
+- `403` https://lmarena.ai/leaderboard  (8 markets, $5,536,045)  `cf-ray=a521eca06e7f981a-SJC server=cloudflare`
+- `404` https://thegameawards.com/nominees/game-of-the-year  (18 markets, $1,013,211)  `cf-ray=a521ecc12d05c8ce-SJC server=cloudflare`
+- `403` https://arena.ai/leaderboard/text/overall-no-style-control  (78 markets, $292,361)  `cf-ray=a521ec8dcd00fa22-SJC server=cloudflare`
+- `403` https://www.maine.gov/sos  (3 markets, $34,894)  `server=CloudFront`
+- `403` https://international.tse.jus.br/en  (16 markets, $26,156)  `server=AkamaiGHost`
+- `403` https://www.bloomberg.com/billionaires/  (52 markets, $8,090)  `retry-after=0 server=Varnish x-served-by=cache-pao-kpao1770072-PAO`
+- `403` https://www.sos.state.tx.us/elections/historical/index.shtml  (2 markets, $6,254)  `server=AmazonS3`
+- `403` https://www.senate.gov/legislative/TieVotes.htm  (9 markets, $1,195)  `server=AkamaiNetStorage`
+- `403` https://arena.ai/leaderboard/text/coding-no-style-control  (1 markets, $0)  `cf-ray=a521ec8dd929168c-SJC server=cloudflare`
+- `403` https://defillama.com/stablecoins  (1 markets, $0)  `cf-ray=a521ec8fcd197b83-SJC server=cloudflare`
+- `0` https://gol.gg/esports/home  (33 markets, $0)  `-`
+- `403` https://kenpom.com/index.php  (43 markets, $0)  `cf-ray=a521ec9ffd62c65e-SJC server=cloudflare`
+- `403` https://www.gov.il/en/departments/central-elections-committee/govil-landing-page  (1 markets, $0)  `cf-ray=a521eceb9959ed40-SJC server=cloudflare`
+
+</details>
+
+```b4state
+{"vantage": "ci", "stamp": "2026-10-29T11:44Z", "epoch": 1793274247, "resolving": 112, "failed": ["https://arena.ai/leaderboard/text/coding-no-style-control", "https://arena.ai/leaderboard/text/overall-no-style-control", "https://defillama.com/stablecoins", "https://gol.gg/esports/home", "https://international.tse.jus.br/en", "https://kenpom.com/index.php", "https://lmarena.ai/leaderboard", "https://thegameawards.com/nominees/game-of-the-year", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page", "https://www.maine.gov/sos", "https://www.senate.gov/legislative/TieVotes.htm", "https://www.sos.state.tx.us/elections/historical/index.shtml"]}
+```
