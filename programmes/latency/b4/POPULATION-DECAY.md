@@ -1652,3 +1652,24 @@ stale baseline is visible as one.
 ```b4state
 {"vantage": "ci", "stamp": "2026-11-18T14:31Z", "epoch": 1795012319, "resolving": 115, "failed": ["https://arena.ai/leaderboard/text/coding-no-style-control", "https://arena.ai/leaderboard/text/overall-no-style-control", "https://international.tse.jus.br/en", "https://lmarena.ai/leaderboard", "https://thegameawards.com/nominees/game-of-the-year", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page", "https://www.maine.gov/sos", "https://www.nass.usda.gov/Publications/Reports_By_Title/", "https://www.sos.state.tx.us/elections/historical/index.shtml"]}
 ```
+| 2026-11-19T14:40Z | ci | 125 | **114** | 11 | 0 | 0 both, 11 ci-only, 0 vm-only (vm 2189.4h old) | **0** | 5086 |
+
+<details><summary>2026-11-19T14:40Z [ci] - not 2xx (11)</summary>
+
+- `403` https://lmarena.ai/leaderboard  (8 markets, $5,536,045)  `cf-ray=a5cff829abc7d90f-SEA server=cloudflare`
+- `403` https://thegameawards.com/nominees/game-of-the-year  (18 markets, $1,013,211)  `cf-ray=a5cff83eebf35fe0-SEA server=cloudflare`
+- `403` https://arena.ai/leaderboard/text/overall-no-style-control  (78 markets, $292,361)  `cf-ray=a5cff815beb5ec7c-SEA server=cloudflare`
+- `403` https://www.maine.gov/sos  (3 markets, $34,894)  `server=CloudFront`
+- `403` https://international.tse.jus.br/en  (16 markets, $26,156)  `server=AkamaiGHost`
+- `429` https://commission.europa.eu/index_en  (5 markets, $19,291)  `retry-after=0.000`
+- `403` https://www.bloomberg.com/billionaires/  (52 markets, $8,090)  `retry-after=0 server=Varnish x-served-by=cache-bfi-krnt7300102-BFI`
+- `405` https://www.sos.state.tx.us/elections/historical/index.shtml  (2 markets, $6,254)  `server=CloudFront`
+- `403` https://arena.ai/leaderboard/text/coding-no-style-control  (1 markets, $0)  `cf-ray=a5cff815bb765719-SEA server=cloudflare`
+- `403` https://www.gov.il/en/departments/central-elections-committee/govil-landing-page  (1 markets, $0)  `cf-ray=a5cff85c7b426acc-SEA server=cloudflare`
+- `404` https://www.nass.usda.gov/Publications/Reports_By_Title/  (4 markets, $0)  `-`
+
+</details>
+
+```b4state
+{"vantage": "ci", "stamp": "2026-11-19T14:40Z", "epoch": 1795099238, "resolving": 114, "failed": ["https://arena.ai/leaderboard/text/coding-no-style-control", "https://arena.ai/leaderboard/text/overall-no-style-control", "https://commission.europa.eu/index_en", "https://international.tse.jus.br/en", "https://lmarena.ai/leaderboard", "https://thegameawards.com/nominees/game-of-the-year", "https://www.bloomberg.com/billionaires/", "https://www.gov.il/en/departments/central-elections-committee/govil-landing-page", "https://www.maine.gov/sos", "https://www.nass.usda.gov/Publications/Reports_By_Title/", "https://www.sos.state.tx.us/elections/historical/index.shtml"]}
+```
